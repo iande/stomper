@@ -63,5 +63,20 @@ module Stomper
       end
     end
 
+    describe "unsubscribing" do
+      it "should remove all naive subscriptions when unsubscribing with a string destination" do
+        @subscriptions << Subscription.new("/queue/test/1") { |msg| received_1 = true }
+        @subscriptions << Subscription.new("/queue/test/1") { |msg| received_1 = true }
+        @subscriptions << Subscription.new("/queue/test/2") { |msg| received_1 = true }
+        @subscriptions << Subscription.new("/queue/test/1", 'subscription-4') { |msg| received_1 = true }
+        @to_remove = @subscriptions.remove("/queue/test/1")
+        @subscriptions.size.should == 2
+        @subscriptions.map() { |s| s.destination }.should == ["/queue/test/2", "/queue/test/1"]
+        @to_remove.size.should == 2
+        @to_remove.map() { |s| s.destination }.should == ["/queue/test/1", "/queue/test/1"]
+      end
+
+    end
+
   end
 end

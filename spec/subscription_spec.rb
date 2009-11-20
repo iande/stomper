@@ -56,59 +56,59 @@ module Stomper
       end
     end
 
-    describe "message matching" do
-      it "should match a message without a subscription header only when the subscription is 'naive'" do
+    describe "message acceptance" do
+      it "should accept a message without a subscription header only when the subscription is 'naive'" do
         @matching_subscription_1 = Subscription.new("/queue/test/1")
         @matching_subscription_2 = Subscription.new("/queue/test/1", nil, :auto)
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
-        @subscription.matches?(@message).should be_false
-        @matching_subscription_1.matches?(@message).should be_true
-        @matching_subscription_2.matches?(@message).should be_true
+        @subscription.accepts?(@message).should be_false
+        @matching_subscription_1.accepts?(@message).should be_true
+        @matching_subscription_2.accepts?(@message).should be_true
       end
 
-      it "should be able to match against messages by destination" do
+      it "should be able to accept messages by destination" do
         @non_matching_subscription = Subscription.new("/queue/test/another")
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.to_subscribe.id},"test message")
-        @subscription.matches?(@message).should be_true
-        @non_matching_subscription.matches?(@message).should be_false
+        @subscription.accepts?(@message).should be_true
+        @non_matching_subscription.accepts?(@message).should be_false
       end
 
-      it "should match messages only if the same destination and subscription" do
+      it "should accept messages only if the same destination and subscription" do
         @alternate_subscription = Subscription.new("/queue/test/1", 'subscription-2')
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.to_subscribe.id},"test message")
-        @subscription.matches?(@message).should be_true
-        @alternate_subscription.matches?(@message).should be_false
+        @subscription.accepts?(@message).should be_true
+        @alternate_subscription.accepts?(@message).should be_false
       end
 
-      it "should match messages by the subscription id if the message has a subscription" do
+      it "should accept messages by the subscription id if the message has a subscription" do
         @non_matching_subscription = Subscription.new("/queue/test/1")
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => 'subscription-1'},"test message")
-        @subscription.matches?(@message).should be_true
-        @non_matching_subscription.matches?(@message).should be_false
+        @subscription.accepts?(@message).should be_true
+        @non_matching_subscription.accepts?(@message).should be_false
       end
 
-      it "should not match messages with the same destination when its ack mode is not 'auto' and no subscription header was specified" do
+      it "should not accept messages with the same destination when its ack mode is not 'auto' and no subscription header was specified" do
         @non_matching_subscription = Subscription.new("/queue/test/1", nil, 'client')
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
-        @non_matching_subscription.matches?(@message).should be_false
+        @non_matching_subscription.accepts?(@message).should be_false
       end
 
-      it "should not match messages with the same destination when it has a selector and no subscription header was specified" do
+      it "should not accept messages with the same destination when it has a selector and no subscription header was specified" do
         @non_matching_subscription = Subscription.new("/queue/test/1", nil, 'auto', 'rating > 3.0')
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
-        @non_matching_subscription.matches?(@message).should be_false
+        @non_matching_subscription.accepts?(@message).should be_false
       end
 
       # Either insist that the #id method return something meaningful in non-trivial situations
       # as part of the expected behavior of the interface, or change this test!
       # We now insist on it, so this test is valid.
-      it "should match messages when it has a selector and the subscription header was specified" do
+      it "should accept messages when it has a selector and the subscription header was specified" do
         @non_matching_subscription = Subscription.new("/queue/test/1", nil, 'auto', 'rating > 3.0')
         # To test this without insisting that the #id field be equivalent to the subscribe frame's header
         # go this way:
 
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @non_matching_subscription.to_subscribe.id},"test message")
-        @non_matching_subscription.matches?(@message).should be_true
+        @non_matching_subscription.accepts?(@message).should be_true
       end
     end
 

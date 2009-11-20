@@ -21,39 +21,29 @@ module Stomper
       end
     end
 
+    # Let's add a helper method to reduce some of our compound conditionals
+    def naive?
+      @id.nil? && @selector.nil? && @ack == :auto
+    end
 
-    # Do we want to support wild-card subscriptions?
-    # They aren't part of the stomp-spec proper, but they are
-    # supported by ActiveMQ.  For now, we will say no.
-    # We MUST support subscription-id matching, as that is a specific
-    # part of the stomp spec, and an ID match should take precedence
-    # over all other matching.  Incidentally, this solves the wildcard
-    # problem.  If a wild-card subscription has an explicit ID specified,
-    # matches? does its thing without further work on our part.
-    #
-    # Here's the issue we're going to run in to:
-    # every SUBSCRIBE frame sent on the connection results in a new
-    # consumer for the broker.  If no subscription id is specified, the
-    # client code will still receive all the messages, but there's no way
-    # of knowing which subscription it was meant for.  Normally, this wouldn't
-    # be an issue, but when you factor in things like selectors, wild-card destinations,
-    # and varying ack modes, distinguishing the subscription is VERY important.
-    #
-    # Let's talk about expected behaviors in our spec files!
-    def matches?(message_frame)
-      if message_frame.subscription || @id
+    def accepts?(message_frame)
+      if message_frame.subscription || !naive?
         @id == message_frame.subscription
       else
         # If this subscription has a selector or a non-auto ack mode, we should
         # not accept the message as the expectations of the call back may not
         # be met!  Instead we are forced to rely on the presence of a subscription
         # header in the message frame!
-        @selector.nil? && @ack == :auto && (message_frame.destination == @destination)
+        message_frame.destination == @destination
       end
     end
 
+    def accepts_messages_from?(destination)
+      naive? && destination.to_s == @destination
+    end
+
     def perform(message_frame)
-      @call_back.call(message_frame) if matches?(message_frame)
+      @call_back.call(message_frame) if accepts?(message_frame)
     end
 
     def to_subscribe
@@ -61,6 +51,12 @@ module Stomper
       headers['id'] = @id unless @id.nil?
       headers['selector'] = @selector unless @selector.nil?
       Stomper::Frames::Subscribe.new(@destination, headers)
+    end
+
+    def to_unsubscribe
+      headers = { 'destination' => @destination }
+      headers['id'] = @id unless @id.nil?
+      Stomper::Frames::Unsubscribe.new(@destination, headers)
     end
   end
 end

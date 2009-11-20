@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   s.has_rdoc = true
   s.rdoc_options = ["--quiet", "--title", "stomp documentation", "--opname", "index.html", "--line-numbers", "--main", "README.rdoc", "--inline-source"]
-  s.extra_rdoc_files = ["README.rdoc", "CHANGELOG", "LICENSE"]
+  s.extra_rdoc_files = ["README.rdoc", "CHANGELOG", "LICENSE", "AUTHORS"]
 end
   
 

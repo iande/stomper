@@ -8,12 +8,19 @@ module Stomper
     end
 
     def <<(sub)
+      add(sub)
+    end
+
+    def add(sub)
       raise ArgumentError, "appended object must be a subscription" unless sub.is_a?(Subscription)
       @sub_lock.synchronize { @subs << sub }
     end
 
-    def add(sub)
-      self << sub
+    def remove(sub)
+      @sub_lock.synchronize do
+        to_remove, @subs = @subs.partition { |s| s.accepts_messages_from?(sub) }
+        to_remove
+      end
     end
 
     def size

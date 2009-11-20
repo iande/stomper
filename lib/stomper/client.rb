@@ -28,13 +28,12 @@ module Stomper
       # on a socket error.
       if uri_or_params.is_a?(Hash)
         options = options.merge(uri_or_params)
-        @connection = Stomper::BasicConnection.new(options[:host], options[:port],
+        @connection = BasicConnection.new(options[:host], options[:port],
           options[:user], options[:pass], options[:secure])
       else
-        @connection = Stomper::BasicConnection.new(uri_or_params)
+        @connection = BasicConnection.new(uri_or_params)
       end
-      @subscriptions = {}
-      @subscription_lock = Mutex.new
+      @subscriptions = Subscriptions.new
       @send_lock = Mutex.new
       @receive_lock = Mutex.new
       @run_thread = nil
@@ -72,29 +71,17 @@ module Stomper
     end
 
     def subscribe(destination, headers={}, &block)
-      # If a subscription ID is given, we MUST subscribe to
-      # the given destination, even if we're already subscribed
-      # with the appropriate "id" header.  We're getting into enough
-      # conditional behavior that this should be abstracted out into
-      # it's own beast.
-      subscribe = headers.has_key?('id') && !headers['id'].nil? && !headers['id'].empty?
-      @subscription_lock.synchronize do
-        unless @subscriptions.has_key?(destination)
-          @subscriptions[destination] = []
-          subscribe = true
-        end
-        @subscriptions[destination] << block
+      unless destination.is_a?(Subscription)
+        destination = Subscription.new(headers.merge(:destination => destination), &block)
       end
-      transmit_frame(Stomper::Frames::Subscribe.new(destination)) if subscribe
+      @subscriptions << destination
+      transmit_frame(destination.to_subscribe)
       self
     end
 
     def unsubscribe(destination)
-      @subscription_lock.synchronize do
-        if @subscriptions.has_key?(destination)
-          transmit_frame(Stomper::Frames::Unsubscribe.new(destination))
-          @subscriptions[destination].clear
-        end
+      @subscriptions.remove(destination).each do |unsub|
+        transmit_frame(unsub.to_unsubscribe)
       end
     end
 
@@ -145,18 +132,8 @@ module Stomper
     end
 
     def receive
-      msg = @receive_lock.synchronize do
-        @connection.receive
-      end
-      if msg.respond_to?(:destination)
-        # Could probably make this finer grained, a per-subscription lock
-        # but for now, this should do just fine.
-        @subscription_lock.synchronize do
-          if @subscriptions[msg.destination]
-            @subscriptions[msg.destination].each { |sub| sub.call(msg) }
-          end
-        end
-      end
+      msg = @receive_lock.synchronize { @connection.receive }
+      @subscriptions.perform(msg) if msg.is_a?(Stomper::Frames::Message)
       msg
     end
 
