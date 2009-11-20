@@ -1,7 +1,13 @@
-Stomper was derived from the stomp gem by Ian D. Eccles.  Substantial changes
-to the code base have been made, but the original authors of stomp deserve
-credit for the work they have done.
+Stomper authors:
+Ian D. Eccles
 
+
+Stomper was initially a fork of the Stomp Ruby Gem.  Though it
+no longer has a compatible interface with the Stomp gem, and shares
+no common code with it, the Stomp contributors are listed below in
+recognition of their influence on Stomper.  Note: these authors have
+not contributed to the Stomper project, nor are they in any way responsible
+for this project.  Please do not contact them with questions regarding Stomper.
 
 The following people have contributed to Stomp (ordered by commits):
 
