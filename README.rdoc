@@ -50,13 +50,13 @@ one of my goals.
 ===To-Do
 
 - Write/complete specs for:
-    - Subscription
-    - Subscriptions
-    - Transaction
+  - Subscription
+  - Subscriptions
+  - Transaction
 - Ensure that Transaction throws a TransactionAborted error when abort is
   explicitly called.
 - Refactor Client to make use of changes to Subscription handling.
 - Re-work headers of Frame objects so they can be accessed:
-    - By string (headers['ack'])
-    - By symbol (headers[:destination])
-    - By method (headers.subscription)
+  - By string (headers['ack'])
+  - By symbol (headers[:destination])
+  - By method (headers.subscription)
