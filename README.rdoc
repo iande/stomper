@@ -1,4 +1,4 @@
-=README
+==README
 
 Stomper was built from a fork of the [stomp](http://github.com/js/stomp) gem.  I initially planned only to
 make some minor changes, but had the time and desire to make the stomp client
@@ -15,7 +15,7 @@ authors of Stomp their due credit) simply because I have already broken interfac
 compatibility with the stomp gem and making this gem backwards compatible is not
 one of my goals.
 
-==Example Usage
+===Example Usage
 
     client = Stomper::Client.new("stomp://my_username:s3cr3tz@localhost:61613")
     # First major deviation from the stomp gem, the receiver thread must be
@@ -47,16 +47,16 @@ one of my goals.
       end
     end
 
-==To-Do
+===To-Do
 
-* Write/complete specs for:
-    * Subscription
-    * Subscriptions
-    * Transaction
-* Ensure that Transaction throws a TransactionAborted error when abort is
+- Write/complete specs for:
+    - Subscription
+    - Subscriptions
+    - Transaction
+- Ensure that Transaction throws a TransactionAborted error when abort is
   explicitly called.
-* Refactor Client to make use of changes to Subscription handling.
-* Re-work headers of Frame objects so they can be accessed:
-    * By string (headers['ack'])
-    * By symbol (headers[:destination])
-    * By method (headers.subscription)
+- Refactor Client to make use of changes to Subscription handling.
+- Re-work headers of Frame objects so they can be accessed:
+    - By string (headers['ack'])
+    - By symbol (headers[:destination])
+    - By method (headers.subscription)
