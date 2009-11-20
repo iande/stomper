@@ -60,3 +60,6 @@ one of my goals.
   - By string (headers['ack'])
   - By symbol (headers[:destination])
   - By method (headers.subscription)
+- Implement secure connections for stomp+ssl:// URI's
+- Implement reliable connections by adapting BasicConnection to reconnect when
+  unexpectedly disconnected.
