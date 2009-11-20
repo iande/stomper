@@ -1,0 +1,5 @@
+pkg/*
+doc/*
+coverage/*
+nbproject/*
+bin/demo.rb

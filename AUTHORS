@@ -1,0 +1,15 @@
+Stomper was derived from the stomp gem by Ian D. Eccles.  Substantial changes
+to the code base have been made, but the original authors of stomp deserve
+credit for the work they have done.
+
+
+The following people have contributed to Stomp (ordered by commits):
+
+Brian McCaliister
+Glenn Rempe <glenn@rempe.us>
+jstrachan 
+Marius Mathiesen <marius.mathiesen@gmail.com>
+Johan S√∏rensen <johan@johansorensen.com>
+kookster
+Tony Garnock-Jones <tonyg@lshift.net>
+chirino

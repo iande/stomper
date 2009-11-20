@@ -1,0 +1,48 @@
+==README
+
+Stomper was built from a fork of the stomp gem.  I initially planned only to
+make some minor changes, but had the time and desire to make the stomp client
+more "high level."  I also plan to separate the reliable nature of connections
+by having them represented by two separate classes (BasicConnection and
+ReliableConnection.)  A further change I made was to keep the connection classes
+as simple as possible, which means they are not thread safe.  The client library
+does support multi-threading and should be preferred to working directly with
+the connection classes in code that makes use of this library.  There will
+be more changes to come, but I wanted to get this committed.
+
+Ultimately, I will probably end up renaming this repository (though giving the
+authors of Stomp their due credit) simply because I have already broken interface
+compatibility with the stomp gem and making this gem backwards compatible is not
+one of my goals.
+
+===Example Usage
+
+    client = Stomp::Client.new("stomp://my_username:s3cr3tz@localhost:61613")
+    # First major deviation from the stomp gem, the receiver thread must be
+    # explicitly started.
+    client.start
+
+    client.subscribe("/queue/hello") do |msg|
+      puts msg.body
+    end
+
+    # Send a simple message
+    client.send("/queue/hello", "hello world!")
+
+    # Send a message within a transaction.  This usage is new to stomper
+    # however, one can manually manage transactions as well.
+    client.transaction do |t|
+      t.send("/queue/hello", "a transactioned message")
+    end
+
+    # If the block provided to #transaction accepts a single parameter,
+    # the client yields the Transaction object to the block, otherwise
+    # the block is instance_eval'd within the Transaction object.
+    client.transaction do
+      send("/queue/hello", "a message you will never receive")
+      # Nested transactions, failures percolate up to parent transactions.
+      transaction do
+        send("/queue/hello", "because I am about to fail!")
+        raise "by forcing an error in a nested transaction"
+      end
+    end
