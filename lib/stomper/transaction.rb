@@ -30,7 +30,7 @@ module Stomper
         end
         commit
       rescue => err
-        abort
+        _abort
         # If the transaction aborts, raise a new exception.
         # If this is a nested transaction, we can abort the parent as well
         # If we are directly using Transaction objects, we will need to handle
@@ -67,10 +67,7 @@ module Stomper
     end
 
     def abort
-      # Guard against sending multiple abort messages to the server for a
-      # single transaction.
-      @client.abort(@id) unless committed? || aborted?
-      @aborted = true
+      raise TransactionAborted, "transaction '#{@id}' aborted explicitly" if _abort
     end
 
     def commit
@@ -78,6 +75,15 @@ module Stomper
       # single transaction.
       @client.commit(@id) unless committed? || aborted?
       @committed = true
+    end
+
+    private
+    def _abort
+      # Guard against sending multiple abort messages to the server for a
+      # single transaction.
+      return false if committed? || aborted?
+      @client.abort(@id)
+      @aborted = true
     end
   end
 end

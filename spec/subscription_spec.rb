@@ -30,11 +30,11 @@ module Stomper
         @subscription.selector.should == "b < 10"
       end
 
-      # We do not insist that #id has to be equal to what was specified,
-      # merely that it is not nil.
-      it "should provide a meanginful ID when the subscription ID is specified" do
+      it "should use the specified ID for subscribing and unsubscribing" do
         @subscription.id.should_not be_nil
         @subscription.id.should_not be_empty
+        @subscription.id.should == @subscription.to_subscribe.id
+        @subscription.id.should == @subscription.to_unsubscribe.id
       end
 
       it "should provide a meaningful ID when the ack mode is not auto" do
@@ -68,21 +68,21 @@ module Stomper
 
       it "should be able to accept messages by destination" do
         @non_matching_subscription = Subscription.new("/queue/test/another")
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.to_subscribe.id},"test message")
+        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.id},"test message")
         @subscription.accepts?(@message).should be_true
         @non_matching_subscription.accepts?(@message).should be_false
       end
 
       it "should accept messages only if the same destination and subscription" do
         @alternate_subscription = Subscription.new("/queue/test/1", 'subscription-2')
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.to_subscribe.id},"test message")
+        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.id},"test message")
         @subscription.accepts?(@message).should be_true
         @alternate_subscription.accepts?(@message).should be_false
       end
 
       it "should accept messages by the subscription id if the message has a subscription" do
         @non_matching_subscription = Subscription.new("/queue/test/1")
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => 'subscription-1'},"test message")
+        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.id},"test message")
         @subscription.accepts?(@message).should be_true
         @non_matching_subscription.accepts?(@message).should be_false
       end
@@ -107,7 +107,7 @@ module Stomper
         # To test this without insisting that the #id field be equivalent to the subscribe frame's header
         # go this way:
 
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @non_matching_subscription.to_subscribe.id},"test message")
+        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @non_matching_subscription.id},"test message")
         @non_matching_subscription.accepts?(@message).should be_true
       end
     end
@@ -118,7 +118,7 @@ module Stomper
         @subscription_with_block = Subscription.new("/queue/test/1", 'subscription-test') do |msg|
           called_back = (msg == @message)
         end
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription_with_block.to_subscribe.id},"test message")
+        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription_with_block.id},"test message")
         @subscription_with_block.perform(@message)
         called_back.should be_true
       end
@@ -135,10 +135,10 @@ module Stomper
 
       it "should call its callback when a message arrives for its subscription id" do
         called_back = false
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => 'subscription-test'},"test message")
         @subscription_with_block = Subscription.new("/queue/test/another", 'subscription-test') do |msg|
           called_back = (msg == @message)
         end
+        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription_with_block.id},"test message")
         @subscription_with_block.perform(@message)
         called_back.should be_true
       end

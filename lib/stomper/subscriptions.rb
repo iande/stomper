@@ -16,11 +16,15 @@ module Stomper
       @sub_lock.synchronize { @subs << sub }
     end
 
-    def remove(sub)
-      @sub_lock.synchronize do
-        to_remove, @subs = @subs.partition { |s| s.accepts_messages_from?(sub) }
-        to_remove
+    def remove(dest, subid=nil)
+      if dest.is_a?(Hash)
+        subid = dest[:id]
+        dest = dest[:destination]
+      elsif dest.is_a?(Subscription)
+        subid = dest.id
+        dest = dest.destination
       end
+      _remove(dest, subid)
     end
 
     def size
@@ -41,6 +45,14 @@ module Stomper
 
     def perform(message)
       @sub_lock.synchronize { @subs.each { |sub| sub.perform(message) } }
+    end
+
+    private
+    def _remove(dest, subid)
+      @sub_lock.synchronize do
+        to_remove, @subs = @subs.partition { |s| s.receives_for?(dest,subid) }
+        to_remove
+      end
     end
   end
 end

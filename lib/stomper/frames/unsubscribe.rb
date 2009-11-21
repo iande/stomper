@@ -5,6 +5,10 @@ module Stomper
         super('UNSUBSCRIBE', headers)
         @headers['destination'] = destination
       end
+
+      def id
+        @headers['id']
+      end
     end
   end
 end

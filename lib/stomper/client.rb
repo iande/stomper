@@ -83,6 +83,7 @@ module Stomper
       @subscriptions.remove(destination).each do |unsub|
         transmit_frame(unsub.to_unsubscribe)
       end
+      self
     end
 
     # The stomp gem we were forked from does this part automatically

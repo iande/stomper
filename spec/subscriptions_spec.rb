@@ -32,16 +32,32 @@ module Stomper
         @subscriptions << Subscription.new("/queue/test/1")
         @subscriptions << Subscription.new("/queue/test/2")
         @subscriptions << Subscription.new("/queue/test/3")
-        Thread.new { sleep(0.25); @subscriptions << Subscription.new("/queue/test/4") }
+        Thread.new { sleep(0.1); @subscriptions << Subscription.new("/queue/test/4") }
         # In general, this next step should execute before the thread has a chance to
         # but the sleep in the map should mean that our thread gets woken up before
         # map finishes.  However, destinations should NEVER contain "/queue/test/4"
         # because map should be synchronized.
-        destinations = @subscriptions.map { |sub| sleep(0.25); sub.destination }
+        destinations = @subscriptions.map { |sub| sleep(0.1); sub.destination }
         destinations.size.should == 3
         destinations.should == ['/queue/test/1', '/queue/test/2', '/queue/test/3']
         @subscriptions.size.should == 4
         @subscriptions.last.destination.should == "/queue/test/4"
+      end
+
+      it "should synchronize removing subscriptions" do
+        @subscriptions << Subscription.new("/queue/test/1")
+        @subscriptions << Subscription.new("/queue/test/2")
+        @subscriptions << Subscription.new("/queue/test/3")
+        Thread.new { sleep(0.1); @subscriptions.remove("/queue/test/1") }
+        # In general, this next step should execute before the thread has a chance to
+        # but the sleep in the map should mean that our thread gets woken up before
+        # map finishes.  However, destinations should NEVER contain "/queue/test/4"
+        # because map should be synchronized.
+        destinations = @subscriptions.map { |sub| sleep(0.1); sub.destination }
+        destinations.size.should == 3
+        destinations.should == ['/queue/test/1', '/queue/test/2', '/queue/test/3']
+        @subscriptions.size.should == 2
+        @subscriptions.first.destination.should == "/queue/test/2"
       end
 
     end
@@ -54,7 +70,6 @@ module Stomper
         @subscriptions << Subscription.new("/queue/test/1") { |msg| received_1 = true }
         @subscriptions << Subscription.new("/queue/test/1", 'subscription-2') { |msg| received_2 = true }
         @subscriptions << Subscription.new("/queue/test/2") { |msg| received_3 = true }
-        #@message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @non_matching_subscription.to_subscribe.id},"test message")
         @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
         @subscriptions.perform(@message)
         received_1.should be_true
@@ -65,18 +80,69 @@ module Stomper
 
     describe "unsubscribing" do
       it "should remove all naive subscriptions when unsubscribing with a string destination" do
-        @subscriptions << Subscription.new("/queue/test/1") { |msg| received_1 = true }
-        @subscriptions << Subscription.new("/queue/test/1") { |msg| received_1 = true }
-        @subscriptions << Subscription.new("/queue/test/2") { |msg| received_1 = true }
-        @subscriptions << Subscription.new("/queue/test/1", 'subscription-4') { |msg| received_1 = true }
+        @removed_subscriptions = [Subscription.new("/queue/test/1"), Subscription.new("/queue/test/1")]
+        @removed_subscriptions.each { |sub| @subscriptions << sub }
+        @subscriptions << Subscription.new("/queue/test/2")
+        @subscriptions << Subscription.new("/queue/test/1", 'subscription-4')
         @to_remove = @subscriptions.remove("/queue/test/1")
         @subscriptions.size.should == 2
-        @subscriptions.map() { |s| s.destination }.should == ["/queue/test/2", "/queue/test/1"]
+        @subscriptions.should_not include(@removed_subscriptions.first)
+        @subscriptions.should_not include(@removed_subscriptions.last)
         @to_remove.size.should == 2
-        @to_remove.map() { |s| s.destination }.should == ["/queue/test/1", "/queue/test/1"]
+        @to_remove.should include(@removed_subscriptions.first)
+        @to_remove.should include(@removed_subscriptions.last)
       end
-
+      it "should remove all subscriptions that accept messages for a supplied subscription ID" do
+        @removed_subscription = Subscription.new("/queue/test/1", 'subscription-4')
+        @subscriptions << Subscription.new("/queue/test/1")
+        @subscriptions << Subscription.new("/queue/test/1")
+        @subscriptions << Subscription.new("/queue/test/2")
+        @subscriptions << @removed_subscription
+        @to_remove = @subscriptions.remove(nil, @removed_subscription.id)
+        @subscriptions.size.should == 3
+        @subscriptions.should_not include(@removed_subscription)
+        @to_remove.size.should == 1
+        @to_remove.should include(@removed_subscription)
+      end
+      it "should remove subscriptions as expected when parameter is a hash specifying the ID" do
+        @removed_subscription = Subscription.new("/queue/test/1", 'subscription-4')
+        @subscriptions << Subscription.new("/queue/test/1")
+        @subscriptions << Subscription.new("/queue/test/1")
+        @subscriptions << Subscription.new("/queue/test/2")
+        @subscriptions << @removed_subscription
+        @to_remove = @subscriptions.remove({ :id => @removed_subscription.id })
+        @subscriptions.size.should == 3
+        @subscriptions.should_not include(@removed_subscription)
+        @to_remove.size.should == 1
+        @to_remove.should include(@removed_subscription)
+      end
+      it "should remove subscriptions as expected when parameter is a hash specifying the destination" do
+        @removed_subscriptions = [Subscription.new("/queue/test/1"), Subscription.new("/queue/test/1")]
+        @removed_subscriptions.each { |sub| @subscriptions << sub }
+        @subscriptions << Subscription.new("/queue/test/2")
+        @subscriptions << Subscription.new("/queue/test/1", 'subscription-4')
+        @to_remove = @subscriptions.remove( { :destination => "/queue/test/1" })
+        @subscriptions.size.should == 2
+        @subscriptions.should_not include(@removed_subscriptions.first)
+        @subscriptions.should_not include(@removed_subscriptions.last)
+        @to_remove.size.should == 2
+        @to_remove.should include(@removed_subscriptions.first)
+        @to_remove.should include(@removed_subscriptions.last)
+      end
+      it "should remove subscriptions as expected when parameter is a Subscription" do
+        @removed_subscription = Subscription.new("/queue/test/1", 'subscription-4')
+        @subscriptions << Subscription.new("/queue/test/1")
+        @subscriptions << Subscription.new("/queue/test/1")
+        @subscriptions << Subscription.new("/queue/test/2")
+        @subscriptions << @removed_subscription
+        @to_remove = @subscriptions.remove(@removed_subscription)
+        @to_remove.size.should == 1
+        @to_remove.should include(@removed_subscription)
+        @to_remove = @subscriptions.remove(Subscription.new("/queue/test/1", nil, :client))
+        @to_remove.should be_empty
+        @subscriptions.size.should == 3
+        @subscriptions.should_not include(@removed_subscription)
+      end
     end
-
   end
 end

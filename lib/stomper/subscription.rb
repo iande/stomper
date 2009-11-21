@@ -16,9 +16,7 @@ module Stomper
       @ack = (ack || :auto).to_sym
       @selector = selector
       @call_back = block
-      unless @ack == :auto && (@selector.nil? || @selector.empty?)
-        @id ||= "sub-#{Time.now.to_f}"
-      end
+      @id ||= "sub-#{Time.now.to_f}" unless naive?
     end
 
     # Let's add a helper method to reduce some of our compound conditionals
@@ -27,19 +25,15 @@ module Stomper
     end
 
     def accepts?(message_frame)
-      if message_frame.subscription || !naive?
-        @id == message_frame.subscription
-      else
-        # If this subscription has a selector or a non-auto ack mode, we should
-        # not accept the message as the expectations of the call back may not
-        # be met!  Instead we are forced to rely on the presence of a subscription
-        # header in the message frame!
-        message_frame.destination == @destination
-      end
+      receives_for?(message_frame.destination, message_frame.subscription)
     end
 
-    def accepts_messages_from?(destination)
-      naive? && destination.to_s == @destination
+    def receives_for?(dest, subid=nil)
+      if naive? && subid.nil?
+        @destination == dest
+      else
+        @id == subid
+      end
     end
 
     def perform(message_frame)

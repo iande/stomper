@@ -5,18 +5,15 @@ module Stomper
 
       def initialize(command, headers={})
         @command = command
-        @headers = headers
+        @headers = Headers.new(headers)
       end
       
-      def to_stomp
-        unless @body.nil? || @body.length == 0
-          @headers["content-length"] = @body.length
-          @headers["content-type"] = "text/plain; charset=UTF-8"
+      def to_stomp(skip_content_length=false)
+        unless skip_content_length || @body.nil? || @body.bytesize == 0
+          # use bytesize as it's what the broker will expect
+          @headers["content-length"] = @body.bytesize
         end
-        if @headers.size > 0
-          str_head = @headers.map { |k,v| "#{k}:#{v}" }.join("\n") + "\n"
-        end
-        "#{@command}\n#{str_head}\n#{@body}\0"
+        "#{@command}\n#{@headers.to_stomp}\n#{@body}\0"
       end
     end
   end
