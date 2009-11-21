@@ -1,6 +1,6 @@
 ==README
 
-Stomper was built from a fork of the [stomp](http://github.com/js/stomp) gem.  I initially planned only to
+Stomper was built from a fork of the stomp (http://github.com/js/stomp) gem.  I initially planned only to
 make some minor changes, but had the time and desire to make the stomp client
 more "high level."  I also plan to separate the reliable nature of connections
 by having them represented by two separate classes (BasicConnection and
