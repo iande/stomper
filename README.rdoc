@@ -52,7 +52,6 @@ one of my goals.
 - Write/complete specs for:
   - Frames
   - Client
-- Finish support for surpressing content-length auto-generation.
 - Implement secure connections for stomp+ssl:// URI's
 - Implement reliable connections by adapting BasicConnection to reconnect when
   unexpectedly disconnected.

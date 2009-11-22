@@ -3,6 +3,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), '..', 'spec_helper'))
 module Stomper::Frames
   describe ClientFrame do
     before(:each) do
+      ClientFrame.generate_content_length = true
       @client_frame = ClientFrame.new('COMMAND')
     end
 
@@ -18,17 +19,42 @@ module Stomper::Frames
       @client_frame.to_stomp.should == "COMMAND\nack:client\ndestination:/queue/test/1\ntransaction-id:2\n\n\0"
     end
 
-    it "should generate content-length header when converted to a stomp frame with a non-empty body by default" do
-      @frame_body = 'testing'
-      @send_frame = Send.new("/queue/test/1", @frame_body)
-      @send_frame.to_stomp.should == "SEND\ncontent-length:#{@frame_body.bytesize}\ndestination:/queue/test/1\n\n#{@frame_body}\0"
-    end
+    describe "generating content-length header" do
+      it "should provide the header by default, overriding any existing header" do
+        @frame_body = 'testing'
+        @client_frame = ClientFrame.new('COMMAND', {'content-length' => 1}, @frame_body)
+        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{@frame_body.bytesize}\n\n#{@frame_body}\0"
+      end
 
-    # What are you doing, writing a novel?
-    it "should not generate a content-length header when converted to a stomp frame with a non-empty body if explicitly told to skip" do
-      @frame_body = 'testing'
-      @send_frame = Send.new("/queue/test/1", @frame_body)
-      @send_frame.to_stomp(true).should == "SEND\ndestination:/queue/test/1\n\n#{@frame_body}\0"
+      it "should not provide the header if the class option is set to false, unless explicitly set on the frame in particular" do
+        ClientFrame.generate_content_length = false
+        @frame_body = 'testing'
+        @client_frame = ClientFrame.new('COMMAND', {}, @frame_body)
+        @client_frame.to_stomp.should == "COMMAND\n\n#{@frame_body}\0"
+        @client_frame = ClientFrame.new('COMMAND', {}, @frame_body)
+        @client_frame.generate_content_length = true
+        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{@frame_body.bytesize}\n\n#{@frame_body}\0"
+      end
+
+      it "should not provide the header if instance option is set false, when the class option is true" do
+        @frame_body = 'testing'
+        @client_frame = ClientFrame.new('COMMAND', {}, @frame_body)
+        @client_frame.generate_content_length = false
+        @client_frame.to_stomp.should == "COMMAND\n\n#{@frame_body}\0"
+        @client_frame = ClientFrame.new('COMMAND', {:generate_content_length => false}, @frame_body)
+        @client_frame.to_stomp.should == "COMMAND\n\n#{@frame_body}\0"
+      end
+
+      it "should not overwrite an explicit content-length header when option is off at class or instance level" do
+        @frame_body = 'testing'
+        @client_frame = ClientFrame.new('COMMAND', { 'content-length' => 4}, @frame_body)
+        @client_frame.generate_content_length = false
+        @client_frame.to_stomp.should == "COMMAND\ncontent-length:4\n\n#{@frame_body}\0"
+        ClientFrame.generate_content_length = false
+        @client_frame = ClientFrame.new('COMMAND', {'content-length' => 2}, @frame_body)
+        @client_frame.to_stomp.should == "COMMAND\ncontent-length:2\n\n#{@frame_body}\0"
+      end
+
     end
   end
 end
