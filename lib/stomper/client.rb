@@ -1,6 +1,6 @@
 module Stomper
   class Client
-    attr_reader :connection
+    attr_reader :connection, :subscriptions
 
     # Forms for constructor:
     #   Client.new("stomp://user:pass@host:port") (with variations on the URI)
@@ -79,8 +79,8 @@ module Stomper
       self
     end
 
-    def unsubscribe(destination)
-      @subscriptions.remove(destination).each do |unsub|
+    def unsubscribe(destination, sub_id=nil)
+      @subscriptions.remove(destination, sub_id).each do |unsub|
         transmit_frame(unsub.to_unsubscribe)
       end
       self

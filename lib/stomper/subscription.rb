@@ -4,10 +4,11 @@ module Stomper
     
     def initialize(destination_or_options, subscription_id=nil, ack=nil, selector=nil, &block)
       if destination_or_options.is_a?(Hash)
-        destination = destination_or_options[:destination]
-        subscription_id ||= destination_or_options[:id]
-        ack ||= destination_or_options[:ack]
-        selector ||= destination_or_options[:selector]
+        options = Stomper::Frames::Headers.new(destination_or_options)
+        destination = options.destination
+        subscription_id ||= options.id
+        ack ||= options.ack
+        selector ||= options.selector
       else
         destination = destination_or_options.to_s
       end
