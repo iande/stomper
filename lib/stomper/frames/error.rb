@@ -1,12 +1,14 @@
 module Stomper
   module Frames
     class Error < Stomper::Frames::ServerFrame
-      frame_factory :error
-      attr_reader :message
+      factory_for :error
 
       def initialize(headers, body)
         super('ERROR', headers, body)
-        @message = headers['message']
+      end
+
+      def message
+        @headers.message
       end
     end
   end

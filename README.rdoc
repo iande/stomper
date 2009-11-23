@@ -50,7 +50,6 @@ one of my goals.
 ===To-Do
 
 - Write/complete specs for:
-  - Frames
   - Client
 - Implement secure connections for stomp+ssl:// URI's
 - Implement reliable connections by adapting BasicConnection to reconnect when

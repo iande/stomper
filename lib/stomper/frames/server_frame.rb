@@ -5,20 +5,16 @@ module Stomper
 
       def initialize(command, headers={}, body=nil)
         @command = command
-        @headers = headers
+        @headers = Headers.new(headers)
         @body = body
       end
 
       class << self
-        def frame_factory(*args)
+        def factory_for(*args)
           @@registered_commands ||= {}
           args.each do |command|
             @@registered_commands[command.to_s.upcase] = self
           end
-        end
-
-        def factory_for(command)
-          @@registered_commands[command.to_s.upcase]
         end
 
         def build(command, headers, body)

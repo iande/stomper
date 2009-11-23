@@ -1,7 +1,7 @@
 module Stomper
   module Frames
     class Message < Stomper::Frames::ServerFrame
-      frame_factory :message
+      factory_for :message
 
       def initialize(headers, body)
         super('MESSAGE', headers, body)
@@ -9,15 +9,15 @@ module Stomper
 
       # Convenience attributes
       def id
-        @headers['message-id']
+        @headers[:'message-id']
       end
 
       def destination
-        @headers['destination']
+        @headers.destination
       end
 
       def subscription
-        @headers['subscription']
+        @headers.subscription
       end
     end
   end

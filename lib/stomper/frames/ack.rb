@@ -8,7 +8,7 @@ module Stomper
 
       def self.ack_for(message, headers = {})
         if message.is_a?(Message)
-          headers['transaction'] = message.headers['transaction'] if message.headers.has_key?('transaction')
+          headers['transaction'] = message.headers.transaction if message.headers.transaction
           new(message.id, headers)
         else
           new(message.to_s)
