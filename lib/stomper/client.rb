@@ -99,14 +99,11 @@ module Stomper
           @run_thread = Thread.new do
             while receiving?
               begin
-                # if @connection.socket.ready? is no longer needed
-                # as we are handling this in the connection layer.
-                receive #if @connection.socket.ready?
+                receive
               rescue => err
                 puts "Exception Caught: #{err.to_s}"
                 break
               end
-              #puts "We are receiving!"
             end
           end
         end
@@ -119,8 +116,6 @@ module Stomper
       @receiver_lock.synchronize do
         if receiving?
           @receiving = false
-          #With the use of ready? we do not need to force a disconnect
-          #@connection.disconnect
           @run_thread.join
           @run_thread = nil
         end

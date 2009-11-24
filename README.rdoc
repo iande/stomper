@@ -49,6 +49,4 @@ one of my goals.
 
 ===To-Do
 
-- Implement secure connections for stomp+ssl:// URI's
-- Implement reliable connections by adapting BasicConnection to reconnect when
-  unexpectedly disconnected.
+- Consider a better way of making connections reliable.

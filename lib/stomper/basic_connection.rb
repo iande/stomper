@@ -11,15 +11,9 @@ module Stomper
     attr_reader :uri
     attr_reader :socket
 
-    def initialize(host_or_uri, port=nil, user=nil, pass=nil, secure=false)
-      if host_or_uri =~ /^stomp[^:]*:\/\//
-        @uri = URI.parse(host_or_uri)
-      else
-        scheme = (secure) ? "stomp+ssl" : "stomp"
-        creds = (user.nil? || pass.nil?) ? "" : "#{user}:#{pass}@"
-        hostport = (port.nil?) ? host_or_uri : "#{host_or_uri}:#{port}"
-        @uri = URI.parse("#{scheme}://#{creds}#{hostport}")
-      end
+    def initialize(uri, opts = {})
+      @uri = URI.parse(uri)
+      #connect_now = opts.delete(:connect_now) { true }
       # ActiveMQ seems to suggest using port 61612 for stomp+ssl connections
       # As do some other Stomp resources.
       @uri.port = (@uri.scheme == "stomp") ? 61613 : 61612 if @uri.port.nil?
@@ -27,20 +21,23 @@ module Stomper
       # when receiving that, so we need to accommodate it.
       @uri.host = 'localhost' if @uri.host.nil?
       @uri.freeze
-      raise ArgumentError, "secure connections not currently supported" if @uri.scheme == "stomp+ssl"
-      connect
-    end
-
-    # Convenience method.  I don't know who it is convenient for, but the original
-    # Stomp library provided it, so we shall, too.
-    def BasicConnection.open(host_or_uri, port=nil, user=nil, pass=nil, secure=false)
-      new(host_or_uri, port, user, pass, secure)
+      #raise ArgumentError, "secure connections not currently supported" if @uri.scheme == "stomp+ssl"
+      #connect if connect_now
+      @use_ssl = (@uri.scheme == "stomp+ssl")
+      if @use_ssl
+        @ssl_context = OpenSSL::SSL::SSLContext.new
+        @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
     end
 
     def connect
-      @socket = TCPSocket.new(@uri.host, @uri.port)
-      # Let's see how much this screws things up!
-      #@socket.nonblock= true
+      s = TCPSocket.open(@uri.host, @uri.port)
+      if @use_ssl
+        s = OpenSSL::SSL::SSLSocket.new(s, @ssl_context)
+        s.sync_close = true
+        s.connect
+      end
+      @socket = s
       transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
     end
 
@@ -52,7 +49,7 @@ module Stomper
     # either explicitly disconnected, or we have given up trying to be reliable.
     def connected?
       #!(@socket.closed? || @socket.eof?)
-      !@socket.closed?
+      @socket && !@socket.closed?
     end
 
     def close
@@ -73,7 +70,7 @@ module Stomper
 
     def receive
       command = ''
-      while @socket.ready? && (command = @socket.gets)
+      while ready? && (command = @socket.gets)
         command.chomp!
         break if command.size > 0
       end
@@ -108,6 +105,11 @@ module Stomper
       end
       # Messages should be forever immutable.
       Stomper::Frames::ServerFrame.build(command, headers, body).freeze
+    end
+
+    private
+    def ready?
+      (@use_ssl) ? @socket.io.ready? : @socket.ready?
     end
   end
 end

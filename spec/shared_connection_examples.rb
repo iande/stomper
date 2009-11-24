@@ -1,26 +1,5 @@
 shared_examples_for "All Client Connections" do
-
   describe "connection initializers" do
-    describe "explicit parameters" do
-      it "should accept explicit parameters for host" do
-        lambda { @connection.class.new('localhost') }.should_not raise_error
-      end
-
-      it "should accept explicit parameters for host and port" do
-        lambda { @connection.class.new('localhost', 61613) }.should_not raise_error
-      end
-
-      it "should accept explicit parameters for host, port, user and passcode" do
-        lambda { @connection.class.new('localhost', 61613, 'test_user', 's3cr3tz') }.should_not raise_error
-      end
-
-      it "should establish a secure connection explicitly" do
-        pending "need to implement the SSL portion and figure out a proper way to test" do
-          lambda { @connection.class.new('localhost', 61613, 'test_user', 's3cr3tz', true) }.should_not raise_error
-        end
-      end
-    end
-
     describe "from uri" do
       it "should accept the stomp:/// uri (no host specified)" do
         lambda { @connection.class.new("stomp:///") }.should_not raise_error
@@ -39,9 +18,7 @@ shared_examples_for "All Client Connections" do
       end
 
       it "should accept a uri specifying a secure connection" do
-        pending "need to implement the SSL portion and figure out a proper way to test" do
-          lambda { @connection.class.new("stomp+ssl://localhost") }.should_not raise_error
-        end
+        lambda { @connection.class.new("stomp+ssl://localhost") }.should_not raise_error
       end
 
       it "should not accept a bogus URI" do
@@ -60,12 +37,14 @@ shared_examples_for "All Client Connections" do
     end
 
     it "should not report it is connected after close is called" do
+      @connection.connect
       @connection.connected?.should be_true
       @connection.close
       @connection.connected?.should be_false
     end
     
     it "should not report it is connected after disconnect is called" do
+      @connection.connect
       @connection.connected?.should be_true
       @connection.disconnect
       @connection.connected?.should be_false
@@ -78,7 +57,8 @@ shared_examples_for "All Client Connections" do
       @connection.should respond_to(:receive)
     end
 
-    it "the first frame received should be CONNECTED" do
+    it "should receive the CONNECTED frame first" do
+      @connection.connect
       @connection.connected?.should be_true
       @frame = @connection.receive while @frame.nil?
       @frame.should be_an_instance_of(Stomper::Frames::Connected)
@@ -86,6 +66,30 @@ shared_examples_for "All Client Connections" do
 
     it "should transmit frames" do
       # Clear out the CONNECTED frame.
+      @connection.connect
+      @frame = @connection.receive while @frame.nil?
+      @frame = nil
+      @connection.transmit(Stomper::Frames::Subscribe.new("/topic/test_topic"))
+      @connection.transmit(Stomper::Frames::Send.new("/topic/test_topic", "hello"))
+      @frame = @connection.receive while @frame.nil?
+      @frame.should be_an_instance_of(Stomper::Frames::Message)
+      @frame.body.should == "hello"
+    end
+  end
+
+  describe "secure connection" do
+    before(:each) do
+      @secure_connection = @connection.class.new("stomp+ssl:///")
+    end
+    it "should receive the CONNECTED frame first" do
+      @secure_connection.connect
+      @secure_connection.connected?.should be_true
+      @frame = @secure_connection.receive while @frame.nil?
+      @frame.should be_an_instance_of(Stomper::Frames::Connected)
+    end
+    it "should transmit frames" do
+      # Clear out the CONNECTED frame.
+      @connection.connect
       @frame = @connection.receive while @frame.nil?
       @frame = nil
       @connection.transmit(Stomper::Frames::Subscribe.new("/topic/test_topic"))
