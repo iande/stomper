@@ -54,6 +54,7 @@ one of my goals.
 - Provide a convenient method for acknowledging methods within a subscription
   callback when the subscription has ack set to 'client'
   - Perhaps an `ack` method on Stomper::Frames::Message ?
+- RDocs!
 - Provide the `pipe` method on Stomper::Client
 - Allow SSL verification if requested (option :verify_ssl?)
 
