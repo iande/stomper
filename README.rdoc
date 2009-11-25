@@ -48,5 +48,14 @@ one of my goals.
     end
 
 ===To-Do
+- Check the specs for ReliableConnection
+  - Verify that all the options (max_retries, etc) are working as advertised
+  - Verify that the new delegate and decorate design works properly
+- Provide a convenient method for acknowledging methods within a subscription
+  callback when the subscription has ack set to 'client'
+  - Perhaps an `ack` method on Stomper::Frames::Message ?
+- Provide the `pipe` method on Stomper::Client
+- Allow SSL verification if requested (option :verify_ssl?)
 
-- Consider a better way of making connections reliable.
+===After
+- Consider a new library/gem that handles MapReduce in my opinionated fashion.
