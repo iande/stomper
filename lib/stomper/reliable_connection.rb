@@ -1,122 +1,66 @@
 module Stomper
-  class ReliableConnection
-    attr_accessor :reconnect_delay
+  class RetriesExceededError < RuntimeError; end
 
+  class ReliableConnection
+    include Stomper::Decogator
+    attr_accessor :reconnect_delay, :max_retries
+
+    delegates :connect, :disconnect, :close, :transmit, :receive, :connected?, :to => :'@connection'
+    around :connect, :call => :guard_connect
+    around :transmit, :receive, :call => :guard_io
+    after :disconnect, :close, :call => :explicitly_disconnect
+    
     def initialize(uri_or_connection, opts = {})
       @connection_lock = Mutex.new
-      @reconnect_delay = 0
+      @attempts = 0
+      @reconnect_delay = opts.delete(:delay) || 5
+      @max_retries = opts.delete(:max_retries) || 0
+
       if uri_or_connection.is_a?(BasicConnection)
         @connection = uri_or_connection
-        @reconnect = !@connection.connected?
       else
         @connection = BasicConnection.new(uri_or_connection, opts.merge(:connect_now => false))
-        begin
-          @connection.connect
-          @reconnect = false
-        rescue
-          @reconnect = true
-        end
       end
-    end
-    
-    def before_close
-      explicitly_disconnected
-    end
-    
-    def before_disconnect
-      explicitly_disconnected
-    end
-
-    def around_connect
-      begin
-        yield
-      rescue IOError
-        @reconnect = true
-      end
-    end
-
-    def around_transmit
-      begin
-        yield
-      rescue IOError
-        @reconnect = true
-      end
-    end
-
-    def around_receive
-      begin
-        yield
-      rescue IOError
-        @reconnect = true
-      end
-    end
-
-    def after_connect
-      ensure_connection
-    end
-
-    def after_transmit
-      ensure_connection
-    end
-
-    def after_receive
-      ensure_connection
-    end
-
-    def method_missing(meth, *args, &block)
-      if @connection.respond_to?(meth)
-        if respond_to?("before_#{meth}")
-          self.send("before_#{meth}")
-        end
-        res = nil
-        if respond_to?("around_#{meth}")
-          self.send("around_#{meth}") do
-            res = @connection.send(meth, *args, &block)
-          end
-        else
-          res = @connection.send(meth, *args, &block)
-        end
-        if respond_to?("after_#{meth}")
-          self.send("after_#{meth}")
-        end
-        res
-      else
-        raise NoMethodError, "no such method #{meth}"
-      end
-    end
-
-    def respond_to?(meth)
-      super || @connection.respond_to?(meth)
+      connect unless connected?
     end
 
     private
-    def ensure_connection
-      reconnect if reconnect?
+    def guard_io
+      begin
+        yield
+      rescue IOError
+        @reconnect = true
+        reconnect
+      end
     end
 
-    def reconnect?
-      @reconnect
+    def guard_connect
+      begin
+        yield
+      rescue Errno::ECONNREFUSED, IOError, SocketError
+        @reconnect = true
+        reconnect
+      end
+    end
+
+    def explicitly_disconnect
+      @closed = true
     end
 
     def reconnect
-      return unless reconnect?
+      return if @closed || !@reconnect
       do_connect = false
       @connection_lock.synchronize do
-        do_connect, @reconnect = @reconnect, false
+        do_connect, @reconnect = (!@closed && @reconnect), false
       end
       if do_connect
-        begin
+        if @max_retries == 0 || @attempts < @max_retries
           sleep(@reconnect_delay) if @reconnect_delay > 0
-          #@connection.connect
           connect
-        rescue
-          @reconnect = true
+        else
+          raise RetriesExceededError, "maximum retries exceeded"
         end
       end
-    end
-
-    def explicitly_disconnected
-      @reconnect = false
     end
   end
 end

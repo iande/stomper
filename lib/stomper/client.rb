@@ -22,16 +22,14 @@ module Stomper
     # => :max_retries: number of times to retry connecting when disconnected (default: unlimited)
     #
     # Note that specifying a value for max_retries should implicitly set reliable to true
-    def initialize(uri_or_params, options={})
+    def initialize(uri, options={})
       # At this time we only bother with the BasicConnection.  We will need
       # to write the ReliableConnection class to handle the particulars of reconnecting
       # on a socket error.
-      if uri_or_params.is_a?(Hash)
-        options = options.merge(uri_or_params)
-        @connection = BasicConnection.new(options[:host], options[:port],
-          options[:user], options[:pass], options[:secure])
+      if options.has_key?(:max_retries) || options.delete(:reliable) { false }
+        @connection = ReliableConnection.new(uri, options)
       else
-        @connection = BasicConnection.new(uri_or_params)
+        @connection = BasicConnection.new(uri, options)
       end
       @subscriptions = Subscriptions.new
       @send_lock = Mutex.new

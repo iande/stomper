@@ -56,18 +56,8 @@ shared_examples_for "All Client Connections" do
       @connection.should respond_to(:transmit)
       @connection.should respond_to(:receive)
     end
-
-    it "should receive the CONNECTED frame first" do
-      @connection.connect
-      @connection.connected?.should be_true
-      @frame = @connection.receive while @frame.nil?
-      @frame.should be_an_instance_of(Stomper::Frames::Connected)
-    end
-
     it "should transmit frames" do
-      # Clear out the CONNECTED frame.
       @connection.connect
-      @frame = @connection.receive while @frame.nil?
       @frame = nil
       @connection.transmit(Stomper::Frames::Subscribe.new("/topic/test_topic"))
       @connection.transmit(Stomper::Frames::Send.new("/topic/test_topic", "hello"))
@@ -81,16 +71,8 @@ shared_examples_for "All Client Connections" do
     before(:each) do
       @secure_connection = @connection.class.new("stomp+ssl:///")
     end
-    it "should receive the CONNECTED frame first" do
-      @secure_connection.connect
-      @secure_connection.connected?.should be_true
-      @frame = @secure_connection.receive while @frame.nil?
-      @frame.should be_an_instance_of(Stomper::Frames::Connected)
-    end
     it "should transmit frames" do
-      # Clear out the CONNECTED frame.
       @connection.connect
-      @frame = @connection.receive while @frame.nil?
       @frame = nil
       @connection.transmit(Stomper::Frames::Subscribe.new("/topic/test_topic"))
       @connection.transmit(Stomper::Frames::Send.new("/topic/test_topic", "hello"))

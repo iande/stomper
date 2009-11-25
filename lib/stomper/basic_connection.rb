@@ -12,6 +12,7 @@ module Stomper
     attr_reader :socket
 
     def initialize(uri, opts = {})
+      connect_now = opts.delete(:connect_now) { true }
       @uri = URI.parse(uri)
       #connect_now = opts.delete(:connect_now) { true }
       # ActiveMQ seems to suggest using port 61612 for stomp+ssl connections
@@ -28,6 +29,8 @@ module Stomper
         @ssl_context = OpenSSL::SSL::SSLContext.new
         @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
       end
+      @connected = false
+      connect if connect_now
     end
 
     def connect
@@ -39,6 +42,9 @@ module Stomper
       end
       @socket = s
       transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
+      # Block until the first frame is received
+      connect_frame = receive(true)
+      @connected = connect_frame.instance_of?(Stomper::Frames::Connected)
     end
 
     # This method should be viewed as "higher level"
@@ -49,11 +55,13 @@ module Stomper
     # either explicitly disconnected, or we have given up trying to be reliable.
     def connected?
       #!(@socket.closed? || @socket.eof?)
-      @socket && !@socket.closed?
+      @connected && @socket && !@socket.closed?
     end
 
     def close
       @socket.close
+    ensure
+      @connected = false
     end
 
     # Try to be nice about disconnecting by sending a DISCONNECT frame
@@ -68,9 +76,9 @@ module Stomper
       @socket.write(frame.to_stomp)
     end
 
-    def receive
+    def receive(blocking=false)
       command = ''
-      while ready? && (command = @socket.gets)
+      while (ready? || blocking) && (command = @socket.gets)
         command.chomp!
         break if command.size > 0
       end

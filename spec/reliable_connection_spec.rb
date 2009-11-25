@@ -5,7 +5,7 @@ module Stomper
   describe ReliableConnection do
     describe "shared behaviors" do
       before(:each) do
-        @connection = ReliableConnection.new(BasicConnection.new("stomp:///"))
+        @connection = ReliableConnection.new("stomp:///")
       end
       it_should_behave_like "All Client Connections"
     end
@@ -15,8 +15,9 @@ module Stomper
         @mock_basic_connection = mock("basic connection")
         Stomper::BasicConnection.stub!(:new).and_return(@mock_basic_connection)
         @mock_basic_connection.should_receive(:connect).with(no_args()).once.and_return(nil)
+        @mock_basic_connection.should_receive(:connected?).with(no_args()).once.and_return(false)
         @connection = ReliableConnection.new("stomp:///")
-        @connection.reconnect_delay = 1
+        @connection.reconnect_delay = 0.1
       end
 
       it "should reconnect when an IOError is raised during connect" do
@@ -28,14 +29,13 @@ module Stomper
           # after which it will attempt to connect again.
           # Our sleep time is less than the reconnect delay so that by the time
           # the connection is "re-established", the non-failing receive is in place.
-          sleep(0.5)
+          sleep(0.05)
           @mock_basic_connection.should_receive(:connect).with(no_args()).once.and_return(nil)
         end
         @mock_basic_connection.should_receive(:receive).with(no_args()).once.and_return(nil)
         @connection.connect
         @connection.receive
       end
-
 
       it "should reconnect when an IOError is received during a transmit" do
         @send_frame = Stomper::Frames::Send.new("/queue/test/1", "message body")
@@ -64,12 +64,21 @@ module Stomper
           # after which it will attempt to connect again.
           # Our sleep time is less than the reconnect delay so that by the time
           # the connection is "re-established", the non-failing receive is in place.
-          sleep(0.5)
+          sleep(0.05)
           @mock_basic_connection.should_receive(:receive).with(no_args()).once.and_return(nil)
         end
         @connection.receive
         @connection.receive
         thread.join
+      end
+    end
+    
+    describe "maximum retries" do
+      before(:each) do
+        @mock_basic_connection = mock("basic connection: maximum retries")
+        Stomper::BasicConnection.stub!(:new).and_return(@mock_basic_connection)
+        @mock_basic_connection.should_receive(:connect).with(no_args()).once.and_return(nil)
+        @connection = ReliableConnection.new("stomp:///", :max_retries => 2, :delay => 0.1)
       end
     end
   end
