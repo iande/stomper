@@ -1,52 +1,57 @@
 module Stomper
   class RetriesExceededError < RuntimeError; end
 
-  class ReliableConnection
-    include Stomper::Decogator
+  class ReliableConnection < Stomper::BasicConnection
     attr_accessor :reconnect_delay, :max_retries
-
-    delegates :connect, :disconnect, :close, :transmit, :receive, :connected?, :to => :'@connection'
-    around :connect, :call => :guard_connect
-    around :transmit, :receive, :call => :guard_io
-    after :disconnect, :close, :call => :explicitly_disconnect
     
     def initialize(uri_or_connection, opts = {})
       @connection_lock = Mutex.new
       @attempts = 0
       @reconnect_delay = opts.delete(:delay) || 5
       @max_retries = opts.delete(:max_retries) || 0
-
-      if uri_or_connection.is_a?(BasicConnection)
-        @connection = uri_or_connection
-      else
-        @connection = BasicConnection.new(uri_or_connection, opts.merge(:connect_now => false))
-      end
+      super(uri_or_connection, opts.merge(:connect_now => false))
       connect unless connected?
     end
-
-    private
-    def guard_io
+    
+    def connect
       begin
-        yield
-      rescue IOError
-        @reconnect = true
-        reconnect
-      end
-    end
-
-    def guard_connect
-      begin
-        yield
+        super
       rescue Errno::ECONNREFUSED, IOError, SocketError
         @reconnect = true
         reconnect
       end
     end
 
-    def explicitly_disconnect
+    def transmit(frame)
+      begin
+        super
+      rescue IOError
+        @reconnect = true
+        reconnect
+      end
+    end
+
+    def receive(blocking=false)
+      begin
+        super
+      rescue IOError
+        @reconnect = true
+        reconnect
+        nil
+      end
+    end
+
+    def disconnect
+      super
       @closed = true
     end
 
+    def close
+      super
+      @closed = true
+    end
+
+    private
     def reconnect
       return if @closed || !@reconnect
       do_connect = false
