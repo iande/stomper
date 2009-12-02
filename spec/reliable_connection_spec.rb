@@ -11,9 +11,9 @@ module Stomper
     end
 
     describe "reliability" do
-      # This is really awful, though appropriately named.  You REALLY should
+      # This is really awful, though appropriately named.  I REALLY should
       # favor composition over inheritance, and here is further proof of that.
-      # Your options here were to mock and stub all of TCP connection so you could
+      # My options here were to mock and stub all of TCP connection so I could
       # raise IO Errors in a controlled and testable way, or to slap a mock
       # module in the inheritance chain that you could stub.
       # The former would result in writing a lot of low-level crap that I don't
