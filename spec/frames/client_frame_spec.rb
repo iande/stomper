@@ -7,6 +7,10 @@ module Stomper::Frames
       @client_frame = ClientFrame.new('COMMAND')
     end
 
+    def str_size(str)
+      str.respond_to?(:bytesize) ? str.bytesize : str.size
+    end
+
     it "should be provide a headers as an instance of Headers" do
       @client_frame.headers.should be_an_instance_of(Stomper::Frames::Headers)
     end
@@ -23,7 +27,7 @@ module Stomper::Frames
       it "should provide the header by default, overriding any existing header" do
         @frame_body = 'testing'
         @client_frame = ClientFrame.new('COMMAND', {'content-length' => 1}, @frame_body)
-        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{@frame_body.bytesize}\n\n#{@frame_body}\0"
+        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{str_size(@frame_body)}\n\n#{@frame_body}\0"
       end
 
       it "should not provide the header if the class option is set to false, unless explicitly set on the frame in particular" do
@@ -33,7 +37,7 @@ module Stomper::Frames
         @client_frame.to_stomp.should == "COMMAND\n\n#{@frame_body}\0"
         @client_frame = ClientFrame.new('COMMAND', {}, @frame_body)
         @client_frame.generate_content_length = true
-        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{@frame_body.bytesize}\n\n#{@frame_body}\0"
+        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{str_size(@frame_body)}\n\n#{@frame_body}\0"
       end
 
       it "should not provide the header if instance option is set false, when the class option is true" do
@@ -60,14 +64,14 @@ module Stomper::Frames
         Send.generate_content_length = false
         @send_frame = Send.new('/queue/test/1', @frame_body)
         @client_frame = ClientFrame.new('COMMAND', {}, @frame_body)
-        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{@frame_body.bytesize}\n\n#{@frame_body}\0"
+        @client_frame.to_stomp.should == "COMMAND\ncontent-length:#{str_size(@frame_body)}\n\n#{@frame_body}\0"
         @send_frame.to_stomp.should == "SEND\ndestination:#{@send_frame.headers.destination}\n\n#{@frame_body}\0"
         Send.generate_content_length = true
         ClientFrame.generate_content_length = false
         @send_frame = Send.new('/queue/test/1', @frame_body)
         @client_frame = ClientFrame.new('COMMAND', {}, @frame_body)
         @client_frame.to_stomp.should == "COMMAND\n\n#{@frame_body}\0"
-        @send_frame.to_stomp.should == "SEND\ncontent-length:#{@frame_body.bytesize}\ndestination:#{@send_frame.headers.destination}\n\n#{@frame_body}\0"
+        @send_frame.to_stomp.should == "SEND\ncontent-length:#{str_size(@frame_body)}\ndestination:#{@send_frame.headers.destination}\n\n#{@frame_body}\0"
       end
     end
     describe "client frames" do

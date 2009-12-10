@@ -100,15 +100,17 @@ module Stomper
       # Have we been given a content length?
       if headers['content-length']
         body = @socket.read(headers['content-length'].to_i)
-        raise "Invalid message terminator or content-length header" if @socket.getc.ord != 0
+
+        raise "Invalid message terminator or content-length header" if socket_c_to_i(@socket.getc) != 0
       else
         body = ''
         # We read until we find the first nil character
         while (c = @socket.getc)
           # Both Ruby 1.8 and 1.9 should support this even though the behavior
-          # of getc is different between the two.
-          break if c.ord == 0
-          body << c.chr
+          # of getc is different between the two.  However, jruby is particular
+          # about this.  And that sucks.
+          break if socket_c_to_i(c) == 0
+          body << socket_c_to_chr(c)
         end
       end
       # Messages should be forever immutable.
@@ -118,6 +120,25 @@ module Stomper
     private
     def ready?
       (@use_ssl) ? @socket.io.ready? : @socket.ready?
+    end
+
+    def socket_c_to_i(c)
+      if c.respond_to?(:ord)
+        def socket_c_to_i(char); char.ord; end
+        c.ord
+      else
+        def socket_c_to_i(char); char; end
+        c
+      end
+    end
+    def socket_c_to_chr(c)
+      if c.respond_to?(:chr)
+        def socket_c_to_chr(char); char.chr; end
+        c.chr
+      else
+        def socket_c_to_chr(char); char; end
+        c
+      end
     end
   end
 end

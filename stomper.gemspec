@@ -3,7 +3,7 @@ Gem::Specification.new do |s|
   s.version = "0.2.0"
   s.authors = ["Ian D. Eccles"]
   s.email = ["ian.eccles@gmali.com"]
-  s.homepage = "http://github.com/iande/stomp"
+  s.homepage = "http://github.com/iande/stomper"
   s.summary = "Ruby client for the stomp messaging protocol derived from the original stomp gem"
   s.description = s.summary
   s.platform = Gem::Platform::RUBY
@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
 #  s.test_files = ["test/test_client.rb", "test/test_connection.rb", "test/test_helper.rb"]
 
   s.has_rdoc = true
-  s.rdoc_options = ["--quiet", "--title", "stomp documentation", "--opname", "index.html", "--line-numbers", "--main", "README.rdoc", "--inline-source"]
+  s.rdoc_options = ["--quiet", "--title", "stomper documentation", "--opname", "index.html", "--line-numbers", "--main", "README.rdoc", "--inline-source"]
   s.extra_rdoc_files = ["README.rdoc", "CHANGELOG", "LICENSE", "AUTHORS"]
 end
   

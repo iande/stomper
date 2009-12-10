@@ -19,7 +19,7 @@ module Stomper
       end
       
       def to_stomp
-        @headers["content-length"] = @body.bytesize if @body && !@body.empty? && generate_content_length?
+        @headers["content-length"] = str_size(@body) if @body && !@body.empty? && generate_content_length?
         "#{@command}\n#{@headers.to_stomp}\n#{@body}\0"
       end
 
@@ -40,6 +40,17 @@ module Stomper
             @generate_content_length = true
           end
           @generate_content_length
+        end
+      end
+
+      private
+      def str_size(str)
+        if str.respond_to?(:bytesize)
+          def str_size(strng); strng.bytesize; end
+          str.bytesize
+        else
+          def str_size(strng); strng.size; end
+          str.size
         end
       end
     end
