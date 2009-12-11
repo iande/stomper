@@ -6,7 +6,7 @@ module Stomper
       # For the client, we want to mock the underlying connection
       @mock_connection = mock("connection")
       @mock_connection.should_receive(:disconnect).with(no_args()).at_most(:once).and_return(nil)
-      Stomper::BasicConnection.stub!(:new).and_return(@mock_connection)
+      Stomper::Connection.stub!(:new).and_return(@mock_connection)
       @client = Client.new("stomp:///")
     end
     

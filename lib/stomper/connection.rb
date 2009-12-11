@@ -7,7 +7,7 @@
 # class intead of this.
 
 module Stomper
-  class BasicConnection
+  class Connection
     attr_reader :uri
     attr_reader :socket
 
