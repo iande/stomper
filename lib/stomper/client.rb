@@ -26,11 +26,11 @@ module Stomper
       # At this time we only bother with the BasicConnection.  We will need
       # to write the ReliableConnection class to handle the particulars of reconnecting
       # on a socket error.
-      if options.has_key?(:max_retries) || options.delete(:reliable) { false }
-        @connection = ReliableConnection.new(uri, options)
-      else
-        @connection = BasicConnection.new(uri, options)
-      end
+      #if options.has_key?(:max_retries) || options.delete(:reliable) { false }
+        #@connection = ReliableConnection.new(uri, options)
+      #else
+        @connection = Connection.new(uri, options)
+      #end
       @subscriptions = Subscriptions.new
       @send_lock = Mutex.new
       @receive_lock = Mutex.new

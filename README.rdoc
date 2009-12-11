@@ -1,14 +1,15 @@
 ==README
 
-Stomper was built from a fork of the stomp (http://github.com/js/stomp) gem.  I initially planned only to
-make some minor changes, but had the time and desire to make the stomp client
-more "high level."  I also plan to separate the reliable nature of connections
-by having them represented by two separate classes (BasicConnection and
-ReliableConnection.)  A further change I made was to keep the connection classes
-as simple as possible, which means they are not thread safe.  The client library
-does support multi-threading and should be preferred to working directly with
-the connection classes in code that makes use of this library.  There will
-be more changes to come, but I wanted to get this committed.
+Stomper was built from a fork of the stomp (http://github.com/js/stomp) gem.
+I initially planned only to make some minor changes, but had the time and
+desire to make the stomp client more "high level."  I also plan to separate the
+reliable nature of connections by having them represented by two separate classes
+(BasicConnection and ReliableConnection.)  A further change I made was to keep
+the connection classes as simple as possible, which means they are not
+thread safe.  The client library does support multi-threading and should be
+preferred to working directly with the connection classes in code that makes
+use of this library.  There will be more changes to come, but I wanted to get
+this committed.
 
 Ultimately, I will probably end up renaming this repository (though giving the
 authors of Stomp their due credit) simply because I have already broken interface
