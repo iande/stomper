@@ -1,12 +1,3 @@
-module Stomper
-  module Frames
-    def parse_command_name(clazz)
-      clazz.to_s.split("::").last
-    end
-    module_function :parse_command_name
-  end
-end
-
 require 'stomper/frames/headers'
 require 'stomper/frames/client_frame'
 require 'stomper/frames/server_frame'
@@ -23,3 +14,11 @@ require 'stomper/frames/receipt'
 require 'stomper/frames/send'
 require 'stomper/frames/subscribe'
 require 'stomper/frames/unsubscribe'
+
+module Stomper
+  # This module holds all known encapsulations of
+  # frames that are part of the
+  # {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
+  module Frames
+  end
+end

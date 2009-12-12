@@ -1,26 +1,19 @@
-==README
+=README
 
-Stomper was built from a fork of the stomp (http://github.com/js/stomp) gem.
-I initially planned only to make some minor changes, but had the time and
-desire to make the stomp client more "high level."  I also plan to separate the
-reliable nature of connections by having them represented by two separate classes
-(BasicConnection and ReliableConnection.)  A further change I made was to keep
-the connection classes as simple as possible, which means they are not
-thread safe.  The client library does support multi-threading and should be
-preferred to working directly with the connection classes in code that makes
-use of this library.  There will be more changes to come, but I wanted to get
-this committed.
+Stomper is a library for connecting to and interacting with a message queue
+service that supports the {Stomp protocol}[http://stomp.codehaus.org/Protocol].
+Characteristics that distinguish it from other libraries, such the
+{stomp gem}[http://github.com/js/stomp], are:
 
-Ultimately, I will probably end up renaming this repository (though giving the
-authors of Stomp their due credit) simply because I have already broken interface
-compatibility with the stomp gem and making this gem backwards compatible is not
-one of my goals.
+* Transaction blocks with {transaction blocks}[link:classes/Stomper/Client.html#M000066]
+* Playing nice with Apache ActiveMQ by being able to {disable automatic content-length generation}[link:classes/Stomper/Frames/ClientFrame.html#M000014]
+* A receiver thread that can be bypassed by something else! (whatever that means)
 
-===Example Usage
+== Example Usage
 
     client = Stomper::Client.new("stomp://my_username:s3cr3tz@localhost:61613")
-    # First major deviation from the stomp gem, the receiver thread must be
-    # explicitly started.
+    # Clients must be explicitly started to automatically receive incoming
+    # messages.
     client.start
 
     client.subscribe("/queue/hello") do |msg|
@@ -48,16 +41,28 @@ one of my goals.
       end
     end
 
-===To-Do
-- Check the specs for ReliableConnection
-  - Verify that all the options (max_retries, etc) are working as advertised
-  - Verify that the new delegate and decorate design works properly
-- Provide a convenient method for acknowledging methods within a subscription
-  callback when the subscription has ack set to 'client'
-  - Perhaps an `ack` method on Stomper::Frames::Message ?
-- RDocs!
-- Provide the `pipe` method on Stomper::Client
-- Allow SSL verification if requested (option :verify_ssl?)
+    # Later ...
+    client.stop
+    client.close
 
-===After
-- Consider a new library/gem that handles MapReduce in my opinionated fashion.
+== To-Do
+* Provide the `pipe` method on Stomper::Client
+* Allow SSL verification if requested (option :verify_ssl?)
+* Re-evaluate how to handle a 'reliable' connection.
+
+== License
+
+Stomper is released under the Apache License 2.0
+
+== Pointless Backstory
+
+Stomper began its life as a mere fork of the {Stomp}[http://github.com/js/stomp]
+gem.  However, as changes were made and desires grew, the fork began breaking
+API compatibility with the original gem, and thus Stomper was conceived.
+
+== Other Stuff
+
+Primary Author:: Ian D. Eccles
+Source Repository:: http://github.com/iande/stomper
+Current Version:: 0.2.0
+Last Updated:: 2009-12-11

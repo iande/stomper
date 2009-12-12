@@ -1,29 +1,37 @@
-# A basic stomp client connection.  This class is not meant to be synchronized
-# nor is it meant to be reliable.  We will layer that functionality atop
-# this class with the Client and ReliableConnection classes respectively.
-# The only state I want instances of this class to maintain are the base
-# uri (defined through initialize and then left alone) and the raw socket
-# to the stomp server.  Most higher level code should make use of the Client
-# class intead of this.
-
 module Stomper
+  # A low level connection to a Stomp message broker.
+  # Instances of Connection are not synchronized and thus not
+  # directly thread safe.  This is a deliberate decision as instances of
+  # Stomper::Client are the preferred way of communicating with
+  # Stomp message broker services.
   class Connection
     attr_reader :uri
     attr_reader :socket
 
+    # Creates a new connection to the Stomp broker specified by +uri+.
+    # The +uri+ parameter may be either a URI object, or something that can
+    # be parsed by URI.parse, such as a string.
+    # Some examples of acceptable +uri+ forms include:
+    # [stomp:///] Connection will be made to 'localhost' on port 61613 with no login credentials.
+    # [stomp+ssl:///] Same as above, but connection will be made on port 61612 and wrapped by SSL.
+    # [stomp://user:pass@host.tld] Connection will be made to 'host.tld', authenticating as 'user' with a password of 'pass'.
+    # [stomp://user:pass@host.tld:86753] Connection will be made to 'host.tld' on port 86753, authenticating as above.
+    # [stomp://host.tld:86753] Connection will be made to 'host.tld' on port 86753, with no authentication.
+    #
+    # In order to wrap the connection with SSL, the schema of +uri+ must be 'stomp+ssl';
+    # however, if SSL is not required, the schema is essentially ignored.
+    # The default port for the 'stomp+ssl' schema is 61612, all other schemas
+    # default to port 61613.
+    #
+    # The +opts+ parameter is a hash of options, and can include:
+    #
+    # [:connect_now] Immediately connect to the broker when a new instance is created (default: true)
     def initialize(uri, opts = {})
       connect_now = opts.delete(:connect_now) { true }
-      @uri = URI.parse(uri)
-      #connect_now = opts.delete(:connect_now) { true }
-      # ActiveMQ seems to suggest using port 61612 for stomp+ssl connections
-      # As do some other Stomp resources.
-      @uri.port = (@uri.scheme == "stomp") ? 61613 : 61612 if @uri.port.nil?
-      # Can only really happen with: stomp(+ssl):///, but URI won't complain
-      # when receiving that, so we need to accommodate it.
+      @uri = (uri.is_a?(URI) && uri) or URI.parse(uri)
+      @uri.port = (@uri.scheme == "stomp+ssl") ? 61612 : 61613 if @uri.port.nil?
       @uri.host = 'localhost' if @uri.host.nil?
       @uri.freeze
-      #raise ArgumentError, "secure connections not currently supported" if @uri.scheme == "stomp+ssl"
-      #connect if connect_now
       @use_ssl = (@uri.scheme == "stomp+ssl")
       if @use_ssl
         @ssl_context = OpenSSL::SSL::SSLContext.new
@@ -33,6 +41,12 @@ module Stomper
       connect if connect_now
     end
 
+
+    # Connects to the broker specified by the +uri+ attribute.
+    # By default, this method is invoked when a new Stomper::Connection
+    # is created.
+    #
+    # See also: new
     def connect
       s = TCPSocket.open(@uri.host, @uri.port)
       if @use_ssl
@@ -47,35 +61,54 @@ module Stomper
       @connected = connect_frame.instance_of?(Stomper::Frames::Connected)
     end
 
-    # This method should be viewed as "higher level"
-    # IE: connected? should return true when an instance expects that it is
-    # still connected, and false when the instance has given up the ghost.
-    # For the basic connection, this implementation is perfectly fine.
-    # For the reliable version, it should only return true if we have
-    # either explicitly disconnected, or we have given up trying to be reliable.
+    # Returns true when there is an open connection
+    # established to the broker.
     def connected?
+      # FIXME: @socket.eof? appears to block or otherwise "wonk out", not sure
+      # why yet.
       #!(@socket.closed? || @socket.eof?)
       @connected && @socket && !@socket.closed?
     end
 
+    # Immediately closes the connection to the broker.
+    #
+    # See also: disconnect
     def close
       @socket.close
     ensure
       @connected = false
     end
 
-    # Try to be nice about disconnecting by sending a DISCONNECT frame
-    # then closing the connection
+    # Transmits a Stomper::Frames::Disconnect frame to the broker
+    # then terminates the connection by invoking +close+.
+    #
+    # See also: close
     def disconnect
       transmit(Stomper::Frames::Disconnect.new)
     ensure
       close
     end
 
+    # Converts an instance of Stomper::Frames::ClientFrame into
+    # a string conforming to the Stomp protocol and sends it
+    # to the broker.
     def transmit(frame)
       @socket.write(frame.to_stomp)
     end
 
+    # Receives a single Stomper::Frames::ServerFrame from the broker.
+    # If the frame received is known to the Stomper library, an instance of
+    # the appropriate subclass will be returned (eg: Stomper::Frames::Message),
+    # otherwise an instance of Stomper::Frames::ServerFrame is returned with
+    # the +command+ attribute set to the frame type.
+    # If the +blocking+ parameter is set to true, +receive+ will
+    # block until there is a frame available from the server, otherwise if no frame
+    # is currently available, +nil+ is returned.
+    #
+    # If an incoming message is malformed (not terminated with a NULL (\0)
+    # character, or has an incorrectly specified +content+-+length+ header,
+    # this method will raise an exception. [Type the exception, don't rely on
+    # a basic RuntimeError or whatever the default is.]
     def receive(blocking=false)
       command = ''
       while (ready? || blocking) && (command = @socket.gets)
@@ -100,7 +133,6 @@ module Stomper
       # Have we been given a content length?
       if headers['content-length']
         body = @socket.read(headers['content-length'].to_i)
-
         raise "Invalid message terminator or content-length header" if socket_c_to_i(@socket.getc) != 0
       else
         body = ''
