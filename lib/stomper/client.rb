@@ -196,18 +196,19 @@ module Stomper
     def start
       @connection.connect unless connected?
       return self if receiving?
+      start_thread = false
       @receiver_lock.synchronize do
-        if @run_thread.nil?
-          @receiving = true
-          @run_thread = Thread.new do
-            while receiving?
-              #begin
-                receive
-              #rescue => err
-                #puts "Exception Caught: #{err.to_s}"
-                #break
-              #end
-            end
+        @receiving = true
+        start_thread = @run_thread.nil?
+      end
+      if start_thread
+        @run_thread = Thread.new do
+          while receiving?
+            # This was running a little too tightly...
+            # still not terribly happy with this approach, event driven
+            # receiving would be better than polling.
+            receive
+            sleep(1.0)
           end
         end
       end
