@@ -28,7 +28,7 @@ module Stomper
     # [:connect_now] Immediately connect to the broker when a new instance is created (default: true)
     def initialize(uri, opts = {})
       connect_now = opts.delete(:connect_now) { true }
-      @uri = (uri.is_a?(URI) && uri) or URI.parse(uri)
+      @uri = (uri.is_a?(URI) && uri) || URI.parse(uri)
       @uri.port = (@uri.scheme == "stomp+ssl") ? 61612 : 61613 if @uri.port.nil?
       @uri.host = 'localhost' if @uri.host.nil?
       @uri.freeze

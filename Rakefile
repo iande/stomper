@@ -31,12 +31,6 @@ task :install => [:package] do
   sh %{sudo gem install pkg/#{GEM}-#{VERSION}}
 end
 
-Rake::TestTask.new do |t|
-  t.libs << "test"
-  t.test_files = FileList['test/test*.rb']
-  t.verbose = true
-end
-
 Rake::RDocTask.new do |rd|
   rd.main = "README.rdoc"
   rd.rdoc_files.include("README.rdoc", "lib/**/*.rb")

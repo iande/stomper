@@ -76,6 +76,7 @@ module Stomper
       end
       it "should only be receiving when it is started" do
         @mock_connection.stub!(:receive).and_return(nil)
+        @mock_connection.should_receive(:connected?).any_number_of_times.and_return(true)
         @client.receiving?.should be_false
         @client.start
         @client.receiving?.should be_true
@@ -87,6 +88,7 @@ module Stomper
     describe "subscribing to queue" do
       before(:each) do
         @message_sent = Stomper::Frames::Message.new({'destination' => "/queue/test"}, "test message")
+        @mock_connection.should_receive(:connected?).any_number_of_times.and_return(true)
         @mock_connection.should_receive(:transmit).with(duck_type(:to_stomp)).at_least(:once).and_return(nil)
         @mock_connection.should_receive(:receive).any_number_of_times.and_return(@message_sent)
       end
