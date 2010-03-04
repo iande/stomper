@@ -207,7 +207,7 @@ module Stomper
             # still not terribly happy with this approach, event driven
             # receiving would be better than polling.
             receive
-            sleep(1.0)
+            sleep(0.2)
           end
         end
       end
@@ -260,8 +260,8 @@ module Stomper
     # stomp broker.
     #
     # See also: Stomper::Subscription
-    def receive
-      msg = @receive_lock.synchronize { @connection.receive }
+    def receive(block=false)
+      msg = @receive_lock.synchronize { @connection.receive(block) }
       @subscriptions.perform(msg) if msg.is_a?(Stomper::Frames::Message)
       msg
     end

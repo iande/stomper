@@ -31,7 +31,6 @@ module Stomper
       @uri = (uri.is_a?(URI) && uri) || URI.parse(uri)
       @use_ssl = (@uri.scheme == "stomp+ssl")
       @uri.host ||= 'localhost'
-      @uri.freeze
       if @use_ssl
         @uri.port ||= 61612
         @ssl_context = OpenSSL::SSL::SSLContext.new
@@ -39,6 +38,7 @@ module Stomper
       else
         @uri.port ||= 61613
       end
+      @uri.freeze
       @connected = false
       connect if connect_now
     end
