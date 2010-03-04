@@ -64,5 +64,5 @@ API compatibility with the original gem, and thus Stomper was conceived.
 
 Primary Author:: Ian D. Eccles
 Source Repository:: http://github.com/iande/stomper
-Current Version:: 0.2.0
-Last Updated:: 2009-12-11
+Current Version:: 0.3.0
+Last Updated:: 2010-03-04
