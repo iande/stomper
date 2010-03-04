@@ -195,13 +195,12 @@ module Stomper
     # See also: stop, receiving?
     def start
       @connection.connect unless connected?
-      return self if receiving?
-      start_thread = false
+      do_start = false
       @receiver_lock.synchronize do
-        @receiving = true
-        start_thread = @run_thread.nil?
+        do_start = !receiving?
       end
-      if start_thread
+      if do_start
+        @receiving = true
         @run_thread = Thread.new do
           while receiving?
             # This was running a little too tightly...
@@ -227,13 +226,14 @@ module Stomper
     #
     # See also: start, receiving?
     def stop
-      return self unless receiving?
+      do_stop = false
       @receiver_lock.synchronize do
-        if receiving?
-          @receiving = false
-          @run_thread.join
-          @run_thread = nil
-        end
+        do_stop = receiving?
+      end
+      if do_stop
+        @receiving = false
+        @run_thread.join
+        @run_thread = nil
       end
       self
     end

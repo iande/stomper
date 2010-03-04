@@ -29,13 +29,15 @@ module Stomper
     def initialize(uri, opts = {})
       connect_now = opts.delete(:connect_now) { true }
       @uri = (uri.is_a?(URI) && uri) || URI.parse(uri)
-      @uri.port = (@uri.scheme == "stomp+ssl") ? 61612 : 61613 if @uri.port.nil?
-      @uri.host = 'localhost' if @uri.host.nil?
-      @uri.freeze
       @use_ssl = (@uri.scheme == "stomp+ssl")
+      @uri.host ||= 'localhost'
+      @uri.freeze
       if @use_ssl
+        @uri.port ||= 61612
         @ssl_context = OpenSSL::SSL::SSLContext.new
         @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      else
+        @uri.port ||= 61613
       end
       @connected = false
       connect if connect_now
@@ -48,13 +50,13 @@ module Stomper
     #
     # See also: new
     def connect
-      s = TCPSocket.open(@uri.host, @uri.port)
+      stomp_socket = TCPSocket.open(@uri.host, @uri.port)
       if @use_ssl
-        s = OpenSSL::SSL::SSLSocket.new(s, @ssl_context)
-        s.sync_close = true
-        s.connect
+        stomp_socket = OpenSSL::SSL::SSLSocket.new(stomp_socket, @ssl_context)
+        stomp_socket.sync_close = true
+        stomp_socket.connect
       end
-      @socket = s
+      @socket = stomp_socket
       transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
       # Block until the first frame is received
       connect_frame = receive(true)
@@ -155,22 +157,11 @@ module Stomper
     end
 
     def socket_c_to_i(c)
-      if c.respond_to?(:ord)
-        def socket_c_to_i(char); char.ord; end
-        c.ord
-      else
-        def socket_c_to_i(char); char; end
-        c
-      end
+      (c.respond_to?(:ord)) ? c.ord : c
     end
+
     def socket_c_to_chr(c)
-      if c.respond_to?(:chr)
-        def socket_c_to_chr(char); char.chr; end
-        c.chr
-      else
-        def socket_c_to_chr(char); char; end
-        c
-      end
+      (c.respond_to?(:chr)) ? c.chr : c
     end
   end
 end
