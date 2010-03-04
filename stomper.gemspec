@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "stomper"
-  s.version = "0.2.0"
+  s.version = "0.3.0"
   s.authors = ["Ian D. Eccles"]
   s.email = ["ian.eccles@gmali.com"]
   s.homepage = "http://github.com/iande/stomper"
@@ -11,9 +11,6 @@ Gem::Specification.new do |s|
   s.require_path = 'lib'
   s.executables = nil
 
-  # get this easily and accurately by running 'Dir.glob("{lib,test}/**/*")'
-  # in an IRB session.  However, GitHub won't allow that command hence
-  # we spell it out.
   s.files = Dir.glob("{lib,spec}/**/*")
   s.test_files = Dir.glob("spec/**/*")
 #  s.test_files = ["test/test_client.rb", "test/test_connection.rb", "test/test_helper.rb"]
