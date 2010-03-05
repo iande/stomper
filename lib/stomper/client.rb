@@ -191,23 +191,30 @@ module Stomper
     # incur some performance penalties depending upon which
     # Ruby environment this library is used with.  The receiver
     # thread may be stopped by calling the +stop+ instance method.
+    # If the receiver is set to non-blocking (default behavior), the
+    # receiving thread will sleep for a number of seconds specified by the
+    # :receive_delay option between receive calls.
+    #
+    # The +opts+ parameter is a hash of options, and can include:
+    #
+    # [:block] Sets the receiver to either blocking if true (default: false)
+    # [:receive_delay] Sets the delay in seconds between receive calls when the receiver is non-blocking (default: 0.2)
     #
     # See also: stop, receiving?
-    def start
+    def start(opts={})
       @connection.connect unless connected?
       do_start = false
       @receiver_lock.synchronize do
         do_start = !receiving?
       end
       if do_start
+        blocking = opts.delete(:block) { false }
+        sleep_time = opts.delete(:receive_delay) { 0.2 }
         @receiving = true
-        @run_thread = Thread.new do
+        @run_thread = Thread.new(blocking) do |block|
           while receiving?
-            # This was running a little too tightly...
-            # still not terribly happy with this approach, event driven
-            # receiving would be better than polling.
-            receive
-            sleep(0.2)
+            receive(block)
+            sleep(sleep_time) unless block
           end
         end
       end

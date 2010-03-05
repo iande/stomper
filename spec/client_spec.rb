@@ -83,6 +83,16 @@ module Stomper
         @client.stop
         @client.receiving?.should be_false
       end
+      it "should allow for a blocking threaded receiver" do
+        @mock_connection.should_receive(:receive).with(true).at_least(:once).and_return(nil)
+        @mock_connection.should_receive(:connected?).any_number_of_times.and_return(true)
+        @client.receiving?.should be_false
+        @client.start(:block => true)
+        @client.receiving?.should be_true
+        @client.stop
+        @client.receiving?.should be_false
+      end
+
     end
 
     describe "subscribing to queue" do

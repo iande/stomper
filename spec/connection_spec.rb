@@ -4,7 +4,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), 'shared_connection_ex
 module Stomper
   describe Connection do
     before(:each) do
-      @connection = Connection.new("stomp:///")
+      @connection = Connection.new("stomp:///", :connect_now => false)
     end
     
     it_should_behave_like "All Client Connections"
