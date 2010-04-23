@@ -273,16 +273,15 @@ module Stomper
       msg
     end
 
-    # Toying with an idea, probably a very bad one!
-    def each # :nodoc:
-      while connected?
-        yield receive
-      end
-    end
-
     # Returns true if the client is connected, false otherwise.
     def connected?
       @connection.connected?
+    end
+
+    # Establishes a socket connection to the stomp broker and transmits
+    # the initial "CONNECT" frame requred per the Stomp protocol.
+    def connect
+      @connection.connect
     end
 
     # Disconnects from the stomp broker politely by first transmitting
@@ -302,6 +301,14 @@ module Stomper
     def transmit_frame(frame)
       @send_lock.synchronize do
         @connection.transmit(frame)
+      end
+    end
+
+    private
+    # Toying with an idea, probably a very bad one!
+    def each # :nodoc:
+      while connected?
+        yield receive
       end
     end
   end

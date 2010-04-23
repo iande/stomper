@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "stomper"
-  s.version = "0.3.2"
+  s.version = "0.4"
   s.authors = ["Ian D. Eccles"]
   s.email = ["ian.eccles@gmali.com"]
   s.homepage = "http://github.com/iande/stomper"

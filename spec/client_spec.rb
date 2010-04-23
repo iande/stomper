@@ -66,6 +66,9 @@ module Stomper
       it "should provide a connectivity test" do
         @client.should respond_to(:connected?)
       end
+      it "should provide a connect method" do
+        @client.should respond_to(:connect)
+      end
     end
 
     describe "threaded receiver" do

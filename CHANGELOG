@@ -1,3 +1,13 @@
+== 0.4 2010-04-23
+
+* Incremented minor version, beginning expansion.
+
+== 0.3 2010-03-04
+
+* Added sleep to receive loop to prevent it from running "too tightly", not ideal.
+* Bit of cleanup in response to reek report.
+
+
 == 0.2 2009-11-20
 
 * Officially moved to "stomper" library.
