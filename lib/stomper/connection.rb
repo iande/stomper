@@ -76,7 +76,7 @@ module Stomper
     #
     # See also: disconnect
     def close
-      @socket.close
+      @socket.close if @socket
     ensure
       @connected = false
     end
