@@ -46,6 +46,7 @@ Characteristics that distinguish it from other libraries, such the
     client.close
 
 == To-Do
+* Provide other methods for handling the receiver.
 * Provide the `pipe` method on Stomper::Client
 * Allow SSL verification if requested (option :verify_ssl?)
 * Re-evaluate how to handle a 'reliable' connection.
@@ -64,5 +65,5 @@ API compatibility with the original gem, and thus Stomper was conceived.
 
 Primary Author:: Ian D. Eccles
 Source Repository:: http://github.com/iande/stomper
-Current Version:: 0.3.2
+Current Version:: 0.4.0
 Last Updated:: 2010-03-05
