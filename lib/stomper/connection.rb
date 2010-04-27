@@ -35,16 +35,7 @@ module Stomper
     # TODO: Refactor out the SSL business into a separate connection wrapper.
     def initialize(uri)
       @uri = (uri.is_a?(URI) && uri) || URI.parse(uri)
-      @use_ssl = (@uri.scheme == "stomp+ssl")
-      @uri.host ||= 'localhost'
-      if @use_ssl
-        @uri.port ||= 61612
-        @ssl_context = OpenSSL::SSL::SSLContext.new
-        @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      else
-        @uri.port ||= 61613
-      end
-      @uri.freeze
+      @socket_class = (@uri.scheme == "stomp+ssl") ? Stomper::SecureStompSocket : Stomper::StompSocket
       @connected = false
       @writer = @reader = nil
     end
@@ -56,18 +47,11 @@ module Stomper
     #
     # See also: new
     def connect
-      stomp_socket = TCPSocket.open(@uri.host, @uri.port)
-      if @use_ssl
-        stomp_socket = OpenSSL::SSL::SSLSocket.new(stomp_socket, @ssl_context)
-        stomp_socket.sync_close = true
-        stomp_socket.connect
-      end
-      @socket = stomp_socket
+      @socket = @socket_class.new(@uri)
       @writer = Stomper::FrameWriter.new(@socket)
       @reader = Stomper::FrameReader.new(@socket)
       transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
-      connect_frame = receive
-      @connected = connect_frame.instance_of?(Stomper::Frames::Connected)
+      @connected = receive.instance_of?(Stomper::Frames::Connected)
     end
 
     # Returns true when there is an open connection

@@ -10,23 +10,16 @@ module Stomper
 
     # Writes a Stomp Frame to the underlying output stream.
     def put_frame(frame)
-      @output_stream.write("#{serialize_command(frame.command)}\n#{serialize_headers(frame.headers_with_content_length)}\n#{serialize_body(frame.body)}\0")
+      headers = frame.headers_with_content_length.sort { |key1, key2| key1.first.to_s <=> key2.first.to_s }
+      @output_stream.write("#{frame.command.upcase}\n#{serialize_headers(headers)}\n#{frame.body}\0")
     end
 
     private
-    def serialize_command(command)
-      "#{command.upcase}"
-    end
-
     def serialize_headers(headers)
-      headers.sort { |a, b| a.first.to_s <=> b.first.to_s }.inject("") do |acc, (key, val)|
+      headers.inject("") do |acc, (key, val)|
         acc << "#{key}:#{val}\n"
         acc
       end
-    end
-
-    def serialize_body(body)
-      body
     end
   end
 end

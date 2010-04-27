@@ -1,0 +1,22 @@
+lib/stomper/client.rb -- 5 warnings:
+  Stomper::Client#start calls connected? twice (Duplication)
+  Stomper::Client#start calls receiving? twice (Duplication)
+  Stomper::Client#start has approx 9 statements (Long Method)
+  Stomper::Client#start/block is controlled by argument block (Control Couple)
+  Stomper::Client#stop has approx 6 statements (Long Method)
+lib/stomper/frames/ack.rb -- 2 warnings:
+  Stomper::Frames::Ack#self.ack_for calls message.headers twice (Duplication)
+  Stomper::Frames::Ack#self.ack_for calls message.headers[:transaction] twice (Duplication)
+lib/stomper/frames/server_frame.rb -- 3 warnings:
+  Stomper::Frames::ServerFrame declares the class variable @@registered_commands (Class Variable)
+  Stomper::Frames::ServerFrame#build doesn't depend on instance state (Utility Function)
+  Stomper::Frames::ServerFrame#build refers to command more than self (Feature Envy)
+lib/stomper/subscription.rb -- 1 warning:
+  Stomper::Subscription#accepts? refers to message_frame more than self (Feature Envy)
+lib/stomper/subscriptions.rb -- 4 warnings:
+  Stomper::Subscriptions#_remove/block/block has the variable name 's' (Uncommunicative Name)
+  Stomper::Subscriptions#_remove/block/block is nested (Nested Iterators)
+  Stomper::Subscriptions#perform/block/block is nested (Nested Iterators)
+  Stomper::Subscriptions#remove refers to dest more than self (Feature Envy)
+lib/stomper/transaction.rb -- 1 warning:
+  Stomper::Transaction#perform has approx 6 statements (Long Method)

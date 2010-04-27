@@ -12,8 +12,7 @@ module Stomper
     def get_frame
       command = read_command
       headers = read_headers
-      content_length = (headers.has_key?(:'content-length')) ? headers[:'content-length'].strip.to_i : nil
-      body = read_body(content_length)
+      body = read_body(headers[:'content-length'])
       Stomper::Frames::ServerFrame.build(command, headers, body).freeze
     end
 
@@ -38,17 +37,26 @@ module Stomper
       headers
     end
 
-    def read_body(content_length = nil)
-      body = ''
-      if content_length
-        body = @input_stream.read(content_length)
-        raise MalformedFrameError if get_ord != 0
+    def read_body(body_len)
+      body_len &&= body_len.strip.to_i
+      if body_len
+        read_fixed_body(body_len)
       else
-        body = ''
-        while (c = get_ord) != 0
-          body << c.chr
-        end
+        read_null_terminated_body
       end
+    end
+
+    def read_null_terminated_body
+      body = ''
+      while(next_byte = get_ord) != 0
+        body << next_byte.chr
+      end
+      body
+    end
+
+    def read_fixed_body(num_bytes)
+      body = @input_stream.read(num_bytes)
+      raise MalformedFrameError if get_ord != 0
       body
     end
     
