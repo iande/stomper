@@ -41,14 +41,5 @@ module Stomper::Frames
       @headers[:id].should == @test_value
       @headers.send(:id).should == @test_value
     end
-
-    it "should provide method to convert to stomp compatible headers" do
-      @headers.to_stomp.should be_empty
-      @headers.ack = 'auto'
-      @headers.destination = '/queue/test/1'
-      @headers.to_stomp.should == "ack:auto\ndestination:/queue/test/1\n"
-    end
-
-
   end
 end

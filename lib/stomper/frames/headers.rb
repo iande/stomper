@@ -34,7 +34,7 @@ module Stomper
       end
 
       def each(&block)
-        @intern_head.each(&block)
+        @intern_head.sort { |a, b| a.first.to_s <=> b.first.to_s }.each(&block)
       end
 
       def method_missing(meth, *args) # :nodoc:
@@ -51,14 +51,6 @@ module Stomper
         _create_helpers(meth_str)
         # Do the appropriate thing the first time around.
         ret
-      end
-
-      # Converts the headers encapsulated by this object into a format that
-      # the Stomp Protocol expects them to be presented as.
-      def to_stomp
-        @intern_head.sort { |a, b| a.first.to_s <=> b.first.to_s }.inject("") do |acc, (k,v)|
-          acc << "#{k.to_s}:#{v}\n"
-        end
       end
 
       protected

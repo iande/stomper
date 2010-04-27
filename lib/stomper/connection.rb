@@ -66,7 +66,6 @@ module Stomper
       @writer = Stomper::FrameWriter.new(@socket)
       @reader = Stomper::FrameReader.new(@socket)
       transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
-      # Block until the first frame is received
       connect_frame = receive
       @connected = connect_frame.instance_of?(Stomper::Frames::Connected)
     end
