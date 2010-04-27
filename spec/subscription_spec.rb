@@ -60,7 +60,7 @@ module Stomper
       it "should accept a message without a subscription header only when the subscription is 'naive'" do
         @matching_subscription_1 = Subscription.new("/queue/test/1")
         @matching_subscription_2 = Subscription.new("/queue/test/1", nil, :auto)
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1'},"test message")
         @subscription.accepts?(@message).should be_false
         @matching_subscription_1.accepts?(@message).should be_true
         @matching_subscription_2.accepts?(@message).should be_true
@@ -68,34 +68,34 @@ module Stomper
 
       it "should be able to accept messages by destination" do
         @non_matching_subscription = Subscription.new("/queue/test/another")
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.id},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1', :subscription => @subscription.id},"test message")
         @subscription.accepts?(@message).should be_true
         @non_matching_subscription.accepts?(@message).should be_false
       end
 
       it "should accept messages only if the same destination and subscription" do
         @alternate_subscription = Subscription.new("/queue/test/1", 'subscription-2')
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.id},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1', :subscription => @subscription.id},"test message")
         @subscription.accepts?(@message).should be_true
         @alternate_subscription.accepts?(@message).should be_false
       end
 
       it "should accept messages by the subscription id if the message has a subscription" do
         @non_matching_subscription = Subscription.new("/queue/test/1")
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription.id},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1', :subscription => @subscription.id},"test message")
         @subscription.accepts?(@message).should be_true
         @non_matching_subscription.accepts?(@message).should be_false
       end
 
       it "should not accept messages with the same destination when its ack mode is not 'auto' and no subscription header was specified" do
         @non_matching_subscription = Subscription.new("/queue/test/1", nil, 'client')
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1'},"test message")
         @non_matching_subscription.accepts?(@message).should be_false
       end
 
       it "should not accept messages with the same destination when it has a selector and no subscription header was specified" do
         @non_matching_subscription = Subscription.new("/queue/test/1", nil, 'auto', 'rating > 3.0')
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1'},"test message")
         @non_matching_subscription.accepts?(@message).should be_false
       end
 
@@ -107,7 +107,7 @@ module Stomper
         # To test this without insisting that the #id field be equivalent to the subscribe frame's header
         # go this way:
 
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @non_matching_subscription.id},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1', :subscription => @non_matching_subscription.id},"test message")
         @non_matching_subscription.accepts?(@message).should be_true
       end
     end
@@ -118,14 +118,14 @@ module Stomper
         @subscription_with_block = Subscription.new("/queue/test/1", 'subscription-test') do |msg|
           called_back = (msg == @message)
         end
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription_with_block.id},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1', :subscription => @subscription_with_block.id},"test message")
         @subscription_with_block.perform(@message)
         called_back.should be_true
       end
 
       it "should not call its callback when given a message for a different destination" do
         called_back = false
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1'},"test message")
         @subscription_with_block = Subscription.new("/queue/test/another", 'subscription-test') do |msg|
           called_back = (msg == @message)
         end
@@ -138,14 +138,14 @@ module Stomper
         @subscription_with_block = Subscription.new("/queue/test/another", 'subscription-test') do |msg|
           called_back = (msg == @message)
         end
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => @subscription_with_block.id},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1', :subscription => @subscription_with_block.id},"test message")
         @subscription_with_block.perform(@message)
         called_back.should be_true
       end
 
       it "should not call its callback when a message arrives for its subscription id, even on the same " do
         called_back = false
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1', 'subscription' => 'subscription-not-test'},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1', :subscription => 'subscription-not-test'},"test message")
         @subscription_with_block = Subscription.new("/queue/test/another", 'subscription-test') do |msg|
           called_back = (msg == @message)
         end

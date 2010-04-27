@@ -137,7 +137,7 @@ module Stomper
     # into the +headers+ hash, thus informing the stomp broker that the message
     # generated here is part of this transaction.
     def send(destination, body, headers={})
-      headers['transaction'] = @id
+      headers[:transaction] = @id
       @client.send(destination, body, headers)
     end
 
@@ -145,7 +145,7 @@ module Stomper
     # into the +headers+ hash, thus informing the stomp broker that the message
     # acknowledgement is part of this transaction.
     def ack(message_or_id, headers={})
-      headers['transaction'] = @id
+      headers[:transaction] = @id
       @client.ack(message_or_id, headers)
     end
 

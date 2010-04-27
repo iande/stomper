@@ -17,9 +17,9 @@ module Stomper
       # if applicable.
       #
       # This is a convenience method for:
-      # frame.headers[:message], frame.headers['message'], or frame.headers.message
+      # frame.headers[:message]
       def message
-        @headers.message
+        @headers[:message]
       end
     end
   end

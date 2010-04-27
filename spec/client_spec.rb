@@ -100,7 +100,7 @@ module Stomper
 
     describe "subscribing to queue" do
       before(:each) do
-        @message_sent = Stomper::Frames::Message.new({'destination' => "/queue/test"}, "test message")
+        @message_sent = Stomper::Frames::Message.new({:destination => "/queue/test"}, "test message")
         @mock_connection.should_receive(:connected?).any_number_of_times.and_return(true)
         @mock_connection.should_receive(:transmit).with(a_kind_of(Stomper::Frames::ClientFrame)).at_least(:once).and_return(nil)
         @mock_connection.should_receive(:receive).any_number_of_times.and_return(@message_sent)
@@ -120,7 +120,7 @@ module Stomper
       end
 
       it "should not unsubscribe from all destinations when a subscription id is provided" do
-        @client.subscribe("/queue/test", { 'id' => 'subscription-1' }) do |msg|
+        @client.subscribe("/queue/test", { :id => 'subscription-1' }) do |msg|
           @message_received = msg
         end
         @client.subscribe("/queue/test") do |msg|
@@ -134,7 +134,7 @@ module Stomper
       end
 
       it "should not unsubscribe from non-naive subscriptions when only a destination is supplied" do
-        @client.subscribe("/queue/test", { 'id' => 'subscription-1' }) do |msg|
+        @client.subscribe("/queue/test", { :id => 'subscription-1' }) do |msg|
           @message_received = msg
         end
         @client.subscribe("/queue/test") do |msg|

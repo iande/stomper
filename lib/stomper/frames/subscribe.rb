@@ -7,40 +7,40 @@ module Stomper
     class Subscribe < Stomper::Frames::ClientFrame
       def initialize(destination, headers={})
         super('SUBSCRIBE', headers)
-        @headers['destination'] = destination
-        @headers['ack'] ||= 'auto'
+        @headers[:destination] = destination
+        @headers[:ack] ||= 'auto'
       end
 
       # Returns the ack mode of this subscription. (defaults to 'auto')
       #
       # This is a convenience method, and may also be accessed through
-      # frame.headers.ack or frame.headers[:ack] or frame.headers['ack']
+      # frame.headers[:ack]
       def ack
-        @headers['ack']
+        @headers[:ack]
       end
 
       # Returns the destination to which we are subscribing.
       #
       # This is a convenience method, and may also be accessed through
-      # frame.headers.destination or frame.headers[:destination] or frame.headers['destination']
+      # frame.headers[:destination]
       def destination
-        @headers['destination']
+        @headers[:destination]
       end
 
       # Returns the id of this subscription, if it has been set.
       #
       # This is a convenience method, and may also be accessed through
-      # frame.headers.id or frame.headers[:id] or frame.headers['id']
+      # frame.headers[:id]
       def id
-        @headers['id']
+        @headers[:id]
       end
 
       # Returns the selector header of this subscription, if it has been set.
       #
       # This is a convenience method, and may also be accessed through
-      # frame.headers.selector or frame.headers[:selector] or frame.headers['selector']
+      # frame.headers[:selector]
       def selector
-        @headers['selector']
+        @headers[:selector]
       end
     end
   end

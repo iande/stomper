@@ -70,7 +70,7 @@ module Stomper
         @subscriptions << Subscription.new("/queue/test/1") { |msg| received_1 = true }
         @subscriptions << Subscription.new("/queue/test/1", 'subscription-2') { |msg| received_2 = true }
         @subscriptions << Subscription.new("/queue/test/2") { |msg| received_3 = true }
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1'},"test message")
         @subscriptions.perform(@message)
         received_1.should be_true
         received_2.should be_false

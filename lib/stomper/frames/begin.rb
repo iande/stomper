@@ -7,7 +7,7 @@ module Stomper
     class Begin < Stomper::Frames::ClientFrame
       def initialize(transaction_id, headers={})
         super('BEGIN', headers)
-        @headers.transaction = transaction_id
+        @headers[:transaction] = transaction_id
       end
     end
   end

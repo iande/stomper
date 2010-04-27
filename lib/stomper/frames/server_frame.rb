@@ -11,7 +11,7 @@ module Stomper
       # supplied +command+ with the given +headers+ and +body+.
       def initialize(command, headers={}, body=nil)
         @command = command
-        @headers = Headers.new(headers)
+        @headers = headers.dup
         @body = body
       end
 

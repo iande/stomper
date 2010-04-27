@@ -17,7 +17,7 @@ module Stomper
       def initialize(command, headers={}, body=nil)
         @command = command
         @generate_content_length = headers.delete(:generate_content_length)
-        @headers = Headers.new(headers)
+        @headers = headers.dup
         @body = body
       end
 

@@ -11,10 +11,6 @@ module Stomper::Frames
       str.respond_to?(:bytesize) ? str.bytesize : str.size
     end
 
-    it "should be provide a headers as an instance of Headers" do
-      @client_frame.headers.should be_an_instance_of(Stomper::Frames::Headers)
-    end
-
     describe "generating content-length header" do
       it "should provide the header by default, overriding any existing header" do
         @frame_body = 'testing'
@@ -43,11 +39,11 @@ module Stomper::Frames
 
       it "should not overwrite an explicit content-length header when option is off at class or instance level" do
         @frame_body = 'testing'
-        @client_frame = ClientFrame.new('COMMAND', { 'content-length' => 4}, @frame_body)
+        @client_frame = ClientFrame.new('COMMAND', { :'content-length' => 4}, @frame_body)
         @client_frame.generate_content_length = false
         @client_frame.headers_with_content_length[:'content-length'].should == 4
         ClientFrame.generate_content_length = false
-        @client_frame = ClientFrame.new('COMMAND', {'content-length' => 2}, @frame_body)
+        @client_frame = ClientFrame.new('COMMAND', { :'content-length' => 2}, @frame_body)
         @client_frame.headers_with_content_length[:'content-length'].should == 2
       end
 

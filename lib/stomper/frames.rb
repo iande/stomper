@@ -1,4 +1,3 @@
-require 'stomper/frames/headers'
 require 'stomper/frames/client_frame'
 require 'stomper/frames/server_frame'
 require 'stomper/frames/abort'

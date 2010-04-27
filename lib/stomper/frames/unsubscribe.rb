@@ -7,16 +7,16 @@ module Stomper
     class Unsubscribe < Stomper::Frames::ClientFrame
       def initialize(destination, headers={})
         super('UNSUBSCRIBE', headers)
-        @headers['destination'] = destination
+        @headers[:destination] = destination
       end
 
       # Returns the id of the subscription being unsubscribed from, if it
       # exists.
       #
       # This is a convenience method, and may also be accessed through
-      # frame.headers.id or frame.headers[:id] or frame.headers['id']
+      # frame.headers[:id]
       def id
-        @headers['id']
+        @headers[:id]
       end
     end
   end

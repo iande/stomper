@@ -32,19 +32,10 @@ module Stomper
     attr_reader :connection, :subscriptions
 
     # Creates a new Client instance that will connect to the stomp broker
-    # designated by the +uri+ parameter.  Additionally, +options+ may be
-    # specified as a hash, and are passed along to the underlying connection.
-    # For details on the format of +uri+ and the acceptable +options+, see
-    # Stomper::Connection.
-    def initialize(uri, options={})
-      # At this time we only bother with the BasicConnection.  We will need
-      # to write the ReliableConnection class to handle the particulars of reconnecting
-      # on a socket error.
-      #if options.has_key?(:max_retries) || options.delete(:reliable) { false }
-        #@connection = ReliableConnection.new(uri, options)
-      #else
-        @connection = Connection.new(uri, options)
-      #end
+    # designated by the +uri+ parameter.
+    # For details on the format of +uri+, see Stomper::Connection.
+    def initialize(uri)
+      @connection = Connection.new(uri)
       @subscriptions = Subscriptions.new
       @send_lock = Mutex.new
       @receive_lock = Mutex.new

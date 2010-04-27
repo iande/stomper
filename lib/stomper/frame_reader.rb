@@ -12,7 +12,7 @@ module Stomper
     def get_frame
       command = read_command
       headers = read_headers
-      content_length = (headers.has_key?('content-length')) ? headers['content-length'].strip.to_i : nil
+      content_length = (headers.has_key?(:'content-length')) ? headers[:'content-length'].strip.to_i : nil
       body = read_body(content_length)
       Stomper::Frames::ServerFrame.build(command, headers, body).freeze
     end
@@ -32,7 +32,7 @@ module Stomper
         line = @input_stream.gets.chomp!
         break if line.size == 0
         if (delim = line.index(':'))
-          headers[ line[0..(delim-1)] ] = line[(delim+1)..-1]
+          headers[ line[0..(delim-1)].to_sym ] = line[(delim+1)..-1]
         end
       end
       headers

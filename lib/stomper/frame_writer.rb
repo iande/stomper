@@ -19,7 +19,7 @@ module Stomper
     end
 
     def serialize_headers(headers)
-      headers.inject("") do |acc, (key, val)|
+      headers.sort { |a, b| a.first.to_s <=> b.first.to_s }.inject("") do |acc, (key, val)|
         acc << "#{key}:#{val}\n"
         acc
       end

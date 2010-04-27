@@ -35,7 +35,7 @@ module Stomper
       before(:each) do
         @transaction_name = "tx-test"
         @mock_client.should_receive(:begin).once.with(@transaction_name).and_return(nil)
-        @mock_client.should_receive(:send).once.with("/queue/test/1","test message", hash_including("transaction" => @transaction_name)).and_return(nil)
+        @mock_client.should_receive(:send).once.with("/queue/test/1","test message", hash_including(:transaction => @transaction_name)).and_return(nil)
         @mock_client.should_receive(:commit).once.with(@transaction_name).and_return(nil)
       end
 
@@ -50,7 +50,7 @@ module Stomper
       before(:each) do
         @transaction_name = "tx-test-2"
         @mock_client.should_receive(:begin).once.with(@transaction_name).and_return(nil)
-        @mock_client.should_receive(:send).once.with("/queue/test/1","test message", hash_including("transaction" => @transaction_name)).and_return(nil)
+        @mock_client.should_receive(:send).once.with("/queue/test/1","test message", hash_including(:transaction => @transaction_name)).and_return(nil)
       end
 
       it "should abort when an exception is raised" do
@@ -97,8 +97,8 @@ module Stomper
         @inner_inner_transaction_name = "#{@transaction_name}-inner-inner"
         @mock_client.should_receive(:begin).with(@transaction_name).once.and_return(nil)
         @mock_client.should_receive(:begin).with(@inner_transaction_name).once.and_return(nil)
-        @mock_client.should_receive(:send).with("/queue/test/1","test message", hash_including("transaction" => @transaction_name)).once.and_return(nil)
-        @mock_client.should_receive(:send).with("/queue/test/2","inner message", hash_including("transaction" => @inner_transaction_name)).once.and_return(nil)
+        @mock_client.should_receive(:send).with("/queue/test/1","test message", hash_including(:transaction => @transaction_name)).once.and_return(nil)
+        @mock_client.should_receive(:send).with("/queue/test/2","inner message", hash_including(:transaction => @inner_transaction_name)).once.and_return(nil)
       end
       it "no transaction should succeed when an inner one fails" do
         @mock_client.should_receive(:abort).once.with(@transaction_name).and_return(nil)
@@ -116,7 +116,7 @@ module Stomper
       end
       it "no transaction should succeed when an inner one is explicitly aborted" do
         @mock_client.should_receive(:begin).with(@inner_inner_transaction_name).once.and_return(nil)
-        @mock_client.should_receive(:send).with("/queue/test/3","inner-inner message", hash_including("transaction" => @inner_inner_transaction_name)).once.and_return(nil)
+        @mock_client.should_receive(:send).with("/queue/test/3","inner-inner message", hash_including(:transaction => @inner_inner_transaction_name)).once.and_return(nil)
         @mock_client.should_receive(:abort).once.with(@transaction_name).and_return(nil)
         @mock_client.should_receive(:abort).once.with(@inner_transaction_name).and_return(nil)
         @mock_client.should_receive(:abort).once.with(@inner_inner_transaction_name).and_return(nil)

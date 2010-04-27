@@ -7,7 +7,7 @@ module Stomper
     class Send < Stomper::Frames::ClientFrame
       def initialize(destination, body, headers={})
         super('SEND', headers, body)
-        @headers.destination = destination
+        @headers[:destination] = destination
       end
     end
   end

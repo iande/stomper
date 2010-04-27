@@ -48,11 +48,10 @@ module Stomper
     #
     def initialize(destination_or_options, subscription_id=nil, ack=nil, selector=nil, &block)
       if destination_or_options.is_a?(Hash)
-        options = Stomper::Frames::Headers.new(destination_or_options)
-        destination = options.destination
-        subscription_id ||= options.id
-        ack ||= options.ack
-        selector ||= options.selector
+        destination = destination_or_options[:destination]
+        subscription_id ||= destination_or_options[:id]
+        ack ||= destination_or_options[:ack]
+        selector ||= destination_or_options[:selector]
       else
         destination = destination_or_options.to_s
       end
@@ -110,9 +109,9 @@ module Stomper
     # Stomper::Frames::Subscribe client frame that can be transmitted
     # to a stomp broker through a Stomper::Connection instance.
     def to_subscribe
-      headers = { 'destination' => @destination, 'ack' => @ack.to_s }
-      headers['id'] = @id unless @id.nil?
-      headers['selector'] = @selector unless @selector.nil?
+      headers = { :destination => @destination, :ack => @ack.to_s }
+      headers[:id] = @id unless @id.nil?
+      headers[:selector] = @selector unless @selector.nil?
       Stomper::Frames::Subscribe.new(@destination, headers)
     end
 
@@ -120,8 +119,8 @@ module Stomper
     # Stomper::Frames::Unsubscribe client frame that can be transmitted
     # to a stomp broker through a Stomper::Connection instance.
     def to_unsubscribe
-      headers = { 'destination' => @destination }
-      headers['id'] = @id unless @id.nil?
+      headers = { :destination => @destination }
+      headers[:id] = @id unless @id.nil?
       Stomper::Frames::Unsubscribe.new(@destination, headers)
     end
   end
