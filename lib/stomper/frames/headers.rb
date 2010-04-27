@@ -5,6 +5,7 @@ module Stomper
     # to allow its values to be accessed by string, symbol, or method name,
     # similar to an OpenStruct.
     class Headers
+      include Enumerable
       # Creates a new Header instance, derived from the supplied hash, +hsh+.
       def initialize(hsh = {})
         @intern_head = hsh.inject({}) { |acc, (k,v)| acc[k.to_sym] = v; acc }
@@ -30,6 +31,10 @@ module Stomper
       # Allows the headers to be assigned as though they were a Hash instance.
       def []=(idx, val)
         @intern_head[idx.to_sym] = val
+      end
+
+      def each(&block)
+        @intern_head.each(&block)
       end
 
       def method_missing(meth, *args) # :nodoc:

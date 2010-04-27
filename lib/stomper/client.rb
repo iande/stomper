@@ -212,7 +212,7 @@ module Stomper
         sleep_time = opts.delete(:receive_delay) { 0.2 }
         @receiving = true
         @run_thread = Thread.new(blocking) do |block|
-          while receiving?
+          while receiving? && connected?
             receive(block)
             sleep(sleep_time) unless block
           end

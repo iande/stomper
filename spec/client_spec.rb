@@ -102,7 +102,7 @@ module Stomper
       before(:each) do
         @message_sent = Stomper::Frames::Message.new({'destination' => "/queue/test"}, "test message")
         @mock_connection.should_receive(:connected?).any_number_of_times.and_return(true)
-        @mock_connection.should_receive(:transmit).with(duck_type(:to_stomp)).at_least(:once).and_return(nil)
+        @mock_connection.should_receive(:transmit).with(a_kind_of(Stomper::Frames::ClientFrame)).at_least(:once).and_return(nil)
         @mock_connection.should_receive(:receive).any_number_of_times.and_return(@message_sent)
       end
 
@@ -165,7 +165,7 @@ module Stomper
 
     describe "transactions" do
       before(:each) do
-        @mock_connection.should_receive(:transmit).with(duck_type(:to_stomp)).at_least(:once).and_return(nil)
+        @mock_connection.should_receive(:transmit).with(a_kind_of(Stomper::Frames::ClientFrame)).at_least(:once).and_return(nil)
       end
 
       it "should provide a transaction method that generates a new Transaction" do

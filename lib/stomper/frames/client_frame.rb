@@ -21,7 +21,7 @@ module Stomper
         @body = body
       end
 
-      # If +bool+ false or nil, this frame instance will not attempt to
+      # If +bool+ is false or nil, this frame instance will not attempt to
       # automatically generate a content-length header.  This is useful when
       # dealing with ActiveMQ as a stomp message broker, which will treat incoming
       # messages lacking a content-length header as +TextMessage+s and
@@ -38,15 +38,14 @@ module Stomper
         @generate_content_length.nil? ? self.class.generate_content_length? : @generate_content_length
       end
 
-      # Converts the frame instance into a valid string representation of the
-      # desired command according to the specifications of the
-      # {Stomp Protocol}[http://stomp.codehaus.org/Protocol]
-      #
-      # This is where the content-length header is generated if the frame
-      # has a body of non-zero length and generate_content_length? is true.
-      def to_stomp
-        @headers["content-length"] = str_size(@body) if @body && !@body.empty? && generate_content_length?
-        "#{@command}\n#{@headers.to_stomp}\n#{@body}\0"
+      # Returns the headers for this frame, including a +content-length+ header
+      # set to the size of the current body, if +generate_content_length?+ is
+      # not false.
+      def headers_with_content_length
+        if generate_content_length? && @body && !@body.empty?
+          @headers[:'content-length'] = body_size
+        end
+        @headers
       end
 
       class << self
@@ -72,13 +71,13 @@ module Stomper
       end
 
       private
-      def str_size(str)
-        if str.respond_to?(:bytesize)
-          def str_size(strng); strng.bytesize; end
-          str.bytesize
-        else
-          def str_size(strng); strng.size; end
-          str.size
+      if String.method_defined?(:bytesize)
+        def body_size
+          @body.bytesize
+        end
+      else
+        def body_size
+          @body.size
         end
       end
     end
