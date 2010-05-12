@@ -35,7 +35,7 @@ module Stomper
       raise ArgumentError, 'Expected URI schema to be one of stomp or stomp+ssl' unless @uri.respond_to?(:create_socket)
       @connected = false
       @writer = @reader = nil
-      @state = Stomper::SocketState.new
+      #@state = Stomper::SocketState.new
     end
 
 
@@ -45,32 +45,33 @@ module Stomper
     #
     # See also: new
     def connect
-      @state.transition_to :connecting
-      @state.transition_if :connected do
+      @connected = false
+      #@state.transition_to :connecting
+      #@state.transition_if :connected do
         @socket = @uri.create_socket
         @writer = Stomper::FrameWriter.new(@socket)
         @reader = Stomper::FrameReader.new(@socket)
-      end
-      @state.transition_to :authenticating
-      @state.transition_if :authenticated do
+      #end
+      #@state.transition_to :authenticating
+      #@state.transition_if :authenticated do
         transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
-        receive.instance_of?(Stomper::Frames::Connected)
-      end
+        @connected = receive.instance_of?(Stomper::Frames::Connected)
+      #end
     end
 
     # Returns true when there is an open connection
     # established to the broker.
     def connected?
-      @state.readable? && @socket && !@socket.closed?
-      #@connected && @socket && !@socket.closed?
+      #@state.readable? && @socket && !@socket.closed?
+      @connected && @socket && !@socket.closed?
     end
 
     # Transmits a Stomper::Frames::Disconnect frame to the broker
     # then terminates the connection by invoking +close+.
     def disconnect
-      @state.transition_if :disconnecting do
+      #@state.transition_if :disconnecting do
         transmit(Stomper::Frames::Disconnect.new)
-      end
+      #end
     ensure
       close_socket
     end
@@ -111,7 +112,7 @@ module Stomper
     def close_socket(conx_state = :disconnected)
       @socket.close if @socket
     ensure
-      @state.transition_to conx_state
+      #@state.transition_to conx_state
     end
   end
 end
