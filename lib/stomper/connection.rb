@@ -6,7 +6,6 @@ module Stomper
   # Stomp message broker services.
   class Connection
     attr_reader :uri
-    attr_reader :socket
 
     class << self
       def connect(uri)
@@ -31,13 +30,12 @@ module Stomper
     # however, if SSL is not required, the schema is essentially ignored.
     # The default port for the 'stomp+ssl' schema is 61612, all other schemas
     # default to port 61613.
-    #
-    # TODO: Refactor out the SSL business into a separate connection wrapper.
     def initialize(uri)
       @uri = (uri.is_a?(URI) && uri) || URI.parse(uri)
-      @socket_class = (@uri.scheme == "stomp+ssl") ? Stomper::SecureStompSocket : Stomper::StompSocket
+      raise ArgumentError, 'Expected URI schema to be one of stomp or stomp+ssl' unless @uri.respond_to?(:create_socket)
       @connected = false
       @writer = @reader = nil
+      @state = Stomper::SocketState.new
     end
 
 
@@ -47,38 +45,37 @@ module Stomper
     #
     # See also: new
     def connect
-      @socket = @socket_class.new(@uri)
-      @writer = Stomper::FrameWriter.new(@socket)
-      @reader = Stomper::FrameReader.new(@socket)
-      transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
-      @connected = receive.instance_of?(Stomper::Frames::Connected)
+      @state.transition_to :connecting
+      @state.transition_if :connected do
+        @socket = @uri.create_socket
+        @writer = Stomper::FrameWriter.new(@socket)
+        @reader = Stomper::FrameReader.new(@socket)
+      end
+      @state.transition_to :authenticating
+      @state.transition_if :authenticated do
+        transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
+        receive.instance_of?(Stomper::Frames::Connected)
+      end
     end
 
     # Returns true when there is an open connection
     # established to the broker.
     def connected?
-      @connected && @socket && !@socket.closed?
-    end
-
-    # Immediately closes the connection to the broker, without the
-    # formality of sending a Disconnect frame.
-    #
-    # See also: disconnect
-    def close
-      @socket.close if @socket
-    ensure
-      @connected = false
+      @state.readable? && @socket && !@socket.closed?
+      #@connected && @socket && !@socket.closed?
     end
 
     # Transmits a Stomper::Frames::Disconnect frame to the broker
     # then terminates the connection by invoking +close+.
-    #
-    # See also: close
     def disconnect
-      transmit(Stomper::Frames::Disconnect.new)
+      @state.transition_if :disconnecting do
+        transmit(Stomper::Frames::Disconnect.new)
+      end
     ensure
-      close
+      close_socket
     end
+
+    alias_method :close, :disconnect
 
     # Transmits the a Stomp Frame to the connected Stomp broker by
     # way of an internal FrameWriter.  If an exception is raised
@@ -88,7 +85,7 @@ module Stomper
       begin
         @writer.put_frame(frame)
       rescue Exception => ioerr
-        self.close
+        close_socket :lost_connection
         raise ioerr
       end
     end
@@ -101,9 +98,20 @@ module Stomper
       begin
         @reader.get_frame
       rescue Exception => ioerr
-        self.close
+        close_socket :lost_connection
         raise ioerr
       end
+    end
+
+    private
+    # Immediately closes the connection to the broker, without the
+    # formality of sending a Disconnect frame.
+    #
+    # See also: disconnect
+    def close_socket(conx_state = :disconnected)
+      @socket.close if @socket
+    ensure
+      @state.transition_to conx_state
     end
   end
 end

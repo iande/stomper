@@ -6,8 +6,7 @@ module Stomper
     # for more details.
     class Unsubscribe < Stomper::Frames::ClientFrame
       def initialize(destination, headers={})
-        super('UNSUBSCRIBE', headers)
-        @headers[:destination] = destination
+        super(headers.merge({ :destination => destination }))
       end
 
       # Returns the id of the subscription being unsubscribed from, if it

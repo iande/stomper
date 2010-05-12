@@ -5,13 +5,11 @@ module Stomper
     # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
     # for more details.
     class Connected < Stomper::Frames::ServerFrame
-      # This class is a factory for incoming 'CONNECTED' commands.
-      factory_for :connected
 
       # Builds a Connected frame instance with the supplied
       # +headers+ and +body+
       def initialize(headers, body)
-        super('CONNECTED', headers, body)
+        super(headers, body)
       end
 
       # A convenience method that returns the value of

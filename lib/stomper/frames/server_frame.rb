@@ -4,28 +4,21 @@ module Stomper
     #
     # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
     # for more details.
-    class ServerFrame
-      attr_reader :command, :headers, :body
+    class ServerFrame < IndirectFrame
 
       # Creates a new server frame corresponding to the
       # supplied +command+ with the given +headers+ and +body+.
-      def initialize(command, headers={}, body=nil)
-        @command = command
-        @headers = headers.dup
-        @body = body
+      def initialize(headers={}, body=nil, command = nil)
+        super
       end
 
       class << self
-        # Provides a method for subclasses to register themselves
-        # as factories for particular stomp commands by passing a list
-        # of strings (or symbols) to this method.  Each element in
-        # the list is interpretted as the command for which we will
-        # defer to the calling subclass to build.
-        def factory_for(*args)
-          @@registered_commands ||= {}
-          args.each do |command|
-            @@registered_commands[command.to_s.upcase] = self
-          end
+        def inherited(server_frame) #:nodoc:
+          declared_frames << { :class => server_frame, :command => server_frame.name.split("::").last.downcase.to_sym }
+        end
+
+        def declared_frames
+          @declared_frames ||= []
         end
 
         # Builds a new ServerFrame instance by first checking to
@@ -35,11 +28,11 @@ module Stomper
         # ServerFrame instance is created with its +command+ attribute
         # set appropriately.
         def build(command, headers, body)
-          command = command.to_s.upcase
-          if @@registered_commands.has_key?(command)
-            @@registered_commands[command].new(headers, body)
+          com_sym = command.downcase.to_sym
+          if klass = declared_frames.detect { |frame| com_sym == frame[:command] }
+            klass[:class].new(headers, body)
           else
-            ServerFrame.new(command, headers, body)
+            ServerFrame.new(headers, body, command)
           end
         end
       end

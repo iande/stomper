@@ -9,7 +9,7 @@ module Stomper
 
     it "should write commands appropriately" do
       @frame_writer.put_frame(Stomper::Frames::Send.new('/test/queue','body of message'))
-      @output_buffer.string.split(/\n/).first.should == "SEND"
+      @output_buffer.string.should =~ /\ASEND/
     end
 
     it "should write headers appropriately" do

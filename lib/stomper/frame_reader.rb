@@ -20,7 +20,7 @@ module Stomper
     def read_command
       command = ''
       while(command.size == 0)
-        command = @input_stream.gets.chomp!
+        command = @input_stream.gets(Stomper::Frames::LINE_DELIMITER).chomp!
       end
       command
     end
@@ -28,7 +28,7 @@ module Stomper
     def read_headers
       headers = {}
       loop do
-        line = @input_stream.gets.chomp!
+        line = @input_stream.gets(Stomper::Frames::LINE_DELIMITER).chomp!
         break if line.size == 0
         if (delim = line.index(':'))
           headers[ line[0..(delim-1)].to_sym ] = line[(delim+1)..-1]
@@ -48,7 +48,7 @@ module Stomper
 
     def read_null_terminated_body
       body = ''
-      while(next_byte = get_ord) != 0
+      while next_byte = get_body_byte
         body << next_byte.chr
       end
       body
@@ -56,8 +56,13 @@ module Stomper
 
     def read_fixed_body(num_bytes)
       body = @input_stream.read(num_bytes)
-      raise MalformedFrameError if get_ord != 0
+      raise MalformedFrameError if get_body_byte
       body
+    end
+
+    def get_body_byte
+      next_byte = get_ord
+      (next_byte == Stomper::Frames::TERMINATOR) ? nil : next_byte
     end
     
     if String.method_defined?(:ord)

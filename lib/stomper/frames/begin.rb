@@ -6,7 +6,7 @@ module Stomper
     # for more details.
     class Begin < Stomper::Frames::ClientFrame
       def initialize(transaction_id, headers={})
-        super('BEGIN', headers)
+        super(headers.merge(:transaction => transaction_id))
         @headers[:transaction] = transaction_id
       end
     end

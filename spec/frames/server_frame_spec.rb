@@ -7,10 +7,6 @@ module Stomper
         @server_frame = ServerFrame.new("SERVER COMMAND")
       end
 
-      it "should provide a method for subclasses to register the command they handle" do
-        ServerFrame.should respond_to(:factory_for)
-      end
-
       it "should build an appropriate object for a given server frame" do
         @built_frame = ServerFrame.build("MESSAGE", {:'message-id' => 'msg-001', :transaction => 'tx-test', :subscription => 'sub-test'}, "message body")
         @built_frame.should be_an_instance_of(Message)
@@ -24,12 +20,11 @@ module Stomper
         @built_frame.headers[:a_header].should == "test"
         @built_frame.body.should == "a body"
         class MockServerFrame < ServerFrame
-          factory_for :testing
           def initialize(headers, body)
-            super('TESTING', headers, body)
+            super(headers, body)
           end
         end
-        @built_frame = ServerFrame.build("TESTING", {:a_header => "test"}, "a body")
+        @built_frame = ServerFrame.build("MOCKSERVERFRAME", {:a_header => "test"}, "a body")
         @built_frame.should be_an_instance_of(MockServerFrame)
         @built_frame.headers[:a_header].should == "test"
         @built_frame.body.should == "a body"
@@ -40,6 +35,7 @@ module Stomper
           it "should be registered" do
             @server_frame = ServerFrame.build("CONNECTED", {:a_header => 'test'}, "test body")
             @server_frame.should be_an_instance_of(Connected)
+            @server_frame.command.should == "CONNECTED"
             @server_frame.headers[:a_header].should == "test"
             @server_frame.body.should == "test body"
           end
@@ -48,6 +44,7 @@ module Stomper
           it "should be registered" do
             @server_frame = ServerFrame.build("ERROR", {:a_header => 'test'}, "test body")
             @server_frame.should be_an_instance_of(Error)
+            @server_frame.command.should == "ERROR"
             @server_frame.headers[:a_header].should == "test"
             @server_frame.body.should == "test body"
           end
@@ -56,6 +53,7 @@ module Stomper
           it "should be registered" do
             @server_frame = ServerFrame.build("MESSAGE", {:a_header => 'test'}, "test body")
             @server_frame.should be_an_instance_of(Message)
+            @server_frame.command.should == "MESSAGE"
             @server_frame.headers[:a_header].should == "test"
             @server_frame.body.should == "test body"
           end
@@ -71,6 +69,7 @@ module Stomper
           it "should be registered" do
             @server_frame = ServerFrame.build("RECEIPT", {:a_header => 'test'}, "test body")
             @server_frame.should be_an_instance_of(Receipt)
+            @server_frame.command.should == "RECEIPT"
             @server_frame.headers[:a_header].should == "test"
             @server_frame.body.should == "test body"
           end

@@ -6,8 +6,7 @@ module Stomper
     # for more details.
     class Ack < Stomper::Frames::ClientFrame
       def initialize(message_id, headers={})
-        super('ACK', headers)
-        @headers[:'message-id'] = message_id
+        super(headers.merge({ :'message-id' => message_id }))
       end
 
       # Creates a new Ack instance that corresponds to an acknowledgement

@@ -4,8 +4,7 @@ module Stomper
     #
     # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
     # for more details.
-    class ClientFrame
-      attr_reader :headers, :body, :command
+    class ClientFrame < IndirectFrame
 
       # Creates a new ClientFrame instance with the specified +command+,
       # +headers+ and +body+.
@@ -14,11 +13,9 @@ module Stomper
       # generated for this particular frame instance.  This key can be
       # specified in the +headers+ parameter of any of the subclasses of ClientFrame,
       # and it will be interpretted in the same fashion.
-      def initialize(command, headers={}, body=nil)
-        @command = command
+      def initialize(headers={}, body=nil, command = nil)
         @generate_content_length = headers.delete(:generate_content_length)
-        @headers = headers.dup
-        @body = body
+        super(headers, body, command)
       end
 
       # If +bool+ is false or nil, this frame instance will not attempt to
@@ -68,6 +65,14 @@ module Stomper
             @generate_content_length = true
           end
           @generate_content_length
+        end
+
+        def inherited(client_frame) #:nodoc:
+          declared_frames << { :class => client_frame, :command => client_frame.name.split("::").last.downcase.to_sym }
+        end
+
+        def declared_frames
+          @declared_frames ||= []
         end
       end
 

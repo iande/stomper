@@ -6,9 +6,7 @@ module Stomper
     # for more details.
     class Subscribe < Stomper::Frames::ClientFrame
       def initialize(destination, headers={})
-        super('SUBSCRIBE', headers)
-        @headers[:destination] = destination
-        @headers[:ack] ||= 'auto'
+        super({ :ack => 'auto' }.merge(headers).merge({ :destination => destination }))
       end
 
       # Returns the ack mode of this subscription. (defaults to 'auto')
