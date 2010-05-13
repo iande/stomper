@@ -5,6 +5,10 @@ module Stomper
   # Stomper::Client are the preferred way of communicating with
   # Stomp message broker services.
   class Connection
+    include ::Stomper::ClientInterface
+    include ::Stomper::TransactorInterface
+    include ::Stomper::SubscriberInterface
+
     attr_reader :uri
 
     class << self
