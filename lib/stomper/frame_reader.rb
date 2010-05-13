@@ -1,15 +1,10 @@
 module Stomper
-
   # Deserializes Stomp Frames from an input stream.
   # Any object that responds appropriately to +getc+, +gets+
   # and +read+ can be used as the input stream.
-  class FrameReader
-    def initialize(in_stream)
-      @input_stream = in_stream
-    end
-
-    # Receives the next Stomp Frame from the underlying input stream
-    def get_frame
+  module FrameReader
+    # Receives the next Stomp Frame from the socket stream
+    def receive_frame
       command = read_command
       headers = read_headers
       body = read_body(headers[:'content-length'])
@@ -20,7 +15,7 @@ module Stomper
     def read_command
       command = ''
       while(command.size == 0)
-        command = @input_stream.gets(Stomper::Frames::LINE_DELIMITER).chomp!
+        command = gets(Stomper::Frames::LINE_DELIMITER).chomp!
       end
       command
     end
@@ -28,7 +23,7 @@ module Stomper
     def read_headers
       headers = {}
       loop do
-        line = @input_stream.gets(Stomper::Frames::LINE_DELIMITER).chomp!
+        line = gets(Stomper::Frames::LINE_DELIMITER).chomp!
         break if line.size == 0
         if (delim = line.index(':'))
           headers[ line[0..(delim-1)].to_sym ] = line[(delim+1)..-1]
@@ -55,7 +50,7 @@ module Stomper
     end
 
     def read_fixed_body(num_bytes)
-      body = @input_stream.read(num_bytes)
+      body = read(num_bytes)
       raise MalformedFrameError if get_body_byte
       body
     end
@@ -67,11 +62,11 @@ module Stomper
     
     if String.method_defined?(:ord)
       def get_ord
-        @input_stream.getc.ord
+        getc.ord
       end
     else
       def get_ord
-        @input_stream.getc
+        getc
       end
     end
   end

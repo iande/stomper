@@ -1,4 +1,6 @@
 module Stomper
+  # TODO: Rewrite this.  Soon it will not be true as we are removing Client.
+  # 
   # A low level connection to a Stomp message broker.
   # Instances of Connection are not synchronized and thus not
   # directly thread safe.  This is a deliberate decision as instances of
@@ -53,8 +55,6 @@ module Stomper
       #@state.transition_to :connecting
       #@state.transition_if :connected do
         @socket = @uri.create_socket
-        @writer = Stomper::FrameWriter.new(@socket)
-        @reader = Stomper::FrameReader.new(@socket)
       #end
       #@state.transition_to :authenticating
       #@state.transition_if :authenticated do
@@ -88,7 +88,7 @@ module Stomper
     # and the exception will be propegated.
     def transmit(frame)
       begin
-        @writer.put_frame(frame)
+        @socket.transmit_frame(frame)
       rescue Exception => ioerr
         close_socket :lost_connection
         raise ioerr
@@ -101,7 +101,7 @@ module Stomper
     # will be propegated.
     def receive()
       begin
-        @reader.get_frame
+        @socket.receive_frame
       rescue Exception => ioerr
         close_socket :lost_connection
         raise ioerr

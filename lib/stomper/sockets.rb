@@ -4,6 +4,9 @@
 module Stomper
   module Sockets
     class SSL < DelegateClass(OpenSSL::SSL::SSLSocket)
+      include FrameReader
+      include FrameWriter
+
       def initialize(host, port, *args)
         @context = OpenSSL::SSL::SSLContext.new
         @context.verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -21,6 +24,9 @@ module Stomper
     end
 
     class TCP < DelegateClass(TCPSocket)
+      include FrameReader
+      include FrameWriter
+
       def initialize(host, port, *args)
         @socket = TCPSocket.new(host, port)
         super(@socket)
