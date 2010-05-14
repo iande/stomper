@@ -116,6 +116,7 @@ module Stomper
     def close_socket(conx_state = :disconnected)
       @socket.close if @socket
     ensure
+      @connected = false
       #@state.transition_to conx_state
     end
   end
