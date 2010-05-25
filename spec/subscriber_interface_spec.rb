@@ -33,15 +33,15 @@ module Stomper
         @message_sent = Stomper::Frames::Message.new({:destination => "/queue/test"}, "test message")
         @client.should_receive(:connected?).any_number_of_times.and_return(true)
         @client.should_receive(:transmit).with(a_kind_of(Stomper::Frames::ClientFrame)).at_least(:once).and_return(nil)
-        @client.should_receive(:receive).any_number_of_times.and_return(@message_sent)
       end
 
       it "should subscribe to a destination with a block" do
+        @client.should_receive(:receive_without_message_dispatch).once.and_return(@message_sent)
         @message_received = nil
         @client.subscribe("/queue/test") do |msg|
           @message_received = msg
         end
-        @client.receive
+        @client.receive_with_message_dispatch
         @message_received.should == @message_sent
       end
 

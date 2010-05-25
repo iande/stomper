@@ -7,10 +7,6 @@ module Stomper
   # Stomper::Client are the preferred way of communicating with
   # Stomp message broker services.
   class Connection
-    include ::Stomper::ClientInterface
-    include ::Stomper::TransactorInterface
-    include ::Stomper::SubscriberInterface
-
     attr_reader :uri
 
     class << self
@@ -108,7 +104,6 @@ module Stomper
       end
     end
 
-    private
     # Immediately closes the connection to the broker, without the
     # formality of sending a Disconnect frame.
     #
@@ -119,5 +114,9 @@ module Stomper
       @connected = false
       #@state.transition_to conx_state
     end
+
+    include ::Stomper::ClientInterface
+    include ::Stomper::TransactorInterface
+    include ::Stomper::SubscriberInterface
   end
 end

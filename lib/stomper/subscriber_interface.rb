@@ -1,5 +1,22 @@
 module Stomper
   module SubscriberInterface
+    def self.included(base)
+      if base.method_defined?(:receive)
+        base.instance_eval do
+          alias_method :receive_without_message_dispatch, :receive
+          alias_method :receive, :receive_with_message_dispatch
+        end
+      end
+    end
+
+    # Receives a frame and dispatches it to the known subscriptions, if the
+    # received frame is a MESSAGE frame.
+    def receive_with_message_dispatch
+      frame = receive_without_message_dispatch
+      subscriptions.perform(frame) if frame.is_a?(Stomper::Frames::Message)
+      frame
+    end
+
     # Subscribes to the specified +destination+, passing along
     # the optional +headers+ inside the subscription frame.  When a message
     # is received for this subscription, the supplied +block+ is
