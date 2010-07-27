@@ -48,30 +48,22 @@ module Stomper
     # See also: new
     def connect
       @connected = false
-      #@state.transition_to :connecting
-      #@state.transition_if :connected do
-        @socket = @uri.create_socket
-      #end
-      #@state.transition_to :authenticating
-      #@state.transition_if :authenticated do
-        transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
-        @connected = receive.instance_of?(Stomper::Frames::Connected)
-      #end
+      @socket = @uri.create_socket
+      transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
+      @connected = receive.instance_of?(Stomper::Frames::Connected)
     end
 
     # Returns true when there is an open connection
     # established to the broker.
     def connected?
-      #@state.readable? && @socket && !@socket.closed?
       @connected && @socket && !@socket.closed?
     end
 
     # Transmits a Stomper::Frames::Disconnect frame to the broker
     # then terminates the connection by invoking +close+.
     def disconnect
-      #@state.transition_if :disconnecting do
-        transmit(Stomper::Frames::Disconnect.new)
-      #end
+      @connected = false
+      transmit(Stomper::Frames::Disconnect.new)
     ensure
       close_socket
     end
@@ -109,10 +101,8 @@ module Stomper
     #
     # See also: disconnect
     def close_socket(conx_state = :disconnected)
+      @socket.shutdown(2)
       @socket.close if @socket
-    ensure
-      @connected = false
-      #@state.transition_to conx_state
     end
 
     include ::Stomper::ClientInterface
