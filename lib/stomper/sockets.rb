@@ -1,6 +1,3 @@
-# To change this template, choose Tools | Templates
-# and open the template in the editor.
-
 module Stomper
   module Sockets
     class SSL < DelegateClass(OpenSSL::SSL::SSLSocket)

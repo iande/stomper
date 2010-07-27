@@ -40,5 +40,21 @@ module Stomper
         @client.commit("tx-001")
       end
     end
+
+    describe "sending with receipts" do
+      it "should execute a block with a receipt when a block is given" do
+        @client.should_receive(:transmit).with(an_instance_of(Stomper::Frames::Send)).once.and_return(nil)
+        @client.should_receive(:receive).once.and_return(Stomper::Frames::Receipt.new({ :'receipt-id' => 'msg-0001' }, ''))
+        receipt_processed = false
+        @client.send('/queue/to', 'message body') do |r|
+          receipt_processed = (r.for == 'msg-0001')
+        end
+        @client.receive
+        receipt_processed.should be_true
+      end
+
+      # Not quite sure how to test this one just yet.
+      it "should auto-generate a 'receipt' header when a block is given and no receipt header is supplied"
+    end
   end
 end

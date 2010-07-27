@@ -13,7 +13,7 @@ module Stomper
     # received frame is a MESSAGE frame.
     def receive_with_message_dispatch
       frame = receive_without_message_dispatch
-      subscriptions.perform(frame) if frame.is_a?(Stomper::Frames::Message)
+      subscriptions.perform(frame) if frame.is_a?(::Stomper::Frames::Message)
       frame
     end
 

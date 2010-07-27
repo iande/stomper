@@ -5,9 +5,8 @@ module Stomper
   module FrameWriter
     # Writes a Stomp Frame to the underlying output stream.
     def transmit_frame(frame)
-      headers = frame.headers
       write([ frame.command, Stomper::Frames::LINE_DELIMITER,
-        serialize_headers(headers), Stomper::Frames::LINE_DELIMITER,
+        serialize_headers(frame.headers), Stomper::Frames::LINE_DELIMITER,
         frame.body, Stomper::Frames::TERMINATOR.chr].join)
     end
 
