@@ -8,7 +8,7 @@ module Stomper
       command = read_command
       headers = read_headers
       body = read_body(headers[:'content-length'])
-      Stomper::Frames::ServerFrame.build(command, headers, body).freeze
+      Stomper::Frames::ServerFrame.build(command, headers, body)
     end
 
     private
