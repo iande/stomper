@@ -1,27 +1,22 @@
 module Stomper
   class ReceiptHandlers
-    include Enumerable
-
     def initialize
-      @recps = []
+      @recps = {}
       @recp_lock = Mutex.new
     end
 
-    def <<(r_hand)
-      add(r_hand)
+    def add(receipt_id, callback)
+      @recp_lock.synchronize { @recps[receipt_id] = callback }
     end
-
-    def add(r_hand)
-      @recp_lock.synchronize { @recps << r_hand }
-    end
-
-    def each(&block)
-      @recp_lock.synchronize { @recps.each(&block) }
+    
+    def size
+      @recps.size
     end
 
     def perform(receipt)
       @recp_lock.synchronize do
-        @recps.reject! { |m| m.perform(receipt) }
+        callback = @recps.delete(receipt.for)
+        callback.call(receipt) if callback
       end
     end
   end

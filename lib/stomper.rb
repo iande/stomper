@@ -13,10 +13,12 @@ require 'stomper/sockets'
 require 'stomper/client_interface'
 require 'stomper/transactor_interface'
 require 'stomper/subscriber_interface'
+require 'stomper/receipt_interface'
 require 'stomper/connection'
 require 'stomper/transaction'
 require 'stomper/subscription'
 require 'stomper/subscriptions'
+require 'stomper/receipt_handlers'
 require 'stomper/client'
 
 module Stomper

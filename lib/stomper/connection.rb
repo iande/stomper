@@ -108,5 +108,6 @@ module Stomper
     include ::Stomper::ClientInterface
     include ::Stomper::TransactorInterface
     include ::Stomper::SubscriberInterface
+    include ::Stomper::ReceiptInterface
   end
 end
