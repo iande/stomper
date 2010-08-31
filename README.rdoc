@@ -33,7 +33,7 @@ Characteristics that distinguish it from other libraries, such the
 
     # Final example: connect, get a single message, and disconnect
     open("stomp+ssl://localhost/queue/odd_jobs") do |s|
-      # you can use +get+, +gets+, +read+ or +first+, they're all the same at
+      # you can use get, gets, read or first, they're all the same at
       # this time and for the foreseeable future.
       incoming_message = s.get
       # Do some work on incoming_message
@@ -42,11 +42,18 @@ Characteristics that distinguish it from other libraries, such the
 This interface has been a goal of mine for this library for some time now.  I
 understand the value in a more typical socket object approach, and to that end
 the client interface still exists (albeit there's been quite a lot of refractoring.)
-However, `stomp = Stomper::Connection.open(...); stomp.subscribe(...); ...` just
-doesn't feel very Ruby-esque to me.  While the two methods for interacting with
-Stomper connections appear very different, `s` in the OpenURI examples above
+However,
+
+    stomp = Stomper::Connection.new("stomp://localhost/")
+    stomp.subscribe("/queue/blather") do |m|
+      # ...
+    end
+    stomp.send("/topic/other", "Hello")
+
+just doesn't feel very Ruby-esque to me.  While the two methods for interacting with
+Stomper connections appear very different, +s+ in the OpenURI examples above
 really is a Stomper::Connection, but with some added extensions for handling
-`put`, `get`, `each`, and so forth.  One note: +read+, +get+ and +gets+ are
++put+, +get+, +each+, and so forth.  One note: +read+, +get+ and +gets+ are
 all aliases for +first+.  Similarly, +puts+ is an alias for +put+.  However,
 +write+ is slightly different.  The message broker I most often use the
 STOMP protocol with is Apache ActiveMQ which, at the time of this writing, uses
