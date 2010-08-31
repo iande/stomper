@@ -13,8 +13,17 @@ module URI
       ::Stomper::Sockets::TCP.new(self.host||'localhost', self.port)
     end
 
-    def open
-      
+    def open(*args)
+      conx = Stomper::Connection.open(self)
+      conx.extend Stomper::OpenUriInterface
+      if block_given?
+        begin
+          yield conx
+        ensure
+          conx.disconnect
+        end
+      end
+      conx
     end
   end
 

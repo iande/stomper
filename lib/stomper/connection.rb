@@ -77,6 +77,7 @@ module Stomper
     def transmit(frame)
       begin
         @socket.transmit_frame(frame)
+        frame
       rescue Exception => ioerr
         close_socket :lost_connection
         raise ioerr

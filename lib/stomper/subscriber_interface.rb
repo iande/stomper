@@ -39,9 +39,9 @@ module Stomper
       unless destination.is_a?(Subscription)
         destination = Subscription.new(headers.merge(:destination => destination), &block)
       end
-      self.subscriptions << destination
+      subscriptions << destination
       transmit(destination.to_subscribe)
-      self
+      destination
     end
 
     # Unsubscribes from the specified +destination+.  The +destination+
@@ -64,10 +64,9 @@ module Stomper
     #
     # See also: subscribe, Stomper::Subscription
     def unsubscribe(destination, sub_id=nil)
-      self.subscriptions.remove(destination, sub_id).each do |unsub|
+      subscriptions.remove(destination, sub_id).each do |unsub|
         transmit(unsub.to_unsubscribe)
       end
-      self
     end
 
     def subscriptions
