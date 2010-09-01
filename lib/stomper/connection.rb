@@ -36,13 +36,10 @@ module Stomper
       if opts.delete(:threaded_receiver) { true }
         extend ::Stomper::ThreadedReceiver
       end
-      before_and_after(:initialize) do
-        @uri = (uri.is_a?(URI) && uri) || URI.parse(uri)
-        raise ArgumentError, 'Expected URI schema to be one of stomp or stomp+ssl' unless @uri.respond_to?(:create_socket)
-        @connected = false
-        @writer = @reader = nil
-        #@state = Stomper::SocketState.new
-      end
+      @uri = (uri.is_a?(URI) && uri) || URI.parse(uri)
+      raise ArgumentError, 'Expected URI schema to be one of stomp or stomp+ssl' unless @uri.respond_to?(:create_socket)
+      @connected = false
+      @writer = @reader = nil
     end
 
 
@@ -52,12 +49,10 @@ module Stomper
     #
     # See also: new
     def connect
-      before_and_after(:connect) do
-        @connected = false
-        @socket = @uri.create_socket
-        transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
-        @connected = receive.instance_of?(Stomper::Frames::Connected)
-      end
+      @connected = false
+      @socket = @uri.create_socket
+      transmit Stomper::Frames::Connect.new(@uri.user, @uri.password)
+      @connected = receive.instance_of?(Stomper::Frames::Connected)
     end
 
     # Returns true when there is an open connection
@@ -69,13 +64,11 @@ module Stomper
     # Transmits a Stomper::Frames::Disconnect frame to the broker
     # then terminates the connection by invoking +close+.
     def disconnect
-      before_and_after(:disconnect) do
-        begin
-          @connected = false
-          transmit(Stomper::Frames::Disconnect.new)
-        ensure
-          close_socket
-        end
+      begin
+        @connected = false
+        transmit(Stomper::Frames::Disconnect.new)
+      ensure
+        close_socket
       end
     end
 
@@ -86,14 +79,12 @@ module Stomper
     # during the transmission, the connection will be forcibly closed
     # and the exception will be propegated.
     def transmit(frame)
-      before_and_after(:transmit) do
-        begin
-          @socket.transmit_frame(frame)
-          frame
-        rescue Exception => ioerr
-          close_socket :lost_connection
-          raise ioerr
-        end
+      begin
+        @socket.transmit_frame(frame)
+        frame
+      rescue Exception => ioerr
+        close_socket :lost_connection
+        raise ioerr
       end
     end
 
@@ -102,13 +93,11 @@ module Stomper
     # during the fetch, the connection will be forcibly closed and the exception
     # will be propegated.
     def receive()
-      before_and_after(:receive) do
-        begin
-          @socket.receive_frame
-        rescue Exception => ioerr
-          close_socket :lost_connection
-          raise ioerr
-        end
+      begin
+        @socket.receive_frame
+      rescue Exception => ioerr
+        close_socket :lost_connection
+        raise ioerr
       end
     end
 
@@ -125,17 +114,5 @@ module Stomper
     include ::Stomper::Transactor
     include ::Stomper::Subscriber
     include ::Stomper::Receiptor
-
-    private
-    def notify(event_sym)
-      __send__(event_sym) if respond_to?(event_sym)
-    end
-
-    def before_and_after(event_sym)
-      notify "before_#{event_sym}".to_sym
-      res = yield
-      notify "after_#{event_sym}".to_sym
-      res
-    end
   end
 end

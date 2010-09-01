@@ -1,17 +1,15 @@
 module Stomper
   module ThreadedReceiver
-    def after_initialize
-      @threaded_receiver_locks = {
-        :receiver => Mutex.new,
-        :receive => Mutex.new,
-        :transmit => Mutex.new
-      }
+    def self.extended(base)
+      base.instance_eval do
+        @receiver_mutex = Mutex.new
+      end
     end
 
     def start(opts={})
       connect unless connected?
       do_start = false
-      synchronize_on_mutex(:receiver) do
+      @receiver_mutex.synchronize do
         do_start = !started?
       end
       if do_start
@@ -31,7 +29,7 @@ module Stomper
 
     def stop
       do_stop = false
-      synchronize_on_mutex(:receiver) do
+      @receiver_mutex.synchronize do
         do_stop = receiving?
       end
       if do_stop
@@ -45,10 +43,6 @@ module Stomper
     private
     def started?
       @started
-    end
-
-    def synchronize_on_mutex(mutex_sym, &block)
-      @threaded_receiver_locks[mutex_sym].lock(&block)
     end
   end
 end
