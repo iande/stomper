@@ -1,5 +1,5 @@
 module Stomper
-  module ReceiptInterface
+  module Receiptor
     def self.included(base)
       if base.method_defined?(:receive)
         base.instance_eval do

@@ -14,7 +14,7 @@ module URI
     end
 
     def open(*args)
-      conx = Stomper::Connection.open(self)
+      conx = Stomper::Connection.open(self, :threaded_receiver => false)
       conx.extend Stomper::OpenUriInterface
       if block_given?
         begin

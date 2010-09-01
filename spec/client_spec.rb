@@ -1,9 +1,9 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
 module Stomper
-  describe ClientInterface do
+  describe Client do
     class MockConcreteClient
-      include Stomper::ClientInterface
+      include Stomper::Client
     end
 
     before(:each) do

@@ -1,9 +1,9 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
 module Stomper
-  describe SubscriberInterface do
+  describe Subscriber do
     class MockConcreteSubscriber
-      include Stomper::SubscriberInterface
+      include Stomper::Subscriber
     end
 
     before(:each) do

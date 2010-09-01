@@ -1,9 +1,9 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
 module Stomper
-  describe TransactorInterface do
+  describe Transactor do
     class MockConcreteTransactor
-      include Stomper::TransactorInterface
+      include Stomper::Transactor
     end
 
     before(:each) do

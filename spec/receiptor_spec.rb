@@ -1,9 +1,9 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
 module Stomper
-  describe ReceiptInterface do
+  describe Receiptor do
     class MockConcreteReceipter
-      include Stomper::ReceiptInterface
+      include Stomper::Receiptor
     end
 
     before(:each) do

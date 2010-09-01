@@ -1,5 +1,5 @@
 module Stomper
-  module TransactorInterface
+  module Transactor
     # Creates a new Stomper::Transaction object and evaluates
     # the supplied +block+ within a transactional context.  If
     # the block executes successfully, the transaction is committed,

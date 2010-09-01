@@ -1,5 +1,5 @@
 module Stomper
-  module SubscriberInterface
+  module Subscriber
     def self.included(base)
       if base.method_defined?(:receive)
         base.instance_eval do

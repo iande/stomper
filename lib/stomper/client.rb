@@ -1,175 +1,64 @@
 module Stomper
-  # A high-level representation of a connection to a Stomp message broker.
-  # Instances of Client can be shared safely between threads, all mutating
-  # methods should be properly synchronized.  Interactions with the stomp
-  # message broker through instances of Client are generally simpler than
-  # doing so through instances of Connection.  Client instances do not require
-  # the use of Stomper::Frames::ClientFrame objects to transmit and receive
-  # information, instead relying on specific method calls to do so.
-  #
-  # === Example Usage
-  #   client = Stomper::Client.new("stomp://localhost:61613")
-  #   client.start
-  #
-  #   client.subscribe("/queue/target1") do |msg|
-  #     puts "Received Message: #{msg.body}"
-  #   end
-  #
-  #   client.send("/queue/target1", "this is a test")
-  #   client.send("/queue/target1", "this persists", { :persistent => true })
-  #
-  #   client.transaction do |t1|
-  #     t1.send("/queue/target1", "this will never be seen")
-  #     raise "Forced Exception"
-  #   end
-  #
-  #   client.unsubscribe("/queue/target1")
-  #
-  #   client.stop
-  #   client.close
-  #
-  class Client
-    attr_reader :connection, :subscriptions
-
-    # Creates a new Client instance that will connect to the stomp broker
-    # designated by the +uri+ parameter.
-    # For details on the format of +uri+, see Stomper::Connection.
-    def initialize(uri)
-      @connection = Connection.new(uri)
-      @subscriptions = Subscriptions.new
-      @send_lock = Mutex.new
-      @receive_lock = Mutex.new
-      @run_thread = nil
-      @receiving = false
-      @receiver_lock = Mutex.new
-    end
-
-    # Starts the receiver for a Client instance.  This method
-    # must be manually invoked in order to receive frames sent
-    # by the stomp broker.  Be aware that a Client object's
-    # receiver runs in its own separate thread, and so may
-    # incur some performance penalties depending upon which
-    # Ruby environment this library is used with.  The receiver
-    # thread may be stopped by calling the +stop+ instance method.
-    # If the receiver is set to non-blocking (default behavior), the
-    # receiving thread will sleep for a number of seconds specified by the
-    # :receive_delay option between receive calls.
+  module Client
+    # Sends a string message specified by +body+ to the appropriate stomp
+    # broker destination given by +destination+.  Additional headers for the
+    # message may be specified by the +headers+ hash where the key is the header
+    # property and the value is the corresponding property's value.  The
+    # keys of +headers+ may be symbols or strings.
     #
-    # The +opts+ parameter is a hash of options, and can include:
+    # Examples:
     #
-    # [:block] Sets the receiver to either blocking if true (default: false)
-    # [:receive_delay] Sets the delay in seconds between receive calls when the receiver is non-blocking (default: 0.2)
+    #   client.send("/topic/whatever", "hello world")
     #
-    # See also: stop, receiving?
-    def start(opts={})
-      @connection.connect unless connected?
-      do_start = false
-      @receiver_lock.synchronize do
-        do_start = !receiving?
-      end
-      if do_start
-        blocking = opts.delete(:block) { false }
-        sleep_time = opts.delete(:receive_delay) { 0.2 }
-        @receiving = true
-        @run_thread = Thread.new(blocking) do |block|
-          while receiving? && connected?
-            receive(block)
-            sleep(sleep_time) unless block
-          end
-        end
-      end
-      self
-    end
-
-    # Stops the receiver for a Client instance.  The methodology
-    # employed to stop the thread should be safe (it does not
-    # make use of Thread.kill)  It is also safe to +start+ and
-    # +stop+ the receiver thread multiple times, doing so does not
-    # interrupt the connection to the stomp broker under normal
-    # circumstances.  In the interest in proper performance, it is
-    # recommend that +stop+ be called when a Client instance is
-    # no longer needed (assuming the instance's receiver thread was
-    # started, of course.)
+    #   client.send("/queue/some/destination", "hello world", { :persistent => true })
     #
-    # See also: start, receiving?
-    def stop
-      do_stop = false
-      @receiver_lock.synchronize do
-        do_stop = receiving?
-      end
-      if do_stop
-        @receiving = false
-        @run_thread.join
-        @run_thread = nil
-      end
-      self
+    def send(destination, body, headers={})
+      transmit(Stomper::Frames::Send.new(destination, body, headers))
     end
 
-    # Returns true if the receiver thread has been started
-    # by use of the +start+ command.  Otherwise, returns false.
+    # Acknowledge to the stomp broker that a given message was received.
+    # The +id_or_frame+ parameter may be either the message-id header of
+    # the received message, or an actual instance of Stomper::Frames::Message.
+    # Additional headers may be specified through the +headers+ hash.
     #
-    # See also: start, stop
-    def receiving?
-      @receiving
-    end
-
-    # Receives the next available frame from the stomp broker, if
-    # one is available.  This method is regularly invoked by the
-    # receiver thread if it is created by the +start+ method; however,
-    # it may also be invoked manually if so desired, allowing one to
-    # by-pass the threaded implementation of receiving found in using
-    # +start+ and +stop+.  If the received frame is an instance of
-    # Stomper::Frames::Message, this method will invoke any subscriptions
-    # that are responsible for the message.
+    # Examples:
     #
-    # Note: this method does not block under normal operation, as such
-    # +nil+ may be returned if there are no frames available from the
-    # stomp broker.
+    #   client.ack(received_message)
     #
-    # See also: Stomper::Subscription
-    def receive(block=false)
-      msg = @receive_lock.synchronize { @connection.receive(block) }
-      @subscriptions.perform(msg) if msg.is_a?(Stomper::Frames::Message)
-      msg
+    #   client.ack("message-0001-00451-003031")
+    #
+    def ack(id_or_frame, headers={})
+      transmit(Stomper::Frames::Ack.ack_for(id_or_frame, headers))
     end
 
-    # Returns true if the client is connected, false otherwise.
-    def connected?
-      @connection.connected?
+    # Tells the stomp broker to commit a transaction named by the
+    # supplied +transaction_id+ parameter.  When used in conjunction with
+    # +begin+, and +abort+, a means for manually handling transactional
+    # message passing is provided.
+    #
+    # See Also: transaction
+    def commit(transaction_id)
+      transmit(Stomper::Frames::Commit.new(transaction_id))
     end
 
-    # Establishes a socket connection to the stomp broker and transmits
-    # the initial "CONNECT" frame requred per the Stomp protocol.
-    def connect
-      @connection.connect
+    # Tells the stomp broker to abort a transaction named by the
+    # supplied +transaction_id+ parameter.  When used in conjunction with
+    # +begin+, and +commit+, a means for manually handling transactional
+    # message passing is provided.
+    #
+    # See Also: transaction
+    def abort(transaction_id)
+      transmit(Stomper::Frames::Abort.new(transaction_id))
     end
 
-    # Disconnects from the stomp broker politely by first transmitting
-    # a Stomper::Frames::Disconnect frame to the broker.
-    def disconnect
-      @connection.disconnect
-    end
-
-    alias close disconnect
-
-    protected
-    # We need to synchronize frame tranmissions to one at a time.
-    # My suspicion is that write/puts socket methods are not atomic, so if a message
-    # is started then interrupted and a new message is attempted, it will
-    # result in either a broken connection or an inconsistent state of our
-    # system.
-    def transmit_frame(frame)
-      @send_lock.synchronize do
-        @connection.transmit(frame)
-      end
-    end
-
-    private
-    # Toying with an idea, probably a very bad one!
-    def each # :nodoc:
-      while connected?
-        yield receive
-      end
+    # Tells the stomp broker to begin a transaction named by the
+    # supplied +transaction_id+ parameter.  When used in conjunction with
+    # +commit+, and +abort+, a means for manually handling transactional
+    # message passing is provided.
+    #
+    # See also: transaction
+    def begin(transaction_id)
+      transmit(Stomper::Frames::Begin.new(transaction_id))
     end
   end
 end
