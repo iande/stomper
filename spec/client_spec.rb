@@ -24,21 +24,6 @@ module Stomper
         @client.ack("message-id")
         @client.ack(Stomper::Frames::Message.new({:'message-id' => 'msg-001'}, "body"))
       end
-      it "should provide a begin method" do
-        @client.should respond_to(:begin)
-        @client.should_receive(:transmit).with(an_instance_of(Stomper::Frames::Begin)).once.and_return(nil)
-        @client.begin("tx-001")
-      end
-      it "should proivde an abort method" do
-        @client.should respond_to(:abort)
-        @client.should_receive(:transmit).with(an_instance_of(Stomper::Frames::Abort)).once.and_return(nil)
-        @client.abort("tx-001")
-      end
-      it "should provide a commit method" do
-        @client.should respond_to(:commit)
-        @client.should_receive(:transmit).with(an_instance_of(Stomper::Frames::Commit)).once.and_return(nil)
-        @client.commit("tx-001")
-      end
     end
   end
 end

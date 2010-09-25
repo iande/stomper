@@ -16,5 +16,35 @@ module Stomper
         nil
       end
     end
+    
+    # Tells the stomp broker to commit a transaction named by the
+    # supplied +transaction_id+ parameter.  When used in conjunction with
+    # +begin+, and +abort+, a means for manually handling transactional
+    # message passing is provided.
+    #
+    # See Also: transaction
+    def commit(transaction_id)
+      transmit(Stomper::Frames::Commit.new(transaction_id))
+    end
+
+    # Tells the stomp broker to abort a transaction named by the
+    # supplied +transaction_id+ parameter.  When used in conjunction with
+    # +begin+, and +commit+, a means for manually handling transactional
+    # message passing is provided.
+    #
+    # See Also: transaction
+    def abort(transaction_id)
+      transmit(Stomper::Frames::Abort.new(transaction_id))
+    end
+
+    # Tells the stomp broker to begin a transaction named by the
+    # supplied +transaction_id+ parameter.  When used in conjunction with
+    # +commit+, and +abort+, a means for manually handling transactional
+    # message passing is provided.
+    #
+    # See also: transaction
+    def begin(transaction_id)
+      transmit(Stomper::Frames::Begin.new(transaction_id))
+    end
   end
 end
