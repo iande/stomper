@@ -6,7 +6,7 @@ module Stomper
     # for more details.
     class Disconnect < Stomper::Frames::ClientFrame
       def initialize(headers={})
-        super('DISCONNECT', headers)
+        super(headers)
       end
     end
   end

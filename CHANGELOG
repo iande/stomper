@@ -1,7 +1,13 @@
+== 1.0 2010-09-24
+
+* Major additions to api including open-uri style interface.
+
+
 == 0.4 2010-04-23
 
 * Incremented minor version, beginning expansion.
 * Need to make a list of changes I want to make.
+
 
 == 0.3 2010-03-04
 

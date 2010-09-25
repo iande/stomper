@@ -3,10 +3,20 @@ require File.expand_path(File.join(File.dirname(__FILE__), 'shared_connection_ex
 
 module Stomper
   describe Connection do
-    before(:each) do
-      @connection = Connection.new("stomp:///", :connect_now => false)
+    describe "standard connection" do
+      before(:each) do
+        @connection = Connection.new("stomp:///")
+      end
+    
+      it_should_behave_like "All Client Connections"
     end
     
-    it_should_behave_like "All Client Connections"
+    describe "ssl connection" do
+      before(:each) do
+        @connection = Connection.new("stomp+ssl:///")
+      end
+      
+      it_should_behave_like "All Client Connections"
+    end
   end
 end

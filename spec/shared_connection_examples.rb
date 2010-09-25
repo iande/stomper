@@ -2,27 +2,27 @@ shared_examples_for "All Client Connections" do
   describe "connection initializers" do
     describe "from uri" do
       it "should accept the stomp:/// uri (no host specified)" do
-        lambda { @connection.class.new("stomp:///", :connect_now => false) }.should_not raise_error
+        lambda { @connection.class.new("stomp:///") }.should_not raise_error
       end
 
       it "should accept a uri specifying just the host" do
-        lambda { @connection.class.new("stomp://localhost/", :connect_now => false) }.should_not raise_error
+        lambda { @connection.class.new("stomp://localhost/") }.should_not raise_error
       end
 
       it "should accept a uri specifying host and port" do
-        lambda { @connection.class.new("stomp://localhost:61613/", :connect_now => false) }.should_not raise_error
+        lambda { @connection.class.new("stomp://localhost:61613/") }.should_not raise_error
       end
 
       it "should accept a uri specifying host, port and credentials" do
-        lambda { @connection.class.new("stomp://test_user:s3cr3tz@localhost:61613/", :connect_now => false) }.should_not raise_error
+        lambda { @connection.class.new("stomp://test_user:s3cr3tz@localhost:61613/") }.should_not raise_error
       end
 
       it "should accept a uri specifying a secure connection" do
-        lambda { @connection.class.new("stomp+ssl://localhost", :connect_now => false) }.should_not raise_error
+        lambda { @connection.class.new("stomp+ssl://localhost") }.should_not raise_error
       end
 
       it "should not accept a bogus URI" do
-        lambda { @connection.class.new("stomp://localhost:garbage", :connect_now => false) }.should raise_error
+        lambda { @connection.class.new("stomp://localhost:garbage") }.should raise_error
       end
 
     end
@@ -67,18 +67,13 @@ shared_examples_for "All Client Connections" do
     end
   end
 
-  describe "secure connection" do
-    before(:each) do
-      @secure_connection = @connection.class.new("stomp+ssl:///", :connect_now => false)
+  describe "exception handling" do
+    it "should close and propagate when an exception is raised on transmit" do
+      pending
     end
-    it "should transmit frames" do
-      @connection.connect
-      @frame = nil
-      @connection.transmit(Stomper::Frames::Subscribe.new("/topic/test_topic"))
-      @connection.transmit(Stomper::Frames::Send.new("/topic/test_topic", "hello"))
-      @frame = @connection.receive while @frame.nil?
-      @frame.should be_an_instance_of(Stomper::Frames::Message)
-      @frame.body.should == "hello"
+
+    it "should close and propagate when an exception is raised on receive" do
+      pending
     end
   end
 end

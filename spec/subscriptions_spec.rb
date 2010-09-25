@@ -48,14 +48,11 @@ module Stomper
         @subscriptions << Subscription.new("/queue/test/1")
         @subscriptions << Subscription.new("/queue/test/2")
         @subscriptions << Subscription.new("/queue/test/3")
-        Thread.new { sleep(0.1); @subscriptions.remove("/queue/test/1") }
-        # In general, this next step should execute before the thread has a chance to
-        # but the sleep in the map should mean that our thread gets woken up before
-        # map finishes.  However, destinations should NEVER contain "/queue/test/4"
-        # because map should be synchronized.
+        sync_thread = Thread.new { sleep(0.1); @subscriptions.remove("/queue/test/1") }
         destinations = @subscriptions.map { |sub| sleep(0.1); sub.destination }
         destinations.size.should == 3
         destinations.should == ['/queue/test/1', '/queue/test/2', '/queue/test/3']
+        sync_thread.join
         @subscriptions.size.should == 2
         @subscriptions.first.destination.should == "/queue/test/2"
       end
@@ -70,7 +67,7 @@ module Stomper
         @subscriptions << Subscription.new("/queue/test/1") { |msg| received_1 = true }
         @subscriptions << Subscription.new("/queue/test/1", 'subscription-2') { |msg| received_2 = true }
         @subscriptions << Subscription.new("/queue/test/2") { |msg| received_3 = true }
-        @message = Stomper::Frames::Message.new({'destination' => '/queue/test/1'},"test message")
+        @message = Stomper::Frames::Message.new({:destination => '/queue/test/1'},"test message")
         @subscriptions.perform(@message)
         received_1.should be_true
         received_2.should be_false
