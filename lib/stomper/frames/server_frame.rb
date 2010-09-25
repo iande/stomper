@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates a server side frame for the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class ServerFrame < IndirectFrame
 
       # Creates a new server frame corresponding to the

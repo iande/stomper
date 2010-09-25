@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates a client side frame for the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class ClientFrame < IndirectFrame
 
       # Creates a new ClientFrame instance with the specified +command+,

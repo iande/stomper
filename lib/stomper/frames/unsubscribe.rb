@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates an "UNSUBSCRIBE" frame from the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class Unsubscribe < Stomper::Frames::ClientFrame
       def initialize(destination, headers={})
         super(headers.merge({ :destination => destination }))

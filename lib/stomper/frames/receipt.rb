@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates a "RECEIPT" server side frame for the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class Receipt < Stomper::Frames::ServerFrame
 
       # Creates a new Receipt frame with the supplied +headers+ and +body+

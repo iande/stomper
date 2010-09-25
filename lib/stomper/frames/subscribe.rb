@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates a "SUBSCRIBE" frame from the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class Subscribe < Stomper::Frames::ClientFrame
       def initialize(destination, headers={})
         super({ :ack => 'auto' }.merge(headers).merge({ :destination => destination }))

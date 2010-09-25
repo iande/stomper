@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates an "ACK" frame from the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class Ack < Stomper::Frames::ClientFrame
       def initialize(message_id, headers={})
         super(headers.merge({ :'message-id' => message_id }))

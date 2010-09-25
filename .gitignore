@@ -4,3 +4,4 @@ doc/*
 coverage/*
 nbproject/*
 bin/*
+.yardoc

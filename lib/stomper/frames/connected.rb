@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates a "CONNECTED" server side frame for the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class Connected < Stomper::Frames::ServerFrame
 
       # Builds a Connected frame instance with the supplied

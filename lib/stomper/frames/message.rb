@@ -1,9 +1,6 @@
 module Stomper
   module Frames
     # Encapsulates a "MESSAGE" server side frame for the Stomp Protocol.
-    #
-    # See the {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
-    # for more details.
     class Message < Stomper::Frames::ServerFrame
 
       # Creates a new message frame with the given +headers+ and +body+
