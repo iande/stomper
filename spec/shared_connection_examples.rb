@@ -67,18 +67,13 @@ shared_examples_for "All Client Connections" do
     end
   end
 
-  describe "secure connection" do
-    before(:each) do
-      @secure_connection = @connection.class.new("stomp+ssl:///")
+  describe "exception handling" do
+    it "should close and propagate when an exception is raised on transmit" do
+      pending
     end
-    it "should transmit frames" do
-      @connection.connect
-      @frame = nil
-      @connection.transmit(Stomper::Frames::Subscribe.new("/topic/test_topic"))
-      @connection.transmit(Stomper::Frames::Send.new("/topic/test_topic", "hello"))
-      @frame = @connection.receive while @frame.nil?
-      @frame.should be_an_instance_of(Stomper::Frames::Message)
-      @frame.body.should == "hello"
+
+    it "should close and propagate when an exception is raised on receive" do
+      pending
     end
   end
 end

@@ -13,14 +13,10 @@ module Stomper
         do_start = !started?
       end
       if do_start
-        #blocking = opts.delete(:blocking) { true }
-        #sleep_time = opts.delete(:receive_delay) { 0.2 }
         @started = true
         @run_thread = Thread.new() do
           while started? && connected?
             receive
-            #receive(block)
-            #sleep(sleep_time) unless block
           end
         end
       end
@@ -30,7 +26,7 @@ module Stomper
     def stop
       do_stop = false
       @receiver_mutex.synchronize do
-        do_stop = receiving?
+        do_stop = started?
       end
       if do_stop
         @started = false

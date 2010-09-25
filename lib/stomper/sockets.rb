@@ -9,7 +9,7 @@ module Stomper
         @context.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
         tcp_sock = TCPSocket.new(host, port)
-        @socket = OpenSSL::SSL::SSLSocket.new(tcp_sock, @ssl_context)
+        @socket = OpenSSL::SSL::SSLSocket.new(tcp_sock, @context)
         @socket.sync_close = true
         @socket.connect
         super(@socket)
@@ -17,6 +17,10 @@ module Stomper
 
       def ready?
         @socket.io.ready?
+      end
+      
+      def shutdown(mode=2)
+        @socket.io.shutdown(mode)
       end
     end
 
