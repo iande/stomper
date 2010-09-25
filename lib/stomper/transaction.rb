@@ -94,6 +94,9 @@ module Stomper
     # will raise a TransactionAborted exception if the +block+ evaluation fails.
     # This behavior allows for nesting transactions and ensuring that if a nested
     # transaction fails, so do all of its ancestors.
+    #
+    # @param [Proc] block A block of code that is evaluated as part of the transaction.
+    # @raise [TransactionAborted] raises an exception if the given block raises an exception
     def perform(&block) #:yields: transaction
       begin
         @client.begin(@id)
@@ -151,14 +154,18 @@ module Stomper
     # Note that it does so by raising a TransactionAborted exception, allowing
     # the +abort+ call to force any ancestral transactions to also fail.
     #
-    # See also: commit, committed?, aborted?
+    # @see Transaction#commit
+    # @see Transaction#committed?
+    # @see Transaction#aborted?
     def abort
       raise TransactionAborted, "transaction '#{@id}' aborted explicitly" if _abort
     end
 
     # Commits this transaction unless it has already been committed or aborted.
     #
-    # See also: abort, committed?, aborted?
+    # @see Transaction#abort
+    # @see Transaction#committed?
+    # @see Transaction#aborted?
     def commit
       # Guard against sending multiple commit messages to the server for a
       # single transaction.

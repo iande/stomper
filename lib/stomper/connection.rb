@@ -1,11 +1,13 @@
 module Stomper
-  # TODO: Rewrite this.  Soon it will not be true as we are removing Client.
-  # 
-  # A low level connection to a Stomp message broker.
-  # Instances of Connection are not synchronized and thus not
-  # directly thread safe.  This is a deliberate decision as instances of
-  # Stomper::Client are the preferred way of communicating with
-  # Stomp message broker services.
+  # A connection to a Stomp message broker. This class includes the Client,
+  # Transactor, Subscriber, Receiptor and, in most cases, the ThreadedReceiver
+  # modules.
+  #
+  # @see Client
+  # @see Transactor
+  # @see Subscriber
+  # @see Receiptor
+  # @see ThreadedReceiver
   class Connection
     attr_reader :uri
 

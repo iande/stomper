@@ -6,6 +6,14 @@ module Stomper
       end
     end
 
+    # Starts the threaded receiver on a connection, calling receive
+    # on the connection repeatedly in a separate thread until the receiver
+    # is stopped or the connection is closed.
+    #
+    # @return self
+    # @see ThreadedReceiver#stop
+    # @see Connection#receive
+    # @see Connection#connected?
     def start(opts={})
       connect unless connected?
       do_start = false
@@ -23,6 +31,13 @@ module Stomper
       self
     end
 
+    # Stops the threaded receiver on a connection thereby stopping further
+    # calls to receive.
+    #
+    # @return self
+    # @see ThreadedReceiver#start
+    # @see Connection#receive
+    # @see Connection#connected?
     def stop
       do_stop = false
       @receiver_mutex.synchronize do
