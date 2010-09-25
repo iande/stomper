@@ -1,7 +1,6 @@
 module Stomper
   # This module holds all known encapsulations of
-  # frames that are part of the
-  # {Stomp Protocol Specification}[http://stomp.codehaus.org/Protocol]
+  # frames that are part of the Stomp Protocol specification.
   module Frames
     HEADER_DELIMITER = ':'
     TERMINATOR = 0

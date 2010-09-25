@@ -61,7 +61,7 @@ module Stomper
     # is an instance of Stomper::Client and is required so that the Transaction
     # instance has somewhere to forward +begin+, +ack+ and +abort+ methods
     # to.  If the +trans_id+ parameter is not specified, an id is automatically
-    # generated of the form "tx-{Time.now.to_f}".  This name can be accessed
+    # generated of the form +tx-<Time.now.to_f>+.  This name can be accessed
     # through the +id+ attribute and is used in naming the transaction to
     # the stomp broker.  If +block+ is given, the Transaction instance immediately
     # calls its perform method with the supplied +block+.
@@ -127,7 +127,7 @@ module Stomper
     # Similar to Stomper::Client#transaction, this method creates a new
     # Transaction object, nested inside of this one.  To prevent name
     # collisions, this method automatically generates a transaction id,
-    # if one is not specified, of the form "#{parent_transaction_id}-#{Time.now.to_f}.
+    # if one is not specified, of the form +<parent_transaction_id>-<Time.now.to_f>+.
     def transaction(transaction_id=nil,&block)
       # To get a transaction name guaranteed to not collide with this one
       # we will supply an explicit id to the constructor unless an id was

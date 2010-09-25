@@ -36,16 +36,17 @@ module Stomper
     #
     # If no +subscription_id+ is specified, either explicitly or through a
     # hash key of 'id' in +destination_or_options+, one may be automatically
-    # generated of the form "sub-#{Time.now.to_f}".  The automatic generation
+    # generated of the form +sub-<Time.now.to_f>+.  The automatic generation
     # of a subscription id occurs if and only if naive? returns false.
     #
     # While direct creation of Subscription instances is possible, the preferred
     # method is for them to be constructed by a Stomper::Client through the use
     # of the Stomper::Client#subscribe method.
     #
-    # See also: naive?, Stomper::Client#subscribe, Stomper::Client#unsubscribe,
-    # Stomper::Client#ack
-    #
+    # @see naive?
+    # @see Subscriber#subscribe
+    # @see Subscriber#unsubscribe
+    # @see Client#ack
     def initialize(destination_or_options, subscription_id=nil, ack=nil, selector=nil, &block)
       if destination_or_options.is_a?(Hash)
         destination = destination_or_options[:destination]

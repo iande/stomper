@@ -1,0 +1,398 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta name="Content-Type" content="text/html; charset=utf-8" />
+<title>Module: Stomper::Transactor</title>
+<link rel="stylesheet" href="../css/style.css" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="../css/common.css" type="text/css" media="screen" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  relpath = '..';
+  if (relpath != '') relpath += '/';
+</script>
+<script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+  </head>
+  <body>
+    <script type="text/javascript" charset="utf-8">
+      if (window.top.frames.main) document.body.className = 'frames';
+    </script>
+    
+    <div id="header">
+      <div id="menu">
+  
+    <a href="../_index.html">Index (T)</a> &raquo; 
+    <span class='title'><span class='object_link'><a href="../Stomper.html" title="Stomper (module)">Stomper</a></span></span>
+     &raquo; 
+    <span class="title">Transactor</span>
+  
+  
+  <div class="noframes"><span class="title">(</span><a href="." target="_top">no frames</a><span class="title">)</span></div>
+</div>
+
+      <div id="search">
+  <a id="class_list_link" href="#">Class List</a>
+  <a id="method_list_link" href="#">Method List</a>
+  <a id ="file_list_link" href="#">File List</a>
+</div>
+
+      <div class="clear"></div>
+    </div>
+    
+    <iframe id="search_frame"></iframe>
+    
+    <div id="content"><h1>Module: Stomper::Transactor
+  
+  
+  
+</h1>
+
+<dl class="box">
+  
+  
+    
+  
+    
+  
+  
+    <dt class="r1">Included in:</dt>
+    <dd class="r1"><span class='object_link'><a href="Connection.html" title="Stomper::Connection (class)">Connection</a></span></dd>
+    
+  
+  
+    <dt class="r2 last">Defined in:</dt>
+    <dd class="r2 last">lib/stomper/transactor.rb</dd>
+  
+</dl>
+<div class="clear"></div>
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small>(<a href="#" class="summary_toggle">collapse</a>)</small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#abort-instance_method" title="#abort (instance method)">- (Object) <strong>abort</strong>(transaction_id) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Tells the stomp broker to abort a transaction named by the supplied
+<tt>transaction_id</tt> parameter.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#begin-instance_method" title="#begin (instance method)">- (Object) <strong>begin</strong>(transaction_id) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Tells the stomp broker to begin a transaction named by the supplied
+<tt>transaction_id</tt> parameter.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#commit-instance_method" title="#commit (instance method)">- (Object) <strong>commit</strong>(transaction_id) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Tells the stomp broker to commit a transaction named by the supplied
+<tt>transaction_id</tt> parameter.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#transaction-instance_method" title="#transaction (instance method)">- (Object) <strong>transaction</strong>(transaction_id = nil, &amp;block) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Creates a new Stomper::Transaction object and evaluates the supplied
+<tt>block</tt> within a transactional context.
+</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+    
+    
+      <div class="method_details first">
+  <p class="signature first" id="abort-instance_method">
+  
+    - (<tt>Object</tt>) <strong>abort</strong>(transaction_id) 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Tells the stomp broker to abort a transaction named by the supplied
+<tt>transaction_id</tt> parameter. When used in conjunction with
+<tt>begin</tt>, and <tt>commit</tt>, a means for manually handling
+transactional message passing is provided.
+</p>
+<p>
+See Also: transaction
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+36
+37
+38</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/transactor.rb', line 36</span>
+
+<span class='def def kw'>def</span> <span class='abort identifier id'>abort</span><span class='lparen token'>(</span><span class='transaction_id identifier id'>transaction_id</span><span class='rparen token'>)</span>
+  <span class='transmit identifier id'>transmit</span><span class='lparen token'>(</span><span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Frames constant id'>Frames</span><span class='colon2 op'>::</span><span class='Abort constant id'>Abort</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='transaction_id identifier id'>transaction_id</span><span class='rparen token'>)</span><span class='rparen token'>)</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="begin-instance_method">
+  
+    - (<tt>Object</tt>) <strong>begin</strong>(transaction_id) 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Tells the stomp broker to begin a transaction named by the supplied
+<tt>transaction_id</tt> parameter. When used in conjunction with
+<tt>commit</tt>, and <tt>abort</tt>, a means for manually handling
+transactional message passing is provided.
+</p>
+<p>
+See also: transaction
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+46
+47
+48</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/transactor.rb', line 46</span>
+
+<span class='def def kw'>def</span> <span class='begin begin kw'>begin</span><span class='lparen token'>(</span><span class='transaction_id identifier id'>transaction_id</span><span class='rparen token'>)</span>
+  <span class='transmit identifier id'>transmit</span><span class='lparen token'>(</span><span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Frames constant id'>Frames</span><span class='colon2 op'>::</span><span class='Begin constant id'>Begin</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='transaction_id identifier id'>transaction_id</span><span class='rparen token'>)</span><span class='rparen token'>)</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="commit-instance_method">
+  
+    - (<tt>Object</tt>) <strong>commit</strong>(transaction_id) 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Tells the stomp broker to commit a transaction named by the supplied
+<tt>transaction_id</tt> parameter. When used in conjunction with
+<tt>begin</tt>, and <tt>abort</tt>, a means for manually handling
+transactional message passing is provided.
+</p>
+<p>
+See Also: transaction
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+26
+27
+28</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/transactor.rb', line 26</span>
+
+<span class='def def kw'>def</span> <span class='commit identifier id'>commit</span><span class='lparen token'>(</span><span class='transaction_id identifier id'>transaction_id</span><span class='rparen token'>)</span>
+  <span class='transmit identifier id'>transmit</span><span class='lparen token'>(</span><span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Frames constant id'>Frames</span><span class='colon2 op'>::</span><span class='Commit constant id'>Commit</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='transaction_id identifier id'>transaction_id</span><span class='rparen token'>)</span><span class='rparen token'>)</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="transaction-instance_method">
+  
+    - (<tt>Object</tt>) <strong>transaction</strong>(transaction_id = nil, &amp;block) 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Creates a new Stomper::Transaction object and evaluates the supplied
+<tt>block</tt> within a transactional context. If the block executes
+successfully, the transaction is committed, otherwise it is aborted. This
+method is meant to provide a less tedious approach to transactional
+messaging than the <tt>begin</tt>, <tt>abort</tt> and <tt>commit</tt>
+methods.
+</p>
+<p>
+See also: Stomper::ClientInterface::begin,
+Stomper::ClientInterface::commit, Stomper::ClientInterface::abort,
+Stomper::Transaction
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+12
+13
+14
+15
+16
+17
+18</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/transactor.rb', line 12</span>
+
+<span class='def def kw'>def</span> <span class='transaction identifier id'>transaction</span><span class='lparen token'>(</span><span class='transaction_id identifier id'>transaction_id</span><span class='assign token'>=</span><span class='nil nil kw'>nil</span><span class='comma token'>,</span> <span class='bitand op'>&amp;</span><span class='block identifier id'>block</span><span class='rparen token'>)</span>
+  <span class='begin begin kw'>begin</span>
+    <span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Transaction constant id'>Transaction</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='self self kw'>self</span><span class='comma token'>,</span> <span class='transaction_id identifier id'>transaction_id</span><span class='comma token'>,</span> <span class='bitand op'>&amp;</span><span class='block identifier id'>block</span><span class='rparen token'>)</span>
+  <span class='rescue rescue kw'>rescue</span> <span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='TransactionAborted constant id'>TransactionAborted</span>
+    <span class='nil nil kw'>nil</span>
+  <span class='end end kw'>end</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+    
+    <div id="footer">
+  Generated on Sat Sep 25 01:50:41 2010 by 
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.6.1 (ruby-1.8.7).
+</div>
+
+  </body>
+</html>

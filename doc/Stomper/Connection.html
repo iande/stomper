@@ -1,0 +1,962 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta name="Content-Type" content="text/html; charset=utf-8" />
+<title>Class: Stomper::Connection</title>
+<link rel="stylesheet" href="../css/style.css" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="../css/common.css" type="text/css" media="screen" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  relpath = '..';
+  if (relpath != '') relpath += '/';
+</script>
+<script type="text/javascript" charset="utf-8" src="../js/jquery.js"></script>
+<script type="text/javascript" charset="utf-8" src="../js/app.js"></script>
+
+  </head>
+  <body>
+    <script type="text/javascript" charset="utf-8">
+      if (window.top.frames.main) document.body.className = 'frames';
+    </script>
+    
+    <div id="header">
+      <div id="menu">
+  
+    <a href="../_index.html">Index (C)</a> &raquo; 
+    <span class='title'><span class='object_link'><a href="../Stomper.html" title="Stomper (module)">Stomper</a></span></span>
+     &raquo; 
+    <span class="title">Connection</span>
+  
+  
+  <div class="noframes"><span class="title">(</span><a href="." target="_top">no frames</a><span class="title">)</span></div>
+</div>
+
+      <div id="search">
+  <a id="class_list_link" href="#">Class List</a>
+  <a id="method_list_link" href="#">Method List</a>
+  <a id ="file_list_link" href="#">File List</a>
+</div>
+
+      <div class="clear"></div>
+    </div>
+    
+    <iframe id="search_frame"></iframe>
+    
+    <div id="content"><h1>Class: Stomper::Connection
+  
+  
+  
+</h1>
+
+<dl class="box">
+  
+    <dt class="r1">Inherits:</dt>
+    <dd class="r1">
+      <span class="inheritName">Object</span>
+      
+        <ul class="fullTree">
+          <li>Object</li>
+          
+            <li class="next">Stomper::Connection</li>
+          
+        </ul>
+        <a href="#" class="inheritanceTree">show all</a>
+      
+      </dd>
+    
+  
+  
+    
+      <dt class="r2">Extended by:</dt>
+      <dd class="r2"><span class='object_link'><a href="ThreadedReceiver.html" title="Stomper::ThreadedReceiver (module)">ThreadedReceiver</a></span></dd>
+      
+    
+  
+    
+      <dt class="r1">Includes:</dt>
+      <dd class="r1"><span class='object_link'><a href="Client.html" title="Stomper::Client (module)">Client</a></span>, <span class='object_link'><a href="Receiptor.html" title="Stomper::Receiptor (module)">Receiptor</a></span>, <span class='object_link'><a href="Subscriber.html" title="Stomper::Subscriber (module)">Subscriber</a></span>, <span class='object_link'><a href="Transactor.html" title="Stomper::Transactor (module)">Transactor</a></span></dd>
+      
+    
+  
+  
+  
+    <dt class="r2 last">Defined in:</dt>
+    <dd class="r2 last">lib/stomper/connection.rb</dd>
+  
+</dl>
+<div class="clear"></div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    <p>
+A connection to a Stomp message broker. This class includes the Client,
+Transactor, Subscriber, Receiptor and, in most cases, the ThreadedReceiver
+modules.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+  <h3>See Also:</h3>
+  <ul class="see">
+    
+      <li><span class='object_link'><a href="Client.html" title="Stomper::Client (module)">Client</a></span></li>
+    
+      <li><span class='object_link'><a href="Transactor.html" title="Stomper::Transactor (module)">Transactor</a></span></li>
+    
+      <li><span class='object_link'><a href="Subscriber.html" title="Stomper::Subscriber (module)">Subscriber</a></span></li>
+    
+      <li><span class='object_link'><a href="Receiptor.html" title="Stomper::Receiptor (module)">Receiptor</a></span></li>
+    
+      <li><span class='object_link'><a href="ThreadedReceiver.html" title="Stomper::ThreadedReceiver (module)">ThreadedReceiver</a></span></li>
+    
+  </ul>
+
+</div>
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  <h2>Instance Attribute Summary <small>(<a href="#" class="summary_toggle">collapse</a>)</small></h2>
+  <ul class="summary">
+    
+      <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#uri-instance_method" title="#uri (instance method)">- (Object) <strong>uri</strong> </a>
+    
+
+    
+  </span>
+  
+  
+    <span class="note title readonly">readonly</span>
+    
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Returns the value of attribute uri.
+</p>
+</div></span>
+  
+</li>
+
+    
+  </ul>
+
+
+  
+    <h2>
+      Class Method Summary
+      <small>(<a href="#" class="summary_toggle">collapse</a>)</small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#connect-class_method" title="connect (class method)">+ (Object) <strong>connect</strong>(uri, opts = {}) </a>
+    
+
+    
+      (also: open)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'></div></span>
+  
+</li>
+
+      
+    </ul>
+  
+    <h2>
+      Instance Method Summary
+      <small>(<a href="#" class="summary_toggle">collapse</a>)</small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#close_socket-instance_method" title="#close_socket (instance method)">- (Object) <strong>close_socket</strong>(conx_state = :disconnected) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Immediately closes the connection to the broker, without the formality of
+sending a Disconnect frame.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#connect-instance_method" title="#connect (instance method)">- (Object) <strong>connect</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Connects to the broker specified by the <tt>uri</tt> attribute.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#connected%3F-instance_method" title="#connected? (instance method)">- (Boolean) <strong>connected?</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Returns true when there is an open connection established to the broker.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#disconnect-instance_method" title="#disconnect (instance method)">- (Object) <strong>disconnect</strong> </a>
+    
+
+    
+      (also: #close)
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Transmits a Stomper::Frames::Disconnect frame to the broker then terminates
+the connection by invoking <tt>close</tt>.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initialize-instance_method" title="#initialize (instance method)">- (Connection) <strong>initialize</strong>(uri, opts = {}) </a>
+    
+
+    
+  </span>
+  
+    <span class="note title constructor">constructor</span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Creates a new connection to the Stomp broker specified by <tt>uri</tt>.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#receive-instance_method" title="#receive (instance method)">- (Object) <strong>receive</strong> </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Receives the next Stomp Frame from an internal FrameReader that wraps the
+underlying Stomp broker connection.
+</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#transmit-instance_method" title="#transmit (instance method)">- (Object) <strong>transmit</strong>(frame) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'><p>
+Transmits the a Stomp Frame to the connected Stomp broker by way of an
+internal FrameWriter.
+</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="ThreadedReceiver.html" title="Stomper::ThreadedReceiver (module)">ThreadedReceiver</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="ThreadedReceiver.html#extended-class_method" title="Stomper::ThreadedReceiver.extended (method)">extended</a></span>, <span class='object_link'><a href="ThreadedReceiver.html#start-instance_method" title="Stomper::ThreadedReceiver#start (method)">start</a></span>, <span class='object_link'><a href="ThreadedReceiver.html#stop-instance_method" title="Stomper::ThreadedReceiver#stop (method)">stop</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="Receiptor.html" title="Stomper::Receiptor (module)">Receiptor</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="Receiptor.html#included-class_method" title="Stomper::Receiptor.included (method)">included</a></span>, <span class='object_link'><a href="Receiptor.html#receipt_handlers-instance_method" title="Stomper::Receiptor#receipt_handlers (method)">#receipt_handlers</a></span>, <span class='object_link'><a href="Receiptor.html#receive_with_receipt_dispatch-instance_method" title="Stomper::Receiptor#receive_with_receipt_dispatch (method)">#receive_with_receipt_dispatch</a></span>, <span class='object_link'><a href="Receiptor.html#send_with_receipt_handler-instance_method" title="Stomper::Receiptor#send_with_receipt_handler (method)">#send_with_receipt_handler</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="Subscriber.html" title="Stomper::Subscriber (module)">Subscriber</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="Subscriber.html#included-class_method" title="Stomper::Subscriber.included (method)">included</a></span>, <span class='object_link'><a href="Subscriber.html#receive_with_message_dispatch-instance_method" title="Stomper::Subscriber#receive_with_message_dispatch (method)">#receive_with_message_dispatch</a></span>, <span class='object_link'><a href="Subscriber.html#subscribe-instance_method" title="Stomper::Subscriber#subscribe (method)">#subscribe</a></span>, <span class='object_link'><a href="Subscriber.html#subscriptions-instance_method" title="Stomper::Subscriber#subscriptions (method)">#subscriptions</a></span>, <span class='object_link'><a href="Subscriber.html#unsubscribe-instance_method" title="Stomper::Subscriber#unsubscribe (method)">#unsubscribe</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="Transactor.html" title="Stomper::Transactor (module)">Transactor</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="Transactor.html#abort-instance_method" title="Stomper::Transactor#abort (method)">#abort</a></span>, <span class='object_link'><a href="Transactor.html#begin-instance_method" title="Stomper::Transactor#begin (method)">#begin</a></span>, <span class='object_link'><a href="Transactor.html#commit-instance_method" title="Stomper::Transactor#commit (method)">#commit</a></span>, <span class='object_link'><a href="Transactor.html#transaction-instance_method" title="Stomper::Transactor#transaction (method)">#transaction</a></span></p>
+
+  
+  
+  
+  
+  
+  
+  
+  <h3 class="inherited">Methods included from <span class='object_link'><a href="Client.html" title="Stomper::Client (module)">Client</a></span></h3>
+  <p class="inherited"><span class='object_link'><a href="Client.html#ack-instance_method" title="Stomper::Client#ack (method)">#ack</a></span>, <span class='object_link'><a href="Client.html#send-instance_method" title="Stomper::Client#send (method)">#send</a></span></p>
+<div id="constructor_details" class="method_details_list">
+  <h2>Constructor Details</h2>
+  
+    <div class="method_details first">
+  <p class="signature first" id="initialize-instance_method">
+  
+    - (<tt><span class='object_link'><a href="" title="Stomper::Connection (class)">Connection</a></span></tt>) <strong>initialize</strong>(uri, opts = {}) 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Creates a new connection to the Stomp broker specified by <tt>uri</tt>. The
+<tt>uri</tt> parameter may be either a URI object, or something that can be
+parsed by URI.parse, such as a string. Some examples of acceptable
+<tt>uri</tt> forms include:
+</p>
+<dl>
+<dt>stomp:///</dt><dd>Connection will be made to &#8216;localhost&#8217; on port 61613 with no
+login credentials.
+
+</dd>
+<dt>stomp+ssl:///</dt><dd>Same as above, but connection will be made on port 61612 and wrapped by
+SSL.
+
+</dd>
+<dt>stomp://user:pass@host.tld</dt><dd>Connection will be made to &#8216;host.tld&#8217;, authenticating as
+&#8216;user&#8217; with a password of &#8216;pass&#8217;.
+
+</dd>
+<dt>stomp://user:pass@host.tld:86753</dt><dd>Connection will be made to &#8216;host.tld&#8217; on port 86753,
+authenticating as above.
+
+</dd>
+<dt>stomp://host.tld:86753</dt><dd>Connection will be made to &#8216;host.tld&#8217; on port 86753, with no
+authentication.
+
+</dd>
+</dl>
+<p>
+In order to wrap the connection with SSL, the schema of <tt>uri</tt> must
+be &#8216;stomp+ssl&#8217;; however, if SSL is not required, the schema is
+essentially ignored. The default port for the &#8216;stomp+ssl&#8217;
+schema is 61612, all other schemas default to port 61613.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <h3>Raises:</h3>
+<ul class="raise">
+  
+    <li>
+      
+        <span class='type'>(<tt>ArgumentError</tt>)</span>
+      
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+37
+38
+39
+40
+41
+42
+43
+44
+45</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 37</span>
+
+<span class='def def kw'>def</span> <span class='initialize identifier id'>initialize</span><span class='lparen token'>(</span><span class='uri identifier id'>uri</span><span class='comma token'>,</span> <span class='opts identifier id'>opts</span><span class='assign token'>=</span><span class='lbrace token'>{</span><span class='rbrace token'>}</span><span class='rparen token'>)</span>
+  <span class='if if kw'>if</span> <span class='opts identifier id'>opts</span><span class='dot token'>.</span><span class='delete identifier id'>delete</span><span class='lparen token'>(</span><span class='symbol val'>:threaded_receiver</span><span class='rparen token'>)</span> <span class='lbrace token'>{</span> <span class='true true kw'>true</span> <span class='rbrace token'>}</span>
+    <span class='extend identifier id'>extend</span> <span class='colon3 op'>::</span><span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='ThreadedReceiver constant id'>ThreadedReceiver</span>
+  <span class='end end kw'>end</span>
+  <span class='@uri ivar id'>@uri</span> <span class='assign token'>=</span> <span class='lparen token'>(</span><span class='uri identifier id'>uri</span><span class='dot token'>.</span><span class='is_a? fid id'>is_a?</span><span class='lparen token'>(</span><span class='URI constant id'>URI</span><span class='rparen token'>)</span> <span class='andop op'>&amp;&amp;</span> <span class='uri identifier id'>uri</span><span class='rparen token'>)</span> <span class='orop op'>||</span> <span class='URI constant id'>URI</span><span class='dot token'>.</span><span class='parse identifier id'>parse</span><span class='lparen token'>(</span><span class='uri identifier id'>uri</span><span class='rparen token'>)</span>
+  <span class='raise identifier id'>raise</span> <span class='ArgumentError constant id'>ArgumentError</span><span class='comma token'>,</span> <span class='string val'>'Expected URI schema to be one of stomp or stomp+ssl'</span> <span class='unless unless_mod kw'>unless</span> <span class='@uri ivar id'>@uri</span><span class='dot token'>.</span><span class='respond_to? fid id'>respond_to?</span><span class='lparen token'>(</span><span class='symbol val'>:create_socket</span><span class='rparen token'>)</span>
+  <span class='@connected ivar id'>@connected</span> <span class='assign token'>=</span> <span class='false false kw'>false</span>
+  <span class='@writer ivar id'>@writer</span> <span class='assign token'>=</span> <span class='@reader ivar id'>@reader</span> <span class='assign token'>=</span> <span class='nil nil kw'>nil</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+  
+</div>
+
+  <div id="instance_attr_details" class="attr_details">
+    <h2>Instance Attribute Details</h2>
+    
+      
+      <span id=""></span>
+      <span id="uri-instance_method"></span>
+      <div class="method_details first">
+  <p class="signature first" id="uri-instance_method">
+  
+    - (<tt>Object</tt>) <strong>uri</strong>  <span class="extras">(readonly)</span>
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Returns the value of attribute uri
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+12
+13
+14</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 12</span>
+
+<span class='def def kw'>def</span> <span class='uri identifier id'>uri</span>
+  <span class='@uri ivar id'>@uri</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+
+  <div id="class_method_details" class="method_details_list">
+    <h2>Class Method Details</h2>
+    
+    
+      <div class="method_details first">
+  <p class="signature first" id="connect-class_method">
+  
+    + (<tt>Object</tt>) <strong>connect</strong>(uri, opts = {}) 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='open-class_method'>open</span></span>
+    </span>
+  
+</p><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+15
+16
+17
+18
+19</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 15</span>
+
+<span class='def def kw'>def</span> <span class='connect identifier id'>connect</span><span class='lparen token'>(</span><span class='uri identifier id'>uri</span><span class='comma token'>,</span> <span class='opts identifier id'>opts</span><span class='assign token'>=</span><span class='lbrace token'>{</span><span class='rbrace token'>}</span><span class='rparen token'>)</span>
+  <span class='connex identifier id'>connex</span> <span class='assign token'>=</span> <span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='uri identifier id'>uri</span><span class='comma token'>,</span> <span class='opts identifier id'>opts</span><span class='rparen token'>)</span>
+  <span class='connex identifier id'>connex</span><span class='dot token'>.</span><span class='connect identifier id'>connect</span>
+  <span class='connex identifier id'>connex</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+    
+    
+      <div class="method_details first">
+  <p class="signature first" id="close_socket-instance_method">
+  
+    - (<tt>Object</tt>) <strong>close_socket</strong>(conx_state = :disconnected) 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Immediately closes the connection to the broker, without the formality of
+sending a Disconnect frame.
+</p>
+<p>
+See also: disconnect
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+110
+111
+112
+113</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 110</span>
+
+<span class='def def kw'>def</span> <span class='close_socket identifier id'>close_socket</span><span class='lparen token'>(</span><span class='conx_state identifier id'>conx_state</span> <span class='assign token'>=</span> <span class='symbol val'>:disconnected</span><span class='rparen token'>)</span>
+  <span class='@socket ivar id'>@socket</span><span class='dot token'>.</span><span class='shutdown identifier id'>shutdown</span><span class='lparen token'>(</span><span class='integer val'>2</span><span class='rparen token'>)</span>
+  <span class='@socket ivar id'>@socket</span><span class='dot token'>.</span><span class='close identifier id'>close</span> <span class='if if_mod kw'>if</span> <span class='@socket ivar id'>@socket</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="connect-instance_method">
+  
+    - (<tt>Object</tt>) <strong>connect</strong> 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Connects to the broker specified by the <tt>uri</tt> attribute. By default,
+this method is invoked when a new Stomper::Connection is created.
+</p>
+<p>
+See also: new
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+53
+54
+55
+56
+57
+58</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 53</span>
+
+<span class='def def kw'>def</span> <span class='connect identifier id'>connect</span>
+  <span class='@connected ivar id'>@connected</span> <span class='assign token'>=</span> <span class='false false kw'>false</span>
+  <span class='@socket ivar id'>@socket</span> <span class='assign token'>=</span> <span class='@uri ivar id'>@uri</span><span class='dot token'>.</span><span class='create_socket identifier id'>create_socket</span>
+  <span class='transmit identifier id'>transmit</span> <span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Frames constant id'>Frames</span><span class='colon2 op'>::</span><span class='Connect constant id'>Connect</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='@uri ivar id'>@uri</span><span class='dot token'>.</span><span class='user identifier id'>user</span><span class='comma token'>,</span> <span class='@uri ivar id'>@uri</span><span class='dot token'>.</span><span class='password identifier id'>password</span><span class='rparen token'>)</span>
+  <span class='@connected ivar id'>@connected</span> <span class='assign token'>=</span> <span class='receive identifier id'>receive</span><span class='dot token'>.</span><span class='instance_of? fid id'>instance_of?</span><span class='lparen token'>(</span><span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Frames constant id'>Frames</span><span class='colon2 op'>::</span><span class='Connected constant id'>Connected</span><span class='rparen token'>)</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="connected?-instance_method">
+  
+    - (<tt>Boolean</tt>) <strong>connected?</strong> 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Returns true when there is an open connection established to the broker.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <h3>Returns:</h3>
+<ul class="return">
+  
+    <li>
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+62
+63
+64</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 62</span>
+
+<span class='def def kw'>def</span> <span class='connected? fid id'>connected?</span>
+  <span class='@connected ivar id'>@connected</span> <span class='andop op'>&amp;&amp;</span> <span class='@socket ivar id'>@socket</span> <span class='andop op'>&amp;&amp;</span> <span class='notop op'>!</span><span class='@socket ivar id'>@socket</span><span class='dot token'>.</span><span class='closed? fid id'>closed?</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="disconnect-instance_method">
+  
+    - (<tt>Object</tt>) <strong>disconnect</strong> 
+  
+
+  
+    <span class="aliases">Also known as:
+    <span class="names"><span id='close-instance_method'>close</span></span>
+    </span>
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Transmits a Stomper::Frames::Disconnect frame to the broker then terminates
+the connection by invoking <tt>close</tt>.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+68
+69
+70
+71
+72
+73
+74
+75</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 68</span>
+
+<span class='def def kw'>def</span> <span class='disconnect identifier id'>disconnect</span>
+  <span class='begin begin kw'>begin</span>
+    <span class='@connected ivar id'>@connected</span> <span class='assign token'>=</span> <span class='false false kw'>false</span>
+    <span class='transmit identifier id'>transmit</span><span class='lparen token'>(</span><span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Frames constant id'>Frames</span><span class='colon2 op'>::</span><span class='Disconnect constant id'>Disconnect</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='rparen token'>)</span>
+  <span class='ensure ensure kw'>ensure</span>
+    <span class='close_socket identifier id'>close_socket</span>
+  <span class='end end kw'>end</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="receive-instance_method">
+  
+    - (<tt>Object</tt>) <strong>receive</strong> 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Receives the next Stomp Frame from an internal FrameReader that wraps the
+underlying Stomp broker connection. If an exception is raised during the
+fetch, the connection will be forcibly closed and the exception will be
+propegated.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+97
+98
+99
+100
+101
+102
+103
+104</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 97</span>
+
+<span class='def def kw'>def</span> <span class='receive identifier id'>receive</span><span class='lparen token'>(</span><span class='rparen token'>)</span>
+  <span class='begin begin kw'>begin</span>
+    <span class='@socket ivar id'>@socket</span><span class='dot token'>.</span><span class='receive_frame identifier id'>receive_frame</span>
+  <span class='rescue rescue kw'>rescue</span> <span class='Exception constant id'>Exception</span> <span class='assign token'>=</span><span class='gt op'>&gt;</span> <span class='ioerr identifier id'>ioerr</span>
+    <span class='close_socket identifier id'>close_socket</span> <span class='symbol val'>:lost_connection</span>
+    <span class='raise identifier id'>raise</span> <span class='ioerr identifier id'>ioerr</span>
+  <span class='end end kw'>end</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <p class="signature " id="transmit-instance_method">
+  
+    - (<tt>Object</tt>) <strong>transmit</strong>(frame) 
+  
+
+  
+</p><div class="docstring">
+  <div class="discussion">
+    <p>
+Transmits the a Stomp Frame to the connected Stomp broker by way of an
+internal FrameWriter. If an exception is raised during the transmission,
+the connection will be forcibly closed and the exception will be
+propegated.
+</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+83
+84
+85
+86
+87
+88
+89
+90
+91</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'lib/stomper/connection.rb', line 83</span>
+
+<span class='def def kw'>def</span> <span class='transmit identifier id'>transmit</span><span class='lparen token'>(</span><span class='frame identifier id'>frame</span><span class='rparen token'>)</span>
+  <span class='begin begin kw'>begin</span>
+    <span class='@socket ivar id'>@socket</span><span class='dot token'>.</span><span class='transmit_frame identifier id'>transmit_frame</span><span class='lparen token'>(</span><span class='frame identifier id'>frame</span><span class='rparen token'>)</span>
+    <span class='frame identifier id'>frame</span>
+  <span class='rescue rescue kw'>rescue</span> <span class='Exception constant id'>Exception</span> <span class='assign token'>=</span><span class='gt op'>&gt;</span> <span class='ioerr identifier id'>ioerr</span>
+    <span class='close_socket identifier id'>close_socket</span> <span class='symbol val'>:lost_connection</span>
+    <span class='raise identifier id'>raise</span> <span class='ioerr identifier id'>ioerr</span>
+  <span class='end end kw'>end</span>
+<span class='end end kw'>end</span>
+</pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+    
+    <div id="footer">
+  Generated on Sat Sep 25 01:50:40 2010 by 
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.6.1 (ruby-1.8.7).
+</div>
+
+  </body>
+</html>
