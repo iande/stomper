@@ -42,154 +42,135 @@
     <iframe id="search_frame"></iframe>
     
     <div id="content"><div id='filecontents'><h1>README</h1>
-<p>
-Stomper is a library for connecting to and interacting with a message
-broker service that supports the Stomp 1.0 Protocol
-</p>
-<p>
-@see http://stomp.github.com/stomp-specification-1-0.html Stomp 1.0
-Specification
-</p>
+
+<p>Stomper is a library for connecting to and interacting with a message broker
+service that supports the Stomp 1.0 Protocol</p>
+
+<p>See: <a href="http://stomp.github.com/stomp-specification-1-0.html">Stomp 1.0 Specification</a></p>
+
 <h2>OpenURI Example Usage</h2>
-<pre class="code">
-    <span class='comment val'># A contrived example: Send two messages, receive them back</span>
-    <span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/queue/testing&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
-      <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='puts identifier id'>puts</span> <span class='string val'>&quot;Hello World&quot;</span>
-      <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='write identifier id'>write</span> <span class='string val'>&quot;You may disagree, but I find this useful!&quot;</span>
-      <span class='messages identifier id'>messages</span> <span class='assign token'>=</span> <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='first identifier id'>first</span><span class='lparen token'>(</span><span class='integer val'>2</span><span class='rparen token'>)</span> <span class='comment val'># =&gt; [ Message(&quot;Hello World&quot;), Message(&quot;You may disagree...&quot;) ]</span>
-    <span class='end end kw'>end</span>
 
-    <span class='comment val'># Another example: connect, send a message to a destination and disconnect</span>
-    <span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/topic/whatever&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
-      <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='put identifier id'>put</span> <span class='string val'>&quot;PING!&quot;</span>
-    <span class='end end kw'>end</span>
+<pre class="code"><span class='comment val'># A contrived example: Send two messages, receive them back</span>
+<span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/queue/testing&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
+  <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='puts identifier id'>puts</span> <span class='string val'>&quot;Hello World&quot;</span>
+  <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='write identifier id'>write</span> <span class='string val'>&quot;You may disagree, but I find this useful!&quot;</span>
+  <span class='messages identifier id'>messages</span> <span class='assign token'>=</span> <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='first identifier id'>first</span><span class='lparen token'>(</span><span class='integer val'>2</span><span class='rparen token'>)</span> <span class='comment val'># =&gt; [ Message(&quot;Hello World&quot;), Message(&quot;You may disagree...&quot;) ]</span>
+<span class='end end kw'>end</span>
 
-    <span class='comment val'># Another example: connect, subscribe and process indefinitely</span>
-    <span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/queue/worker&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
-      <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='each identifier id'>each</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='m identifier id'>m</span><span class='bitor op'>|</span>
-        <span class='logger identifier id'>logger</span><span class='dot token'>.</span><span class='info identifier id'>info</span> <span class='dstring node'>&quot;Received a message: #{m.body}&quot;</span>
-        <span class='comment val'># Do important work based on message</span>
-      <span class='end end kw'>end</span>
-    <span class='end end kw'>end</span>
+<span class='comment val'># Another example: connect, send a message to a destination and disconnect</span>
+<span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/topic/whatever&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
+  <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='put identifier id'>put</span> <span class='string val'>&quot;PING!&quot;</span>
+<span class='end end kw'>end</span>
 
-    <span class='comment val'># Final example: connect, get a single message, and disconnect</span>
-    <span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp+ssl://localhost/queue/odd_jobs&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
-      <span class='comment val'># you can use get, gets, read or first, they're all the same at</span>
-      <span class='comment val'># this time and for the foreseeable future.</span>
-      <span class='incoming_message identifier id'>incoming_message</span> <span class='assign token'>=</span> <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='get identifier id'>get</span>
-      <span class='comment val'># Do some work on incoming_message</span>
-    <span class='end end kw'>end</span>
+<span class='comment val'># Another example: connect, subscribe and process indefinitely</span>
+<span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/queue/worker&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
+  <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='each identifier id'>each</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='m identifier id'>m</span><span class='bitor op'>|</span>
+    <span class='logger identifier id'>logger</span><span class='dot token'>.</span><span class='info identifier id'>info</span> <span class='dstring node'>&quot;Received a message: #{m.body}&quot;</span>
+    <span class='comment val'># Do important work based on message</span>
+  <span class='end end kw'>end</span>
+<span class='end end kw'>end</span>
+
+<span class='comment val'># Final example: connect, get a single message, and disconnect</span>
+<span class='open identifier id'>open</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp+ssl://localhost/queue/odd_jobs&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='s identifier id'>s</span><span class='bitor op'>|</span>
+  <span class='comment val'># you can use get, gets, read or first, they're all the same at</span>
+  <span class='comment val'># this time and for the foreseeable future.</span>
+  <span class='incoming_message identifier id'>incoming_message</span> <span class='assign token'>=</span> <span class='s identifier id'>s</span><span class='dot token'>.</span><span class='get identifier id'>get</span>
+  <span class='comment val'># Do some work on incoming_message</span>
+<span class='end end kw'>end</span>
 </pre>
-<p>
-This interface has been a goal of mine for this library for some time now.
-I understand the value in a more typical socket object approach, and to
-that end the client interface still exists (albeit there&#8217;s been quite
-a lot of refractoring.) However,
-</p>
-<pre class="code">
-    <span class='stomp identifier id'>stomp</span> <span class='assign token'>=</span> <span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Connection constant id'>Connection</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/&quot;</span><span class='rparen token'>)</span>
-    <span class='stomp identifier id'>stomp</span><span class='dot token'>.</span><span class='subscribe identifier id'>subscribe</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/blather&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='m identifier id'>m</span><span class='bitor op'>|</span>
-      <span class='comment val'># ...</span>
-    <span class='end end kw'>end</span>
-    <span class='stomp identifier id'>stomp</span><span class='dot token'>.</span><span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/topic/other&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;Hello&quot;</span><span class='rparen token'>)</span>
+
+<p>This interface has been a goal of mine for this library for some time now.  I
+understand the value in a more typical socket object approach, and to that end
+the client interface still exists (albeit there's been quite a lot of refractoring.)
+However,</p>
+
+<pre class="code"><span class='stomp identifier id'>stomp</span> <span class='assign token'>=</span> <span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Connection constant id'>Connection</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://localhost/&quot;</span><span class='rparen token'>)</span>
+<span class='stomp identifier id'>stomp</span><span class='dot token'>.</span><span class='subscribe identifier id'>subscribe</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/blather&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='m identifier id'>m</span><span class='bitor op'>|</span>
+  <span class='comment val'># ...</span>
+<span class='end end kw'>end</span>
+<span class='stomp identifier id'>stomp</span><span class='dot token'>.</span><span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/topic/other&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;Hello&quot;</span><span class='rparen token'>)</span>
 </pre>
-<p>
-just doesn&#8217;t feel very Ruby-esque to me. While the two methods for
-interacting with Stomper connections appear very different, <tt>s</tt> in
-the OpenURI examples above really is a Stomper::Connection, but with some
-added extensions for handling <tt>put</tt>, <tt>get</tt>, <tt>each</tt>,
-and so forth. One note: <tt>read</tt>, <tt>get</tt> and <tt>gets</tt> are
-all aliases for <tt>first</tt>. Similarly, <tt>puts</tt> is an alias for
-<tt>put</tt>. However, <tt>write</tt> is slightly different. The message
-broker I most often use the STOMP protocol with is Apache ActiveMQ which,
-at the time of this writing, uses the absence or presence of a
-`content-length` header to discriminate between a JMS TextMessage and a
-BytesMessage. The <tt>put</tt> and <tt>puts</tt> methods will force Stomper
-to omit that header, while <tt>write</tt> will force its presence.
-</p>
+
+<p>just doesn't feel very Ruby-esque to me.  While the two methods for interacting with
+Stomper connections appear very different, +s+ in the OpenURI examples above
+really is a Stomper::Connection, but with some added extensions for handling
++put+, +get+, +each+, and so forth.  One note: +read+, +get+ and +gets+ are
+all aliases for +first+.  Similarly, +puts+ is an alias for +put+.  However,
++write+ is slightly different.  The message broker I most often use the
+STOMP protocol with is Apache ActiveMQ which, at the time of this writing, uses
+the absence or presence of a <code>content-length</code> header to discriminate between a
+JMS TextMessage and a BytesMessage.  The +put+ and +puts+ methods will force
+Stomper to omit that header, while +write+ will force its presence.</p>
+
 <h2>Example Usage</h2>
-<pre class="code">
-    <span class='client identifier id'>client</span> <span class='assign token'>=</span> <span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Client constant id'>Client</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://my_username:s3cr3tz@localhost:61613&quot;</span><span class='rparen token'>)</span>
-    <span class='comment val'># Clients must be explicitly started to automatically receive incoming</span>
-    <span class='comment val'># messages.</span>
-    <span class='client identifier id'>client</span><span class='dot token'>.</span><span class='start identifier id'>start</span>
 
-    <span class='client identifier id'>client</span><span class='dot token'>.</span><span class='subscribe identifier id'>subscribe</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='msg identifier id'>msg</span><span class='bitor op'>|</span>
-      <span class='puts identifier id'>puts</span> <span class='msg identifier id'>msg</span><span class='dot token'>.</span><span class='body identifier id'>body</span>
-    <span class='end end kw'>end</span>
+<pre class="code"><span class='client identifier id'>client</span> <span class='assign token'>=</span> <span class='Stomper constant id'>Stomper</span><span class='colon2 op'>::</span><span class='Client constant id'>Client</span><span class='dot token'>.</span><span class='new identifier id'>new</span><span class='lparen token'>(</span><span class='string val'>&quot;stomp://my_username:s3cr3tz@localhost:61613&quot;</span><span class='rparen token'>)</span>
+<span class='comment val'># Clients must be explicitly started to automatically receive incoming</span>
+<span class='comment val'># messages.</span>
+<span class='client identifier id'>client</span><span class='dot token'>.</span><span class='start identifier id'>start</span>
 
-    <span class='comment val'># Send a simple message</span>
-    <span class='client identifier id'>client</span><span class='dot token'>.</span><span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;hello world!&quot;</span><span class='rparen token'>)</span>
+<span class='client identifier id'>client</span><span class='dot token'>.</span><span class='subscribe identifier id'>subscribe</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='rparen token'>)</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='msg identifier id'>msg</span><span class='bitor op'>|</span>
+  <span class='puts identifier id'>puts</span> <span class='msg identifier id'>msg</span><span class='dot token'>.</span><span class='body identifier id'>body</span>
+<span class='end end kw'>end</span>
 
-    <span class='comment val'># Send a message within a transaction.  This usage is new to stomper</span>
-    <span class='comment val'># however, one can manually manage transactions as well.</span>
-    <span class='client identifier id'>client</span><span class='dot token'>.</span><span class='transaction identifier id'>transaction</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='t identifier id'>t</span><span class='bitor op'>|</span>
-      <span class='t identifier id'>t</span><span class='dot token'>.</span><span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;a transactioned message&quot;</span><span class='rparen token'>)</span>
-    <span class='end end kw'>end</span>
+<span class='comment val'># Send a simple message</span>
+<span class='client identifier id'>client</span><span class='dot token'>.</span><span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;hello world!&quot;</span><span class='rparen token'>)</span>
 
-    <span class='comment val'># If the block provided to #transaction accepts a single parameter,</span>
-    <span class='comment val'># the client yields the Transaction object to the block, otherwise</span>
-    <span class='comment val'># the block is instance_eval'd within the Transaction object.</span>
-    <span class='client identifier id'>client</span><span class='dot token'>.</span><span class='transaction identifier id'>transaction</span> <span class='do do kw'>do</span>
-      <span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;a message you will never receive&quot;</span><span class='rparen token'>)</span>
-      <span class='comment val'># Nested transactions, failures percolate up to parent transactions.</span>
-      <span class='transaction identifier id'>transaction</span> <span class='do do kw'>do</span>
-        <span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;because I am about to fail!&quot;</span><span class='rparen token'>)</span>
-        <span class='raise identifier id'>raise</span> <span class='string val'>&quot;by forcing an error in a nested transaction&quot;</span>
-      <span class='end end kw'>end</span>
-    <span class='end end kw'>end</span>
+<span class='comment val'># Send a message within a transaction.  This usage is new to stomper</span>
+<span class='comment val'># however, one can manually manage transactions as well.</span>
+<span class='client identifier id'>client</span><span class='dot token'>.</span><span class='transaction identifier id'>transaction</span> <span class='do do kw'>do</span> <span class='bitor op'>|</span><span class='t identifier id'>t</span><span class='bitor op'>|</span>
+  <span class='t identifier id'>t</span><span class='dot token'>.</span><span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;a transactioned message&quot;</span><span class='rparen token'>)</span>
+<span class='end end kw'>end</span>
 
-    <span class='comment val'># Later ...</span>
-    <span class='client identifier id'>client</span><span class='dot token'>.</span><span class='stop identifier id'>stop</span>
-    <span class='client identifier id'>client</span><span class='dot token'>.</span><span class='close identifier id'>close</span>
+<span class='comment val'># If the block provided to #transaction accepts a single parameter,</span>
+<span class='comment val'># the client yields the Transaction object to the block, otherwise</span>
+<span class='comment val'># the block is instance_eval'd within the Transaction object.</span>
+<span class='client identifier id'>client</span><span class='dot token'>.</span><span class='transaction identifier id'>transaction</span> <span class='do do kw'>do</span>
+  <span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;a message you will never receive&quot;</span><span class='rparen token'>)</span>
+  <span class='comment val'># Nested transactions, failures percolate up to parent transactions.</span>
+  <span class='transaction identifier id'>transaction</span> <span class='do do kw'>do</span>
+    <span class='send identifier id'>send</span><span class='lparen token'>(</span><span class='string val'>&quot;/queue/hello&quot;</span><span class='comma token'>,</span> <span class='string val'>&quot;because I am about to fail!&quot;</span><span class='rparen token'>)</span>
+    <span class='raise identifier id'>raise</span> <span class='string val'>&quot;by forcing an error in a nested transaction&quot;</span>
+  <span class='end end kw'>end</span>
+<span class='end end kw'>end</span>
+
+<span class='comment val'># Later ...</span>
+<span class='client identifier id'>client</span><span class='dot token'>.</span><span class='stop identifier id'>stop</span>
+<span class='client identifier id'>client</span><span class='dot token'>.</span><span class='close identifier id'>close</span>
 </pre>
+
 <h2>To-Do</h2>
+
 <ul>
-<li>Provide other methods for handling the receiver.
-
-</li>
-<li>Provide the `pipe` method on Stomper::Client
-
-</li>
-<li>Allow SSL verification if requested (option :verify_ssl?)
-
-</li>
-<li>Re-evaluate how to handle a &#8216;reliable&#8217; connection.
-
-</li>
+<li>Provide other methods for handling the receiver.</li>
+<li>Provide the <code>pipe</code> method on Stomper::Client</li>
+<li>Allow SSL verification if requested (option :verify_ssl?)</li>
+<li>Re-evaluate how to handle a 'reliable' connection.</li>
 </ul>
+
+
 <h2>License</h2>
-<p>
-Stomper is released under the Apache License 2.0
-</p>
+
+<p>Stomper is released under the Apache License 2.0</p>
+
 <h2>Pointless Backstory</h2>
-<p>
-Stomper began its life as a mere fork of the stomp gem. However, as changes
-were made and desires grew, the fork began breaking API compatibility with
-the original gem, and thus Stomper was conceived.
-</p>
-<p>
-@see http://github.com/js/stomp Stomp
-</p>
+
+<p>Stomper began its life as a mere fork of the stomp gem.
+However, as changes were made and desires grew, the fork began breaking
+API compatibility with the original gem, and thus Stomper was conceived.</p>
+
+<p>See: <a href="http://github.com/js/stomp">stomp gem</a></p>
+
 <h2>Other Stuff</h2>
-<table>
-<tr><td valign="top">Primary Author:</td><td>Ian D. Eccles
 
-</td></tr>
-<tr><td valign="top">Source Repository:</td><td>http://github.com/iande/stomper
-
-</td></tr>
-<tr><td valign="top">Current Version:</td><td>1.0.0
-
-</td></tr>
-<tr><td valign="top">Last Updated:</td><td>2010-09-25
-
-</td></tr>
-</table>
+<p>Primary Author:: Ian D. Eccles
+Source Repository:: http://github.com/iande/stomper
+Current Version:: 1.0.0
+Last Updated:: 2010-09-25</p>
 </div></div>
     
     <div id="footer">
-  Generated on Sat Sep 25 01:50:39 2010 by 
+  Generated on Mon Sep 27 14:53:33 2010 by 
   <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
   0.6.1 (ruby-1.8.7).
 </div>

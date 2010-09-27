@@ -1,12 +1,12 @@
-=README
+#README
 
 Stomper is a library for connecting to and interacting with a message broker
 service that supports the Stomp 1.0 Protocol
 
-@see http://stomp.github.com/stomp-specification-1-0.html Stomp 1.0 Specification
+See: [Stomp 1.0 Specification](http://stomp.github.com/stomp-specification-1-0.html)
 
 
-== OpenURI Example Usage
+## OpenURI Example Usage
 
     # A contrived example: Send two messages, receive them back
     open("stomp://localhost/queue/testing") do |s|
@@ -58,7 +58,7 @@ the absence or presence of a `content-length` header to discriminate between a
 JMS TextMessage and a BytesMessage.  The +put+ and +puts+ methods will force
 Stomper to omit that header, while +write+ will force its presence.
 
-== Example Usage
+## Example Usage
 
     client = Stomper::Client.new("stomp://my_username:s3cr3tz@localhost:61613")
     # Clients must be explicitly started to automatically receive incoming
@@ -94,25 +94,25 @@ Stomper to omit that header, while +write+ will force its presence.
     client.stop
     client.close
 
-== To-Do
+## To-Do
 * Provide other methods for handling the receiver.
 * Provide the `pipe` method on Stomper::Client
 * Allow SSL verification if requested (option :verify_ssl?)
 * Re-evaluate how to handle a 'reliable' connection.
 
-== License
+## License
 
 Stomper is released under the Apache License 2.0
 
-== Pointless Backstory
+## Pointless Backstory
 
 Stomper began its life as a mere fork of the stomp gem.
 However, as changes were made and desires grew, the fork began breaking
 API compatibility with the original gem, and thus Stomper was conceived.
 
-@see http://github.com/js/stomp Stomp
+See: [stomp gem](http://github.com/js/stomp)
 
-== Other Stuff
+## Other Stuff
 
 Primary Author:: Ian D. Eccles
 Source Repository:: http://github.com/iande/stomper
