@@ -1,11 +1,8 @@
 #README
 
 Stomper is a library for connecting to and interacting with a message broker
-service that supports the Stomp 1.0 and 1.1 protocols
-
-See: [Stomp 1.0 Specification](http://stomp.github.com/stomp-specification-1-0.html)
-See: [Stomp 1.1 Specification](http://stomp.github.com/stomp-specification-1-1.html)
-
+service that supports the Stomp [1.0](http://stomp.github.com/stomp-specification-1-0.html)
+and [1.1](http://stomp.github.com/stomp-specification-1-1.html) protocols.
 
 As the Stomp 1.1 specification is currently a draft, this code base is bound
 to change quite a bit while the specification stabilizes.
