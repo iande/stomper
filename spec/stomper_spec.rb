@@ -4,6 +4,6 @@ require 'spec_helper'
 describe Stomper do
   it "should define a version" do
     Stomper.const_defined?(:VERSION).should be_true
-    Stomper::VERSION.should == '1.1.0'
+    Stomper::VERSION.should == '2.0.0pre1'
   end
 end

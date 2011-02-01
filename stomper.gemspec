@@ -23,5 +23,8 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>= 1.9.0'
   s.has_rdoc = 'yard'
   s.add_development_dependency('rspec', '>= 2.0.0')
-  s.add_development_dependency('simplecov')
+  s.add_development_dependency('simplecov', '>= 0.3.0')
+  s.add_development_dependency('yard', '>= 0.6.0')
+  s.add_development_dependency('rake')
+  s.add_development_dependency('bluecloth')
 end
