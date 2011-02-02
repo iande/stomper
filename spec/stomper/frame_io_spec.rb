@@ -12,7 +12,7 @@ module Stomper
       it "should properly serialize a common frame" do
         frame = mock('frame')
         frame.should_receive(:command).at_least(:once).and_return('FRAME')
-        frame.should_receive(:headers).at_least(:once).and_return([ ['header_1', 'value 1'], ['header_2', 3], ['header_3'] ])
+        frame.should_receive(:headers).at_least(:once).and_return([ ['header_1', 'value 1'], ['header_2', '3'], ['header_3', ''] ])
         frame.should_receive(:content_type_and_charset).at_least(:once).and_return("text/plain;charset=UTF-8")
         frame.should_receive(:body).at_least(:once).and_return('body of message')
         @frame_io.write_frame(frame)
@@ -32,7 +32,7 @@ module Stomper
       it "should properly serialize a frame without a body" do
         frame = mock('frame')
         frame.should_receive(:command).at_least(:once).and_return('FRAME')
-        frame.should_receive(:headers).at_least(:once).and_return([ ['header_1', 'val'], ['musical', nil], ['offering', 4]])
+        frame.should_receive(:headers).at_least(:once).and_return([ ['header_1', 'val'], ['musical', ''], ['offering', '4']])
         frame.should_receive(:content_type_and_charset).at_least(:once).and_return(nil)
         frame.should_receive(:body).at_least(:once).and_return(nil)
         @frame_io.write_frame(frame)
@@ -65,7 +65,11 @@ module Stomper
           :no_content_length => "MESSAGE\ncontent-type:text/plain\n\nh\xC3\xABllo!\000",
           :repeated_headers => "MESSAGE\ncontent-type:text/plain\nrepeated header:a value\nrepeated header:alternate value\n\nh\xC3\xABllo!\000",
           :non_text_content_type => "MESSAGE\ncontent-type:not-text/other\n\nh\xC3\xABllo!\000",
-          :no_content_type => "MESSAGE\n\nh\xC3\xABllo!\000"
+          :no_content_type => "MESSAGE\n\nh\xC3\xABllo!\000",
+          :invalid_content_length => "MESSAGE\ncontent-length:4\n\n12345\000",
+          :invalid_header_character => "MESSAGE\ngrandpa:he was:anti\n\n12345\000",
+          :invalid_header_sequence => "MESSAGE\ngrandpa:he was\\ranti\n\n12345\000",
+          :malformed_header => "MESSAGE\nearth_below_us\nfloating:weightless\n\n12345\000"
         }
         @messages.each { |k, v| v.force_encoding('US-ASCII') }
       end
@@ -103,6 +107,22 @@ module Stomper
         @frame_io.string = @messages[:repeated_headers]
         frame = @frame_io.read_frame
         frame['repeated header'].should == 'a value'
+      end
+      it "should raise a malformed frame error if the frame is not properly terminated" do
+        @frame_io.string = @messages[:invalid_content_length]
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedFrame)
+      end
+      it "should raise an invalid header character error if the frame contains a header with an invalid character" do
+        @frame_io.string = @messages[:invalid_header_character]
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderCharacter)
+      end
+      it "should raise an invalid header esacape sequence error if the frame contains a header with an invalid escape sequence" do
+        @frame_io.string = @messages[:invalid_header_sequence]
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderEscapeSequence)
+      end
+      it "should raise an malfored header error if the frame contains an incomplete header" do
+        @frame_io.string = @messages[:malformed_header]
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedHeader)
       end
     end
   end

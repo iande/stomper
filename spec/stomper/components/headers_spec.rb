@@ -22,11 +22,11 @@ module Stomper
         @headers['other header'].should == '42'
       end
       
-      it "should translate non-nil header values to strings" do
+      it "should translate header values to strings" do
         @headers['test header'] = 42
         @headers['test header'].should == '42'
         @headers['test header'] = nil
-        @headers['test header'].should be_nil
+        @headers['test header'].should == ''
       end
       
       it "should return an array of header key/value pairs" do
@@ -129,12 +129,64 @@ module Stomper
         @headers.include?('header 1').should_not be_true
       end
       
-      it "should be an Enumerable" do
-        @headers.should be_a_kind_of(::Enumerable)
-      end
-      
-      it "should yield an Enumerator if :each is called without a block" do
-        @headers.each.should be_a_kind_of(::Enumerator)
+      describe "enumerability" do
+        before(:each) do
+          @headers['header 1'] = 'value 1'
+          @headers.append('header 2', 'value 2')
+          @headers.append('header 2', 'value 3')
+          @expected_names = ['header 1', 'header 2', 'header 2']
+          @expected_values = ['value 1', 'value 2', 'value 3']
+          @received_names = []
+          @received_values = []
+          @iteration_result = nil
+        end
+        
+        def iterate_with_arity_one(meth, collection=@headers)
+          @received_names.clear
+          @received_values.clear
+          @iteration_result = collection.__send__(meth) do |kvp|
+            @received_names << kvp.first
+            @received_values << kvp.last
+          end
+        end
+        
+        def iterate_with_arity_two(meth, collection=@headers)
+          @received_names.clear
+          @received_values.clear
+          @iteration_result = collection.__send__(meth) do |k,v|
+            @received_names << k
+            @received_values << v
+          end
+        end
+        
+        it "should be an Enumerable" do
+          @headers.should be_a_kind_of(::Enumerable)
+        end
+
+        it "should iterate with :each, yielding appropriately depending on the arity of the block" do
+          iterate_with_arity_one(:each)
+          @received_names.should == @expected_names
+          @received_values.should == @expected_values
+          @iteration_result.should equal(@headers)
+          
+          iterate_with_arity_two(:each)
+          @received_names.should == @expected_names
+          @received_values.should == @expected_values
+          @iteration_result.should equal(@headers)
+        end
+
+        it "should yield an Enumerator if :each is called without a block" do
+          enum = @headers.each
+          enum.should be_a_kind_of(::Enumerator)
+          
+          iterate_with_arity_one(:each, enum)
+          @received_names.should == @expected_names
+          @received_values.should == @expected_values
+
+          iterate_with_arity_two(:each, enum)
+          @received_names.should == @expected_names
+          @received_values.should == @expected_values
+        end
       end
     end
   end
