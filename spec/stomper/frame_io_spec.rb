@@ -77,7 +77,10 @@ module Stomper
         @frame_io.string = @messages[:content_type_and_charset]
         frame = @frame_io.read_frame
         frame.command.should == "MESSAGE"
-        frame.headers.sort { |a, b| a.first <=> b.first }.should == [ ['a-header', ' padded '], ['content-length', '6'], ['content-type', 'text/plain; charset=ISO-8859-1'] ]
+        frame.headers.sort { |a, b| a.first <=> b.first }.should == [
+          ['a-header', ' padded '], ['content-length', '6'],
+          ['content-type', 'text/plain; charset=ISO-8859-1']
+        ]
         frame.body.should == "hëllo!".encode("ISO-8859-1")
         frame.charset.should == 'ISO-8859-1'
       end
@@ -110,19 +113,19 @@ module Stomper
       end
       it "should raise a malformed frame error if the frame is not properly terminated" do
         @frame_io.string = @messages[:invalid_content_length]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedFrame)
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedFrameError)
       end
       it "should raise an invalid header character error if the frame contains a header with an invalid character" do
         @frame_io.string = @messages[:invalid_header_character]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderCharacter)
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderCharacterError)
       end
       it "should raise an invalid header esacape sequence error if the frame contains a header with an invalid escape sequence" do
         @frame_io.string = @messages[:invalid_header_sequence]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderEscapeSequence)
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderEscapeSequenceError)
       end
       it "should raise an malfored header error if the frame contains an incomplete header" do
         @frame_io.string = @messages[:malformed_header]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedHeader)
+        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedHeaderError)
       end
     end
   end

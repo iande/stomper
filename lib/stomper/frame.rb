@@ -16,9 +16,10 @@ class Stomper::Frame
   
   # Creates a new frame with an empty set of {Stomper::Components::Headers headers}
   # and no body or command set.
-  def initialize
-    @headers = ::Stomper::Components::Headers.new
-    @body = nil
+  def initialize(command=nil, headers={}, body=nil)
+    @command = command
+    @headers = ::Stomper::Components::Headers.new(headers)
+    @body = body
   end
   
   # Gets the header value paired with the supplied name.  This is a convenient

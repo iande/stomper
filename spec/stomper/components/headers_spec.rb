@@ -16,7 +16,7 @@ module Stomper
         @headers[:header_1].should == 'some value'
       end
       
-      it "should translate keys to strings" do
+      it "should translate keys to symbols" do
         @headers['other header'] = '42'
         @headers[:'other header'].should == '42'
         @headers['other header'].should == '42'
@@ -39,7 +39,7 @@ module Stomper
       it "should preserve the order of keys" do
         expected_keys = []
         20.times do |n|
-          expected_keys << "header #{n}"
+          expected_keys << :"header #{n}"
           @headers["header #{n}"] = 'value'
         end
         @headers.names.should == expected_keys
@@ -48,10 +48,10 @@ module Stomper
       it "should preserve the order of keys after deletion and insertion" do
         expected_keys = []
         20.times do |n|
-          expected_keys << "header #{n}" unless n == 3 || n == 16
+          expected_keys << :"header #{n}" unless n == 3 || n == 16
           @headers["header #{n}"] = 'value'
         end
-        expected_keys << 'header x'
+        expected_keys << :'header x'
         @headers.delete('header 3')
         @headers.delete('header 16')
         @headers['header x'] = 'value'
@@ -61,7 +61,7 @@ module Stomper
       it "should not duplicate existing keys" do
         expected_keys = []
         10.times do |n|
-          expected_keys << "header #{n}"
+          expected_keys << :"header #{n}"
           @headers["header #{n}"] = 'value'
           @headers["header #{n}"] = 'other value'
           @headers.append("header #{n}", 'last value')
@@ -80,14 +80,14 @@ module Stomper
       
       it "should overwrite header values through the hash-like interface" do
         @headers['header 1'] = 'first value'
-        @headers['header 1'] = 'second value'
+        @headers[:'header 1'] = 'second value'
         @headers['header 1'] = 'third value'
-        @headers['header 1'].should == 'third value'
+        @headers[:'header 1'].should == 'third value'
       end
       
       it "should allow appending headers through the append interface method" do
         @headers.append('header 1', 'first value')
-        @headers.append('header 1', 'second value')
+        @headers.append(:'header 1', 'second value')
         @headers.append('header 1', 'third value')
         @headers.all_values('header 1').should == ['first value', 'second value', 'third value']
       end
@@ -127,6 +127,35 @@ module Stomper
         @headers.has?(:'header 1').should_not be_true
         @headers.key?('header 1').should_not be_true
         @headers.include?('header 1').should_not be_true
+      end
+      
+      describe "merging" do
+        before(:each) do
+          @headers = Headers.new({ :name1 => 'value 1', :name2 => 42, :name3 => false })
+        end
+        
+        it "should have header names and values from the hash it was initialized from" do
+          @headers.names.sort.should == [ :name1, :name2, :name3 ]
+          @headers[:name1].should == 'value 1'
+          @headers[:name2].should == '42'
+          @headers[:name3].should == 'false'
+        end
+        
+        it "should include keys and values from a merge, overwriting existing values" do
+          @headers.merge!({ 'name2' => 'frankenberry', :name1 => 'faust', :name4 => 186 })
+          @headers[:name1].should == 'faust'
+          @headers[:name2].should == 'frankenberry'
+          @headers[:name3].should == 'false'
+          @headers[:name4].should == '186'
+        end
+        
+        it "should include keys and values from a reverse merge, only if it did not have those names" do
+          @headers.reverse_merge!(:name1 => 'chicken', :name5 => true, 'name2' => 1066)
+          @headers[:name1].should == 'value 1'
+          @headers[:name2].should == '42'
+          @headers[:name3].should == 'false'
+          @headers[:name5].should == 'true'
+        end
       end
       
       describe "enumerability" do

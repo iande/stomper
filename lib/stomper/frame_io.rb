@@ -14,17 +14,22 @@
 module Stomper::FrameIO
   # Frame termination character as specified by the Stomp Protocol
   FRAME_TERMINATOR = "\000".chr
+  
+  # Mapping of escape sequences to their appropriate characters. This
+  # is used when unescaping headers being read from the stream.
   ESCAPE_SEQUENCES = {
     'c' => ':',
     '\\' => "\\",
     'n' => "\n"
   }
+  
+  # Mapping of characters to their appropriate escape sequences. This
+  # is used when escaping headers for frames being written to the stream.
   CHARACTER_ESCAPES = {
     ':' => "\\c",
     "\n" => "\\n",
     "\\" => "\\\\"
   }
-  INVALID_HEADER_CHARACTERS = [':']
   
   # Serializes a {Stomper::Frame} and writes it to the underlying IO stream
   #
@@ -58,7 +63,7 @@ module Stomper::FrameIO
       body = nil
       if frame['content-length'] && (len = frame['content-length'].to_i) > 0
         body = read len
-        raise ::Stomper::Errors::MalformedFrame, "frame was not properly terminated" if get_body_byte
+        raise ::Stomper::Errors::MalformedFrameError, "frame was not properly terminated" if get_body_byte
       else
         while (c = get_body_byte)
           body ||= ""
@@ -122,7 +127,7 @@ module Stomper::FrameIO
         when :read_string
           if ch == ':'
             cur_idx += 1
-            raise ::Stomper::Errors::InvalidHeaderCharacter, "invalid header character encountered '#{ch}'" if cur_idx > 1
+            raise ::Stomper::Errors::InvalidHeaderCharacterError, "invalid header character encountered '#{ch}'" if cur_idx > 1
           elsif ch == '\\'
             cur_state = :escape_sequence
           else
@@ -133,12 +138,12 @@ module Stomper::FrameIO
           if ESCAPE_SEQUENCES[ch]
             nvp[cur_idx] << ESCAPE_SEQUENCES[ch]
           else
-            raise ::Stomper::Errors::InvalidHeaderEscapeSequence, "invalid header escape sequence encountered '\\#{ch}'"
+            raise ::Stomper::Errors::InvalidHeaderEscapeSequenceError, "invalid header escape sequence encountered '\\#{ch}'"
           end
         end
         nvp
       end
-      raise ::Stomper::Errors::MalformedHeader, "unterminated header: '#{header_name}'" if cur_idx < 1
+      raise ::Stomper::Errors::MalformedHeaderError, "unterminated header: '#{header_name}'" if cur_idx < 1
       frame.headers.append(header_name, header_value)
     else
       nil
