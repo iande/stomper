@@ -26,7 +26,7 @@ module Stomper::Extensions::Scoping
   # {Stomper::Extensions::Scoping::ReceiptScope} will still request a RECEIPT
   # from the broker.
   # @yield [receipt] callback invoked upon receiving the RECEIPT frame
-  # @yielparam [Stomper::Frame] the received RECEIPT frame
+  # @yieldparam [Stomper::Frame] the received RECEIPT frame
   # @return [Stomper::Extensions::Scoping::ReceiptScope]
   # @example Gonna need an example or two
   # @see Stomper::Extensions::Events#on_receipt}

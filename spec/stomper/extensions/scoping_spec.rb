@@ -52,6 +52,18 @@ module Stomper::Extensions
       @connection.should_receive(:transmit).with(stomper_frame_with_headers(overridden_headers, 'SEND'))
       @scope.snd('/queue/test', 'body of message', { :persistent => false })
     end
+    
+    describe "nested header scopes" do
+      before(:each) do
+        @child_headers = { :child_1 => 1985, 'persistent' => false }
+        @child_scope = Scoping::HeaderScope.new(@scope, @child_headers)
+        @merged_headers = { :global_1 => 'turbo', :global_2 => 'is me', :persistent => false, :child_1 => 1985 }
+      end
+      it "should include headers from the parent scope" do
+        @connection.should_receive(:transmit).with(stomper_frame_with_headers(@merged_headers, 'SEND'))
+        @child_scope.snd('/queue/test', 'body of message')
+      end
+    end
   end
   
   describe Scoping::TransactionScope do

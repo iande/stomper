@@ -43,9 +43,4 @@ module Stomper::Errors
   # Raised if the command issued is not supported by the protocol version
   # negotiated between the client and broker.
   class UnsupportedCommandError < StomperError; end
-  
-  # Raised if the user supplied incorrect or incomplete arguments to one
-  # of the methods of the {Stomper::Extensions::CommonInterface connection}'s
-  # common interface.
-  class ClientArgumentError < StomperError; end
 end
