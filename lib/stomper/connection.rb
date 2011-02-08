@@ -4,6 +4,7 @@
 # Stomp protocol.
 class Stomper::Connection
   include ::Stomper::Extensions::Common
+  include ::Stomper::Extensions::Events
   include ::Stomper::Extensions::Scoping
   
   # The list of supported protocol versions
@@ -27,6 +28,11 @@ class Stomper::Connection
   # The URI representation of the broker this connection is associated with
   # @return [URI]
   attr_reader :uri
+  
+  # True if a connection with the broker has been established, false otherwise.
+  # @return [true,false]
+  attr_reader :connected
+  alias :connected? :connected
   
   # The protocol versions to allow for this connection
   # @return [Array<String>]
@@ -124,6 +130,29 @@ class Stomper::Connection
     @host ||= (@uri.host||'localhost')
     @login ||= (@uri.user || '')
     @passcode ||= (@uri.password || '')
+    @connected = false
+    
+    on_connected do |connected|
+      version = connected[:version]
+      version = '1.0' if version.nil? || version.empty?
+      if @versions.include? version
+        @version = version
+        ::Stomper::Extensions::Protocols::EXTEND_BY_VERSION[@version].each do |mod|
+          extend mod
+        end
+      else
+        raise ::Stomper::Errors::UnsupportedProtocolVersionError, "broker requested '#{version}', client allows: #{@versions.inspect}"
+      end
+      @connected = true
+    end
+    
+    before_transmitting do
+      trigger_event(:on_connection_died, self) unless alive?
+    end
+    
+    before_receiving do
+      trigger_event(:on_connection_died, self) unless alive?
+    end
   end
   
   # Sets the protocol versions that are acceptable for this connection. 
@@ -190,10 +219,16 @@ class Stomper::Connection
   # connection has been established and you're ready to go, otherwise the
   # socket will be closed and an error will be raised.
   def connect
-    frame = nil
-    # After connecting:
-    #::Stomper::Protocols::EXTEND_BY_VERSION[self.version].each { |mod| extend mod }
-    raise ConnectFailedError, "unexpected frame received: #{frame}"
+    @socket = @uri.create_socket
+    transmit ::Stomper::Frame.new('CONNECT', {
+      :'accept-version' => @versions.join(','),
+      :host => @host,
+      :'heart-beat' => @heartbeats.join(',')
+    })
+    connect_frame = receive
+    raise ::Stomper::Errors::StomperError, 'bad juju' if connect_frame.command != 'CONNECTED'
+    trigger_event(:on_connection_established, self) if @connected
+    @connected
   end
   alias :open :connect
   
@@ -221,12 +256,32 @@ class Stomper::Connection
   # Transmits a frame to the broker. This is a low-level method used internally
   # by the more user friendly interface.
   # @param [Stomper::Frame] frame
-  def transmit(frame, callbacks={})
+  def transmit(frame)
+    trigger_event(:before_transmitting, self, frame)
+    begin
+      @socket.write_frame(frame).tap do
+        trigger_event(:after_transmitting, self, frame)
+        trigger_transmitted_frame(frame, self)
+      end
+    rescue ::IOError, ::SystemCallError
+      close_socket(true)
+      raise
+    end
   end
   
   # Receives a frame from the broker.
   # @return [Stomper::Frame]
   def receive
+    trigger_event(:before_receiving, self)
+    begin
+      @socket.read_frame.tap do |f|
+        trigger_event(:after_receiving, self, f)
+        trigger_received_frame(f, self)
+      end
+    rescue ::IOError, ::SystemCallError
+      close_socket(true)
+      raise
+    end
   end
   
   # Receives a frame from the broker if there is data to be read from the
@@ -236,9 +291,26 @@ class Stomper::Connection
   #   if any data is available it will block until a complete frame has been read.
   # @return [Stomper::Frame, nil]
   def receive_nonblock
+    trigger_event(:before_receiving, self)
+    if @socket.ready?
+      @socket.read_frame.tap do |f|
+        trigger_event(:after_receiving, self, f)
+        trigger_received_frame(f, self)
+      end
+    end
   end
   
+  # Move this out!
+  def alive?; true; end
+  def dead?; !alive?; end
+  
   private
-  def close_socket
+  def close_socket(fire_terminated=false)
+    trigger_event(:on_connection_terminated, self) if fire_terminated
+    unless @socket.closed?
+      @socket.shutdown(2) rescue nil
+      @socket.close rescue nil
+    end
+    trigger_event(:on_connection_closed, self)
   end
 end

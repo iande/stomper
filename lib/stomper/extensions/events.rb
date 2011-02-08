@@ -124,11 +124,9 @@ module Stomper::Extensions::Events
     @event_callbacks[event_name] ||= []
     @event_callbacks[event_name] << cb_proc
   end
-  private :bind_callback
   
   def unbind_callback(callback)
   end
-  private :unbind_callback
   
   def trigger_event(event_name, *args)
     if event_name == :on_stomp
@@ -141,23 +139,21 @@ module Stomper::Extensions::Events
   private :trigger_event
   
   def trigger_received_frame(frame, *args)
-    f_comm = frame.command && frame.command.downcase.to_sym
-    if f_comm
-      trigger_event(:"on_#{f_comm}", frame, *args) if [:connected, :receipt, :message, :error].include?(f_comm)
-    else
-      trigger_event(:on_broker_beat, frame, *args)
-    end
+    trigger_frame(frame, :on_broker_beat, *args)
   end
   private :trigger_received_frame
   
   def trigger_transmitted_frame(frame, *args)
-    f_comm = frame.command && frame.command.downcase.to_sym
-    if f_comm
-      trigger_event(:"on_#{f_comm}", frame, *args) if [:send, :subscribe, :unsubscribe, :begin,
-        :commit, :abort, :ack, :nack, :disconnect, :connect, :stomp].include?(f_comm)
-    else
-      trigger_event(:on_client_beat, frame, *args)
-    end
+    trigger_frame(frame, :on_client_beat, *args)
   end
   private :trigger_transmitted_frame
+  
+  def trigger_frame(frame, beat_event, *args)
+    if (f_comm = frame.command && frame.command.downcase.to_sym)
+      trigger_event(:"on_#{f_comm}", frame, *args)
+    else
+      trigger_event(beat_event, frame, *args)
+    end
+  end
+  private :trigger_frame
 end

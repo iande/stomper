@@ -83,6 +83,14 @@ module Stomper::Extensions::Scoping
     end
   end
   
+  # Automatically generates "receipt" headers, if none are present and
+  # applys a supplied callback to every receipt received for frames generated
+  # through it. As instances of this class rely on event callbacks attached
+  # to the underlying {Stomper::Connection connection}, it is entirely possible
+  # for those events to be triggered on +Thread+ other than main. It is for
+  # this reason that synchronization is used to ensure the integrity of
+  # the internal list of receipt IDs that have not yet been processed through
+  # the callback.
   class ReceiptScope < HeaderScope
     FRAME_COMMANDS = %w(SEND SUBSCRIBE UNSUBSCRIBE
       BEGIN COMMIT ABORT ACK NACK DISCONNECT)
@@ -92,6 +100,7 @@ module Stomper::Extensions::Scoping
       @receipt_ids = []
       @receipt_handler = nil
       @handler_installed = false
+      @receipt_mutex = ::Mutex.new
     end
     
     def apply_to(callback)
@@ -102,7 +111,9 @@ module Stomper::Extensions::Scoping
       if check_receipt_handler
         r_id = frame[:receipt]
         r_id = ::Stomper::Support.next_serial if r_id.nil? || r_id.empty?
-        @receipt_ids << r_id
+        @receipt_mutex.synchronize do
+          @receipt_ids << r_id
+        end
         frame[:receipt] = r_id
       end
       super(frame)
@@ -113,9 +124,11 @@ module Stomper::Extensions::Scoping
       if @receipt_handler && !@handler_installed
         @connection.on_receipt do |receipt|
           r_id = receipt[:'receipt-id']
-          if @receipt_ids.include?(r_id)
-            @receipt_handler.call(receipt)
-            @receipt_ids.delete(r_id)
+          @receipt_mutex.synchronize do
+            if @receipt_ids.include?(r_id)
+              @receipt_handler.call(receipt)
+              @receipt_ids.delete(r_id)
+            end
           end
         end
         @handler_installed = true

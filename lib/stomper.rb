@@ -10,6 +10,8 @@ require 'socket'
 require 'io/wait'
 # The socket helpers use this to delegate to the real sockets
 require 'delegate'
+# Threading and Mutex support
+require 'thread'
 
 # Primary namespace of the stomper gem.
 module Stomper
