@@ -43,4 +43,17 @@ module Stomper::Errors
   # Raised if the command issued is not supported by the protocol version
   # negotiated between the client and broker.
   class UnsupportedCommandError < StomperError; end
+  
+  # An error that is raised as a result frames being generated on
+  # a transaction while it is in an invalid state.
+  # @abstract
+  class TransactionError < StomperError; end
+  
+  # Raised if a transactionable frame is sent in a transaction that has
+  # already been aborted or committed.
+  class TransactionFinalizedError < TransactionError; end
+  
+  # Raised if a BEGIN frame is sent on a transaction that has already
+  # begun.
+  class TransactionStartedError < TransactionError; end
 end

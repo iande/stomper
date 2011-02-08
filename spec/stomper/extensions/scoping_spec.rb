@@ -64,6 +64,8 @@ module Stomper::Extensions
         @child_scope.snd('/queue/test', 'body of message')
       end
     end
+    
+    it "should be thread safe"
   end
   
   describe Scoping::TransactionScope do
@@ -150,12 +152,146 @@ module Stomper::Extensions
       @scope.commit
       lambda { @scope.commit }.should raise_error
     end
+    
+    it "should evaluate a block as a transaction and commit it if the block does not raise an error" do
+      scope_block = lambda do |t|
+        t.snd('/queue/test', 'body of message')
+        t.ack('msg-1234', 'sub-4321')
+        t.nack('msg-5678', 'sub-8765')
+      end
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'SEND'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ACK'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'NACK'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'COMMIT'))
+      @scope.apply_to(scope_block)
+    end
+    
+    it "should evaluate a block as a transaction but do nothing if the transaction never started" do
+      scope_block = lambda do |t|
+      end
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'BEGIN'))
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'COMMIT'))
+      @scope.apply_to(scope_block)
+    end
+    
+    it "should evaluate a block as a transaction and abort the transaction and raise an exception if an exception is raised" do
+      scope_block = lambda do |t|
+        t.snd('/queue/test', 'body of message')
+        t.ack('msg-1234', 'sub-4321')
+        raise "Time to abort!"
+        t.nack('msg-5678', 'sub-8765')
+      end
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'SEND'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ACK'))
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'NACK'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ABORT'))
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'COMMIT'))
+      lambda { @scope.apply_to(scope_block) }.should raise_error('Time to abort!')
+    end
+    
+    it "should not commit a transaction block that was manually aborted" do
+      scope_block = lambda do |t|
+        t.snd('/queue/test', 'body of message')
+        t.ack('msg-1234', 'sub-4321')
+        t.abort
+      end
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'SEND'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ACK'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ABORT'))
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'COMMIT'))
+      lambda { @scope.apply_to(scope_block) }.should_not raise_error
+    end
+    
+    it "should not re-commit a transaction block that was manually committed" do
+      scope_block = lambda do |t|
+        t.snd('/queue/test', 'body of message')
+        t.ack('msg-1234', 'sub-4321')
+        t.commit
+      end
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'SEND'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ACK'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'COMMIT'))
+      lambda { @scope.apply_to(scope_block) }.should_not raise_error
+    end
+    
+    it "should raise an error if further transactionable frames are sent after the transaction has been aborted" do
+      scope_block = lambda do |t|
+        t.snd('/queue/test', 'body of message')
+        t.ack('msg-1234', 'sub-4321')
+        t.abort
+        t.nack('msg-5678', 'sub-8765')
+      end
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'SEND'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ACK'))
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'NACK'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ABORT'))
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'COMMIT'))
+      lambda { @scope.apply_to(scope_block) }.should raise_error(::Stomper::Errors::TransactionFinalizedError)
+    end
+    
+    it "should raise an error if further transactionable frames are sent after the transaction has been committed" do
+      scope_block = lambda do |t|
+        t.snd('/queue/test', 'body of message')
+        t.ack('msg-1234', 'sub-4321')
+        t.commit
+        t.nack('msg-5678', 'sub-8765')
+      end
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'SEND'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'ACK'))
+      @connection.should_not_receive(:transmit).with(stomper_frame(nil, {}, 'NACK'))
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers(@headers, 'COMMIT'))
+      lambda { @scope.apply_to(scope_block) }.should raise_error(::Stomper::Errors::TransactionFinalizedError)
+    end
+    
+    it "should be thread safe"
   end
   
   describe Scoping::ReceiptScope do
     before(:each) do
       @connection = mock("connection", :is_a? => true, :version => '1.1')
+      @connection.extend ::Stomper::Extensions::Events
       @scope = Scoping::ReceiptScope.new(@connection, {})
     end
+    
+    it "should set up a handler on the connection when needed" do
+      triggered = {}
+      scope_block = lambda do |r|
+        triggered[r[:'receipt-id']] = true
+      end
+      @scope.apply_to(scope_block)
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers({ :destination => '/queue/test', :receipt => 'receipt-1234' }, 'SEND'))
+      @scope.snd('/queue/test', 'body of message', { :receipt => 'receipt-1234' })
+      @connection.should_receive(:transmit).with(stomper_frame_with_headers({ :destination => '/queue/test', :receipt => 'receipt-4567' }, 'SUBSCRIBE'))
+      @scope.subscribe('/queue/test', { :receipt => 'receipt-4567' })
+      
+      @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => 'receipt-1234' }))
+      @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => 'receipt-4567' }))
+      triggered['receipt-1234'].should be_true
+      triggered['receipt-4567'].should be_true
+    end
+    
+    it "should set up receipt ids automatically when none are specified in the headers" do
+      triggered = {}
+      scope_block = lambda do |r|
+        triggered[r[:'receipt-id']] = true
+      end
+      @connection.stub!(:transmit) { |f| f }
+      @scope.apply_to(scope_block)
+      frames = []
+      frames << @scope.snd('/queue/test', 'body of message', { :receipt => 'receipt-1234' })
+      frames.last[:receipt].should == 'receipt-1234'
+      frames << @scope.unsubscribe('/queue/test')
+      frames.last[:receipt].should_not be_empty
+      frames << @scope.ack('msg-1234', 'sub-5678')
+      frames.last[:receipt].should_not be_empty
+      frames.map { |r| r[:receipt] }.uniq.should == frames.map { |r| r[:receipt] }
+      
+      frames.each do |f|
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => f[:receipt] }))
+        triggered[f[:receipt]].should be_true
+      end
+    end
+    
+    it "should be thread safe"
   end
 end

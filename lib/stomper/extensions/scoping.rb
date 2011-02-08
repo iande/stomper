@@ -84,6 +84,44 @@ module Stomper::Extensions::Scoping
   end
   
   class ReceiptScope < HeaderScope
+    FRAME_COMMANDS = %w(SEND SUBSCRIBE UNSUBSCRIBE
+      BEGIN COMMIT ABORT ACK NACK DISCONNECT)
+    
+    def initialize(parent, headers)
+      super
+      @receipt_ids = []
+      @receipt_handler = nil
+      @handler_installed = false
+    end
+    
+    def apply_to(callback)
+      @receipt_handler = callback
+    end
+    
+    def transmit(frame)
+      if check_receipt_handler
+        r_id = frame[:receipt]
+        r_id = ::Stomper::Support.next_serial if r_id.nil? || r_id.empty?
+        @receipt_ids << r_id
+        frame[:receipt] = r_id
+      end
+      super(frame)
+    end
+    
+    private
+    def check_receipt_handler
+      if @receipt_handler && !@handler_installed
+        @connection.on_receipt do |receipt|
+          r_id = receipt[:'receipt-id']
+          if @receipt_ids.include?(r_id)
+            @receipt_handler.call(receipt)
+            @receipt_ids.delete(r_id)
+          end
+        end
+        @handler_installed = true
+      end
+      @handler_installed
+    end
   end
   
   class TransactionScope < HeaderScope
@@ -97,30 +135,54 @@ module Stomper::Extensions::Scoping
       @transaction_state = :pending
     end
     
-    def begin(headers={})
-      raise "Transaction has already started" unless transaction_pending?
-      @transaction_state = :started
-      transmit create_frame('BEGIN', headers, {})
+    def begin_with_transaction(headers={})
+      if transaction_pending?
+        @transaction_state = :starting
+      else
+        raise ::Stomper::Errors::TransactionStartedError unless transaction_pending?
+      end
+      begin_without_transaction(@transaction, headers).tap do |f|
+        @transaction_state = :started
+      end
     end
+    alias :begin_without_transaction :begin
+    alias :begin :begin_with_transaction
     
-    def abort(headers={})
-      raise "Transaction has already finalized" if transaction_finalized?
-      @transaction_state = :aborted
-      transmit create_frame('ABORT', headers, {})
+    def abort_with_transaction(headers={})
+      abort_without_transaction(@transaction, headers).tap do |f|
+        @transaction_state = :aborted
+      end
     end
+    alias :abort_without_transaction :abort
+    alias :abort :abort_with_transaction
     
-    def commit(headers={})
-      raise "Transaction has already finalized" if transaction_finalized?
-      @transaction_state = :committed
-      transmit create_frame('COMMIT', headers, {})
+    def commit_with_transaction(headers={})
+      commit_without_transaction(@transaction, headers).tap do |f|
+        @transaction_state = :committed
+      end
     end
+    alias :commit_without_transaction :commit
+    alias :commit :commit_with_transaction
     
     def transmit(frame)
       self.begin if transaction_pending?
       if FRAME_COMMANDS.include? frame.command
+        if frame.command != 'BEGIN' && transaction_finalized?
+          raise ::Stomper::Errors::TransactionFinalizedError
+        end
         super(frame)
       else
         @connection.transmit frame
+      end
+    end
+    
+    def apply_to(callback)
+      begin
+        super
+        self.commit if transaction_started?
+      rescue Exception => err
+        self.abort if transaction_started?
+        raise err
       end
     end
     
