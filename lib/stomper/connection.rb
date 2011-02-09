@@ -117,7 +117,7 @@ class Stomper::Connection
   #   # the options hash setting +/queue/highest_priority+.
   def initialize(uri, options={})
     @uri = uri.is_a?(::URI) ? uri : ::URI.parse(uri)
-    config = ::Stomper::Support.keys_to_sym(::CGI.parse(uri.query)).
+    config = ::Stomper::Support.keys_to_sym(::CGI.parse(@uri.query || '')).
       merge(::Stomper::Support.keys_to_sym(options))
     DEFAULT_CONFIG.each do |attr_name, def_val|
       if config.key? attr_name

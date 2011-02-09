@@ -180,6 +180,9 @@ module Stomper
         @connection = Connection.new(@uri)
       end
       
+      it "should test connecting with a string instead of a URI"
+      it "should test actually connecting, or something much closer to it"
+      
       describe "connection state events" do
         before(:each) do
           @connected_frame.should_receive(:[]).with(:version).and_return('1.1')

@@ -6,6 +6,8 @@ require 'uri'
 require 'cgi'
 # Sockets are fairly important in all of this.
 require 'socket'
+# As is openssl
+require 'openssl'
 # For IO#ready?
 require 'io/wait'
 # The socket helpers use this to delegate to the real sockets
@@ -22,6 +24,7 @@ require 'stomper/support'
 require 'stomper/errors'
 require 'stomper/components'
 require 'stomper/frame_io'
+require 'stomper/sockets'
 require 'stomper/frame'
 require 'stomper/uris'
 require 'stomper/extensions'

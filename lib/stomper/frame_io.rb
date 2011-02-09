@@ -70,7 +70,7 @@ module Stomper::FrameIO
           body << c
         end
       end
-      frame.body = encode_body(body, frame['content-type'])
+      frame.body = body && encode_body(body, frame['content-type'])
     end
     frame
   end
@@ -126,8 +126,7 @@ module Stomper::FrameIO
         case cur_state
         when :read_string
           if ch == ':'
-            cur_idx += 1
-            raise ::Stomper::Errors::InvalidHeaderCharacterError, "invalid header character encountered '#{ch}'" if cur_idx > 1
+            cur_idx = 1
           elsif ch == '\\'
             cur_state = :escape_sequence
           else
@@ -145,6 +144,7 @@ module Stomper::FrameIO
       end
       raise ::Stomper::Errors::MalformedHeaderError, "unterminated header: '#{header_name}'" if cur_idx < 1
       frame.headers.append(header_name, header_value)
+      true
     else
       nil
     end

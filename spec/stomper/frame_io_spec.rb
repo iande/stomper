@@ -115,9 +115,12 @@ module Stomper
         @frame_io.string = @messages[:invalid_content_length]
         lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedFrameError)
       end
-      it "should raise an invalid header character error if the frame contains a header with an invalid character" do
+      # While the spec suggests that all ":" chars be replaced with "\c", ActiveMQ 5.3.2 sends
+      # a "session" header with a value that contains ":" chars.  So, we are NOT going to
+      # freak out if we receive more than one ":" on a header line.
+      it "should not raise an error if the frame contains a header value with a raw ':'" do
         @frame_io.string = @messages[:invalid_header_character]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderCharacterError)
+        lambda { @frame_io.read_frame }.should_not raise_error
       end
       it "should raise an invalid header esacape sequence error if the frame contains a header with an invalid escape sequence" do
         @frame_io.string = @messages[:invalid_header_sequence]
