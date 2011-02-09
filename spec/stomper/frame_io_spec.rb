@@ -55,6 +55,11 @@ module Stomper
         @frame_io.write_frame(frame)
         @frame_io.string.should == "FRAME\na\\ntest\\nh\\\\eader:value \\c is\\n\\nme\n\n\000"
       end
+      
+      # If we are pre-1.1, we should not escape ':' or '\'
+      # FrameIO may need to be re-thought on account of this.  We may be
+      # just need serializer that isn't mixed-in to the Socket.
+      it "should pay attention to the protocol version"
     end
   
     describe "reading frames" do
@@ -73,6 +78,11 @@ module Stomper
         }
         @messages.each { |k, v| v.force_encoding('US-ASCII') }
       end
+      
+      # If we are pre-1.1, we should not unescape '\c' or '\\' or '\n'
+      # Further, until the "CONNECTED" frame is processed, we should fall back on basic
+      it "should pay attention to the protocol version"
+      
       it "should properly de-serialize a simple frame" do
         @frame_io.string = @messages[:content_type_and_charset]
         frame = @frame_io.read_frame
