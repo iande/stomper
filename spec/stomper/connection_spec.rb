@@ -174,9 +174,11 @@ module Stomper
     describe "Connection IO" do
       before(:each) do
         @socket = mock('socket', :closed? => false, :close => true, :shutdown => true)
+        @serializer = mock('serializer', :extend_for_protocol => true)
         @connected_frame = mock('CONNECTED', :command => 'CONNECTED')
-        @socket.should_receive(:read_frame).and_return(@connected_frame)
+        @serializer.should_receive(:read_frame).and_return(@connected_frame)
         @uri.should_receive(:create_socket).and_return(@socket)
+        ::Stomper::Extensions::FrameSerializer.stub!(:new => @serializer)
         @connection = Connection.new(@uri)
       end
       
@@ -186,7 +188,7 @@ module Stomper
       describe "connection state events" do
         before(:each) do
           @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
-          @socket.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
         end
         
         it "should trigger on_connection_established after connecting" do
@@ -209,7 +211,7 @@ module Stomper
           triggered = false
           @connection.on_connection_died { triggered = true }
           @connection.connect
-          @socket.stub!(:write_frame).and_return { |f| f }
+          @serializer.stub!(:write_frame).and_return { |f| f }
           @connection.stub!(:alive?).and_return(false)
           @connection.transmit(::Stomper::Frame.new('ACK'))
           triggered.should be_true
@@ -220,7 +222,7 @@ module Stomper
           @connection.on_connection_died { triggered = true }
           @connection.connect
           @connection.stub!(:alive?).and_return(false)
-          @socket.stub!(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
+          @serializer.stub!(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
           @connection.receive
           triggered.should be_true
         end
@@ -230,7 +232,7 @@ module Stomper
           @connection.on_connection_died { triggered = true }
           @connection.connect
           @connection.stub!(:alive?).and_return(false)
-          @socket.stub!(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
+          @serializer.stub!(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
           @socket.stub!(:ready?).and_return(false)
           @connection.receive_nonblock
           triggered.should be_true
@@ -240,7 +242,7 @@ module Stomper
           triggered = false
           @connection.on_connection_terminated { triggered = true }
           @connection.connect
-          @socket.stub!(:write_frame).and_raise(IOError.new('io error'))
+          @serializer.stub!(:write_frame).and_raise(IOError.new('io error'))
           lambda { @connection.transmit(::Stomper::Frame.new('ACK')) }.should raise_error(IOError)
           triggered.should be_true
         end
@@ -249,7 +251,7 @@ module Stomper
           triggered = false
           @connection.on_connection_terminated { triggered = true }
           @connection.connect
-          @socket.stub!(:write_frame).and_raise(SystemCallError.new('syscall error'))
+          @serializer.stub!(:write_frame).and_raise(SystemCallError.new('syscall error'))
           lambda { @connection.transmit(::Stomper::Frame.new('ACK')) }.should raise_error(SystemCallError)
           triggered.should be_true
         end
@@ -258,7 +260,7 @@ module Stomper
           triggered = false
           @connection.on_connection_terminated { triggered = true }
           @connection.connect
-          @socket.stub!(:read_frame).and_raise(IOError.new('io error'))
+          @serializer.stub!(:read_frame).and_raise(IOError.new('io error'))
           lambda { @connection.receive }.should raise_error(IOError)
           triggered.should be_true
         end
@@ -267,7 +269,7 @@ module Stomper
           triggered = false
           @connection.on_connection_terminated { triggered = true }
           @connection.connect
-          @socket.stub!(:read_frame).and_raise(SystemCallError.new('syscall error'))
+          @serializer.stub!(:read_frame).and_raise(SystemCallError.new('syscall error'))
           lambda { @connection.receive }.should raise_error(SystemCallError)
           triggered.should be_true
         end
@@ -277,9 +279,9 @@ module Stomper
       describe "frame events" do
         before(:each) do
           @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
-          @socket.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
           @connection.connect
-          @socket.stub!(:write_frame).and_return { |f| f }
+          @serializer.stub!(:write_frame).and_return { |f| f }
         end
         
         it "should trigger all on_abort handlers when an ABORT frame is transmitted" do
@@ -399,7 +401,7 @@ module Stomper
           @connection.on_connected { triggered[1] = true }
           @connection.before_receiving { triggered[2] = true }
           @connection.after_receiving { triggered[3] = true }
-          @socket.should_receive(:read_frame).and_return(::Stomper::Frame.new('CONNECTED'))
+          @serializer.should_receive(:read_frame).and_return(::Stomper::Frame.new('CONNECTED'))
           @connection.receive
           triggered.should == [true, true, true, true]
         end
@@ -410,7 +412,7 @@ module Stomper
           @connection.on_message { triggered[1] = true }
           @connection.before_receiving { triggered[2] = true }
           @connection.after_receiving { triggered[3] = true }
-          @socket.should_receive(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
+          @serializer.should_receive(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
           @connection.receive
           triggered.should == [true, true, true, true]
         end
@@ -421,7 +423,7 @@ module Stomper
           @connection.on_error { triggered[1] = true }
           @connection.before_receiving { triggered[2] = true }
           @connection.after_receiving { triggered[3] = true }
-          @socket.should_receive(:read_frame).and_return(::Stomper::Frame.new('ERROR'))
+          @serializer.should_receive(:read_frame).and_return(::Stomper::Frame.new('ERROR'))
           @connection.receive
           triggered.should == [true, true, true, true]
         end
@@ -432,7 +434,7 @@ module Stomper
           @connection.on_receipt { triggered[1] = true }
           @connection.before_receiving { triggered[2] = true }
           @connection.after_receiving { triggered[3] = true }
-          @socket.should_receive(:read_frame).and_return(::Stomper::Frame.new('RECEIPT'))
+          @serializer.should_receive(:read_frame).and_return(::Stomper::Frame.new('RECEIPT'))
           @connection.receive
           triggered.should == [true, true, true, true]
         end
@@ -443,7 +445,7 @@ module Stomper
           @connection.on_broker_beat { triggered[1] = true }
           @connection.before_receiving { triggered[2] = true }
           @connection.after_receiving { triggered[3] = true }
-          @socket.should_receive(:read_frame).and_return(::Stomper::Frame.new)
+          @serializer.should_receive(:read_frame).and_return(::Stomper::Frame.new)
           @connection.receive
           triggered.should == [true, true, true, true]
         end
@@ -451,7 +453,7 @@ module Stomper
       
       describe "version negotiation" do
         it "should include Extensions::Protocols::V1_0 if the negotiated protocol is 1.0" do
-          @socket.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
           @connected_frame.should_receive(:[]).with(:version).and_return('1.0')
           @connection.connect
           @connection.version.should == '1.0'
@@ -459,7 +461,7 @@ module Stomper
         end
 
         it "should include Extensions::Protocols::V1_0 if the negotiated protocol is 1.1" do
-          @socket.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
           @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
           @connection.connect
           @connection.version.should == '1.1'
@@ -467,7 +469,7 @@ module Stomper
         end
         
         it "should raise an error if the version returned by the broker is not in the list of acceptable versions" do
-          @socket.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
           @connected_frame.should_receive(:[]).with(:version).and_return('2.0')
           lambda { @connection.connect }.should raise_error(::Stomper::Errors::UnsupportedProtocolVersionError)
         end

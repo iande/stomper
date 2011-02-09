@@ -6,7 +6,6 @@ module Stomper::Sockets
   # A wrapper for an SSL Socket that tidies up the SSL specifics so
   # our Connection library isn't troubled by them.
   class SSL < DelegateClass(::OpenSSL::SSL::SSLSocket)
-    include ::Stomper::FrameIO
     def initialize(host, port, *args)
       #self.extend ::Stomper::FrameIO
       # This all needs to be configurable!
@@ -31,7 +30,6 @@ module Stomper::Sockets
   # A wrapper for an TCP Socket that tidies up the specifics so
   # our Connection library isn't troubled by them.
   class TCP < DelegateClass(::TCPSocket)
-    include ::Stomper::FrameIO
     def initialize(host, port, *args)
       #self.extend ::Stomper::FrameIO
       @socket = TCPSocket.new(host, port)

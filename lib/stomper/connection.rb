@@ -137,9 +137,7 @@ class Stomper::Connection
       version = '1.0' if version.nil? || version.empty?
       if @versions.include? version
         @version = version
-        ::Stomper::Extensions::Protocols::EXTEND_BY_VERSION[@version].each do |mod|
-          extend mod
-        end
+        extend_for_protocol
       else
         raise ::Stomper::Errors::UnsupportedProtocolVersionError, "broker requested '#{version}', client allows: #{@versions.inspect}"
       end
@@ -220,6 +218,7 @@ class Stomper::Connection
   # socket will be closed and an error will be raised.
   def connect
     @socket = @uri.create_socket
+    @serializer = ::Stomper::Extensions::FrameSerializer.new(@socket)
     transmit ::Stomper::Frame.new('CONNECT', {
       :'accept-version' => @versions.join(','),
       :host => @host,
@@ -259,7 +258,7 @@ class Stomper::Connection
   def transmit(frame)
     trigger_event(:before_transmitting, self, frame)
     begin
-      @socket.write_frame(frame).tap do
+      @serializer.write_frame(frame).tap do
         trigger_event(:after_transmitting, self, frame)
         trigger_transmitted_frame(frame, self)
       end
@@ -274,7 +273,7 @@ class Stomper::Connection
   def receive
     trigger_event(:before_receiving, self)
     begin
-      @socket.read_frame.tap do |f|
+      @serializer.read_frame.tap do |f|
         trigger_event(:after_receiving, self, f)
         trigger_received_frame(f, self)
       end
@@ -312,5 +311,12 @@ class Stomper::Connection
       @socket.close rescue nil
     end
     trigger_event(:on_connection_closed, self)
+  end
+  
+  def extend_for_protocol
+    mods = ::Stomper::Extensions::Protocols::EXTEND_BY_VERSION[@version]
+    mods.each { |m| extend m } if mods
+    @serializer.extend_for_protocol @version
+    self
   end
 end

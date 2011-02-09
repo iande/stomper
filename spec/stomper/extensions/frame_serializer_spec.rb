@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 require 'spec_helper'
 
-module Stomper
-  describe FrameIO do
+module Stomper::Extensions
+  describe FrameSerializer do
     before(:each) do
       @frame_io = StringIO.new
-      @frame_io.extend FrameIO
+      @frame_serializer = FrameSerializer.new(@frame_io)
+      @frame_serializer.extend_for_protocol '1.1'
     end
   
     describe "writing frames" do
@@ -15,7 +16,7 @@ module Stomper
         frame.should_receive(:headers).at_least(:once).and_return([ ['header_1', 'value 1'], ['header_2', '3'], ['header_3', ''] ])
         frame.should_receive(:content_type_and_charset).at_least(:once).and_return("text/plain;charset=UTF-8")
         frame.should_receive(:body).at_least(:once).and_return('body of message')
-        @frame_io.write_frame(frame)
+        @frame_serializer.write_frame(frame)
         @frame_io.string.should == "FRAME\nheader_1:value 1\nheader_2:3\nheader_3:\ncontent-type:text/plain;charset=UTF-8\ncontent-length:15\n\nbody of message\000"
       end
       
@@ -25,7 +26,7 @@ module Stomper
         frame.should_receive(:headers).at_least(:once).and_return([])
         frame.should_receive(:content_type_and_charset).at_least(:once).and_return("text/plain;charset=UTF-8")
         frame.should_receive(:body).at_least(:once).and_return('body of message')
-        @frame_io.write_frame(frame)
+        @frame_serializer.write_frame(frame)
         @frame_io.string.should == "FRAME\ncontent-type:text/plain;charset=UTF-8\ncontent-length:15\n\nbody of message\000"
       end
       
@@ -35,14 +36,14 @@ module Stomper
         frame.should_receive(:headers).at_least(:once).and_return([ ['header_1', 'val'], ['musical', ''], ['offering', '4']])
         frame.should_receive(:content_type_and_charset).at_least(:once).and_return(nil)
         frame.should_receive(:body).at_least(:once).and_return(nil)
-        @frame_io.write_frame(frame)
+        @frame_serializer.write_frame(frame)
         @frame_io.string.should == "FRAME\nheader_1:val\nmusical:\noffering:4\n\n\000"
       end
       
       it "should properly serialize a frame without a command as a new line" do
         frame = mock('frame')
         frame.should_receive(:command).at_least(:once).and_return(nil)
-        @frame_io.write_frame(frame)
+        @frame_serializer.write_frame(frame)
         @frame_io.string.should == "\n"
       end
       
@@ -52,7 +53,7 @@ module Stomper
         frame.should_receive(:headers).at_least(:once).and_return( [ ["a\ntest\nh\\eader", "value : is\n\nme"] ])
         frame.should_receive(:content_type_and_charset).at_least(:once).and_return(nil)
         frame.should_receive(:body).at_least(:once).and_return(nil)
-        @frame_io.write_frame(frame)
+        @frame_serializer.write_frame(frame)
         @frame_io.string.should == "FRAME\na\\ntest\\nh\\\\eader:value \\c is\\n\\nme\n\n\000"
       end
       
@@ -85,7 +86,7 @@ module Stomper
       
       it "should properly de-serialize a simple frame" do
         @frame_io.string = @messages[:content_type_and_charset]
-        frame = @frame_io.read_frame
+        frame = @frame_serializer.read_frame
         frame.command.should == "MESSAGE"
         frame.headers.sort { |a, b| a.first <=> b.first }.should == [
           ['a-header', ' padded '], ['content-length', '6'],
@@ -96,49 +97,49 @@ module Stomper
       end
       it "should properly read a frame with special characters in its header" do
         @frame_io.string = @messages[:escaped_headers]
-        frame = @frame_io.read_frame
+        frame = @frame_serializer.read_frame
         frame["a\nspecial:head\\cer"].should == " padded: and using\nspecial\\\\\\ncharacters "
         frame.charset.should == 'UTF-8'
       end
       it "should properly read a frame with a body and no content-length" do
         @frame_io.string = @messages[:no_content_length]
-        frame = @frame_io.read_frame
+        frame = @frame_serializer.read_frame
         frame.body.should == "hëllo!"
         frame.charset.should == 'UTF-8'
       end
       it "should assume a binary charset if none is set and the content-type does not match text/*" do
         @frame_io.string = @messages[:non_text_content_type]
-        frame = @frame_io.read_frame
+        frame = @frame_serializer.read_frame
         frame.charset.should == 'US-ASCII'
       end
       it "should assume a binary charset if the content-type header is not specified" do
         @frame_io.string = @messages[:no_content_type]
-        frame = @frame_io.read_frame
+        frame = @frame_serializer.read_frame
         frame.charset.should == 'US-ASCII'
       end
       it "should set the value of a header to the first occurrence" do
         @frame_io.string = @messages[:repeated_headers]
-        frame = @frame_io.read_frame
+        frame = @frame_serializer.read_frame
         frame['repeated header'].should == 'a value'
       end
       it "should raise a malformed frame error if the frame is not properly terminated" do
         @frame_io.string = @messages[:invalid_content_length]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedFrameError)
+        lambda { @frame_serializer.read_frame }.should raise_error(::Stomper::Errors::MalformedFrameError)
       end
       # While the spec suggests that all ":" chars be replaced with "\c", ActiveMQ 5.3.2 sends
       # a "session" header with a value that contains ":" chars.  So, we are NOT going to
       # freak out if we receive more than one ":" on a header line.
       it "should not raise an error if the frame contains a header value with a raw ':'" do
         @frame_io.string = @messages[:invalid_header_character]
-        lambda { @frame_io.read_frame }.should_not raise_error
+        lambda { @frame_serializer.read_frame }.should_not raise_error
       end
       it "should raise an invalid header esacape sequence error if the frame contains a header with an invalid escape sequence" do
         @frame_io.string = @messages[:invalid_header_sequence]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderEscapeSequenceError)
+        lambda { @frame_serializer.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderEscapeSequenceError)
       end
       it "should raise an malfored header error if the frame contains an incomplete header" do
         @frame_io.string = @messages[:malformed_header]
-        lambda { @frame_io.read_frame }.should raise_error(::Stomper::Errors::MalformedHeaderError)
+        lambda { @frame_serializer.read_frame }.should raise_error(::Stomper::Errors::MalformedHeaderError)
       end
     end
   end
