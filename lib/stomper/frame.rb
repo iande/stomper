@@ -18,7 +18,7 @@ class Stomper::Frame
   # and no body or command set.
   def initialize(command=nil, headers={}, body=nil)
     @command = command
-    @headers = ::Stomper::Components::Headers.new(headers)
+    @headers = ::Stomper::Headers.new(headers)
     @body = body
   end
   

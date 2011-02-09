@@ -22,7 +22,7 @@ end
 require 'stomper/version'
 require 'stomper/support'
 require 'stomper/errors'
-require 'stomper/components'
+require 'stomper/headers'
 require 'stomper/frame_io'
 require 'stomper/sockets'
 require 'stomper/frame'

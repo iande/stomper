@@ -16,7 +16,7 @@ module Stomper
     
     describe "headers" do
       it "should provide access to the headers through :headers" do
-        @frame.headers.should be_a_kind_of(::Stomper::Components::Headers)
+        @frame.headers.should be_a_kind_of(::Stomper::Headers)
       end
       
       it "should provide hash-like access to header assignment" do
