@@ -7,21 +7,24 @@ class Stomper::Extensions::FrameSerializer
   FRAME_TERMINATOR = "\000".chr
   
   # Creates a new frame serializer that will read {Stomper::Frame frames} from
-  # and write {Stomper::Frames frames} to the supplied IO object (typically
+  # and write {Stomper::Frame frames} to the supplied IO object (typically
   # a TCP or SSL socket.)
   # @param [IO] io IO stream to read from and write to
-  def initialize(io)
+  # @param [Array<String>] versions a list of acceptable protocol versions
+  def initialize(io, versions)
     @io = io
-    # We will use V1_0 by default, until the connection has been established
-    # and the protocol version has been negotiated.
-    extend V1_0
+    # For now, ignore the versions and go with CONNECT/CONNECTED use
+    # Stomp 1.0 conventions.
+    extend_for_protocol '1.0'
   end
   
   # Extends the serializer based on the version of the protocol being used.
   # @param [String] version protocol version being used
   # @return [self]
   def extend_for_protocol(version)
-    EXTEND_BY_VERSION[version].each { |m| extend m } if EXTEND_BY_VERSION[version]
+    if EXTEND_BY_VERSION[version]
+      EXTEND_BY_VERSION[version].each { |m| extend m } #unless self.is_a?(m) }
+    end
     self
   end
   
@@ -82,149 +85,172 @@ class Stomper::Extensions::FrameSerializer
   private :bytesize_of_string
   
   module V1_0
-    # Return the body as it was passed. Stomp 1.0 has no concept of body
-    # encoding.
-    # @param [String] body body of message to encode
-    # @param [String] ct content-type header of frame
-    # @return [String]
-    def encode_body(body, ct); body; end
-    private :encode_body
-    
-    # Reads and parses a header line from the stream then adds it to the
-    # headers of the supplied frame. Returns +false+ if no more headers are
-    # available, +true+ otherwise.
-    # @param [Stomper::Frame] frame frame being read from the stream
-    # @return [true,false]
-    def parse_header_line(frame)
-      header_line = @io.gets.chomp
-      if header_line.length > 0
-        raise ::Stomper::Errors::MalformedHeaderError, "unterminated header: '#{header_line}'" unless header_line.include? ':'
-        header_name, header_value = header_line.split(':', 2)
-        frame.headers.append(header_name, header_value)
-      else
-        false
+    module Write
+      # Converts the headers of the supplied frame into a single "\n" delimited
+      # string that's suitable for writing to io.
+      # @param [Stomper::Frame] frame the frame whose headers should be serialized
+      # @return [String]
+      def serialize_headers(frame)
+        serialized = frame.headers.inject('') do |head_str, (k, v)|
+          k = escape_header(k)
+          if !['content-type', 'content-length'].include?(k) && !k.empty?
+            v = escape_header(v, true)
+            head_str << "#{k}:#{v}\n"
+          end
+          head_str
+        end
+        if ct_charset = frame.content_type_and_charset
+          serialized << "content-type:#{ct_charset}\n"
+        end
+        if frame.body
+          serialized << "content-length:#{bytesize_of_string(frame.body)}\n"
+        end
+        serialized
       end
+      private :serialize_headers
+
+      def escape_header(str, as_value=false)
+        str.gsub((as_value ? /\n/ : /[\n:]/), '')
+      end
+      private :escape_header
     end
-    private :parse_header_line
     
-    # Converts the headers of the supplied frame into a single "\n" delimited
-    # string that's suitable for writing to io.
-    # @param [Stomper::Frame] frame the frame whose headers should be serialized
-    # @return [String]
-    def serialize_headers(frame)
-      serialized = frame.headers.inject('') do |head_str, (k, v)|
-        next if ['content-type', 'content-length'].include?(k) || k.empty?
-        head_str << "#{k}:#{v}\n"
-        head_str
+    module Read
+      # Return the body as it was passed. Stomp 1.0 has no concept of body
+      # encoding.
+      # @param [String] body body of message to encode
+      # @param [String] ct content-type header of frame
+      # @return [String]
+      def encode_body(body, ct); body; end
+      private :encode_body
+
+      # Reads and parses a header line from the stream then adds it to the
+      # headers of the supplied frame. Returns +false+ if no more headers are
+      # available, +true+ otherwise.
+      # @param [Stomper::Frame] frame frame being read from the stream
+      # @return [true,false]
+      def parse_header_line(frame)
+        header_line = @io.gets.chomp
+        if header_line.length > 0
+          raise ::Stomper::Errors::MalformedHeaderError, "unterminated header: '#{header_line}'" unless header_line.include? ':'
+          header_name, header_value = header_line.split(':', 2)
+          frame.headers.append(header_name, header_value)
+          true
+        else
+          false
+        end
       end
-      if ct_charset = frame.content_type_and_charset
-        serialized << "content-type:#{ct_charset}\n"
-      end
-      if frame.body
-        serialized << "content-length:#{bytesize_of_string(frame.body)}\n"
-      end
-      serialized
+      private :parse_header_line
     end
-    private :serialize_headers
   end
   
   module V1_1
-    # Mapping of escape sequences to their appropriate characters. This
-    # is used when unescaping headers being read from the stream.
-    ESCAPE_SEQUENCES = {
-      'c' => ':',
-      '\\' => "\\",
-      'n' => "\n"
-    }
-
-    # Mapping of characters to their appropriate escape sequences. This
-    # is used when escaping headers for frames being written to the stream.
-    CHARACTER_ESCAPES = {
-      ':' => "\\c",
-      "\n" => "\\n",
-      "\\" => "\\\\"
-    }
-    
-    def encode_body(body, ct_header)
-      body.tap do |b|
-        charset = ct_header ?
-          (ct_header =~ /\;\s*charset=\"?([\w\-]+)\"?/i) ? $1 :
-            (ct_header =~ /^text\//) ? 'UTF-8' : 'US-ASCII' :
-          'US-ASCII'
-        b.force_encoding(charset)
-      end
-    end
-    private :encode_body
-
-    def escape_header(hdr)
-      hdr.each_char.inject('') do |esc, ch|
-        esc << (CHARACTER_ESCAPES[ch] || ch)
-      end
-    end
-    private :escape_header
-
-    def serialize_headers(frame)
-      serialized = frame.headers.inject('') do |head_str, (k, v)|
-        k = escape_header(k)
-        next if ['content-type', 'content-length'].include?(k) || k.empty?
-        v = escape_header(v)
-        head_str << "#{k}:#{v}\n"
-        head_str
-      end
-      if frame.content_type_and_charset
-        serialized << "content-type:#{frame.content_type_and_charset}\n"
-      end
-      if frame.body
-        serialized << "content-length:#{frame.body.bytesize}\n"
-      end
-      serialized
-    end
-    private :serialize_headers
-    
-    def parse_header_line(frame)
-      header_line = gets_encoded.chomp
-      if header_line.length > 0
-        cur_state = :read_string
-        cur_idx = 0
-        header_name, header_value = header_line.each_char.inject(['', '']) do |nvp, ch|
-          case cur_state
-          when :read_string
-            if ch == ':'
-              cur_idx = 1
-            elsif ch == '\\'
-              cur_state = :escape_sequence
-            else
-              nvp[cur_idx] << ch
-            end
-          when :escape_sequence
-            cur_state = :read_string
-            if ESCAPE_SEQUENCES[ch]
-              nvp[cur_idx] << ESCAPE_SEQUENCES[ch]
-            else
-              raise ::Stomper::Errors::InvalidHeaderEscapeSequenceError, "invalid header escape sequence encountered '\\#{ch}'"
-            end
-          end
-          nvp
+    module Write
+      # Mapping of characters to their appropriate escape sequences. This
+      # is used when escaping headers for frames being written to the stream.
+      CHARACTER_ESCAPES = {
+        ':' => "\\c",
+        "\n" => "\\n",
+        "\\" => "\\\\"
+      }
+      def escape_header(hdr)
+        hdr.each_char.inject('') do |esc, ch|
+          esc << (CHARACTER_ESCAPES[ch] || ch)
         end
-        raise ::Stomper::Errors::MalformedHeaderError, "unterminated header: '#{header_name}'" if cur_idx < 1
-        frame.headers.append(header_name, header_value)
-        true
-      else
-        nil
       end
-    end
-    private :parse_header_line
+      private :escape_header
 
-    def gets_encoded
-      @io.gets.tap do |line|
-        line.force_encoding('UTF-8')
+      def serialize_headers(frame)
+        serialized = frame.headers.inject('') do |head_str, (k, v)|
+          k = escape_header(k)
+          if !['content-type', 'content-length'].include?(k) && !k.empty?
+            v = escape_header(v)
+            head_str << "#{k}:#{v}\n"
+          end
+          head_str
+        end
+        if ct_charset = frame.content_type_and_charset
+          serialized << "content-type:#{ct_charset}\n"
+        end
+        if frame.body
+          serialized << "content-length:#{bytesize_of_string(frame.body)}\n"
+        end
+        serialized
       end
+      private :serialize_headers
     end
-    private :gets_encoded
+    
+    module Read
+      # Mapping of escape sequences to their appropriate characters. This
+      # is used when unescaping headers being read from the stream.
+      ESCAPE_SEQUENCES = {
+        'c' => ':',
+        '\\' => "\\",
+        'n' => "\n"
+      }
+
+      def encode_body(body, ct_header)
+        body.tap do |b|
+          charset = ct_header ?
+            (ct_header =~ /\;\s*charset=\"?([\w\-]+)\"?/i) ? $1 :
+              (ct_header =~ /^text\//) ? 'UTF-8' : 'US-ASCII' :
+            'US-ASCII'
+          b.force_encoding(charset)
+        end
+      end
+      private :encode_body
+
+      def parse_header_line(frame)
+        header_line = gets_encoded.chomp
+        if header_line.length > 0
+          cur_state = :read_string
+          cur_idx = 0
+          header_name, header_value = header_line.each_char.inject(['', '']) do |nvp, ch|
+            case cur_state
+            when :read_string
+              if ch == ':'
+                cur_idx = 1
+              elsif ch == '\\'
+                cur_state = :escape_sequence
+              else
+                nvp[cur_idx] << ch
+              end
+            when :escape_sequence
+              cur_state = :read_string
+              if ESCAPE_SEQUENCES[ch]
+                nvp[cur_idx] << ESCAPE_SEQUENCES[ch]
+              else
+                raise ::Stomper::Errors::InvalidHeaderEscapeSequenceError, "invalid header escape sequence encountered '\\#{ch}'"
+              end
+            end
+            nvp
+          end
+          raise ::Stomper::Errors::MalformedHeaderError, "unterminated header: '#{header_name}'" if cur_idx < 1
+          frame.headers.append(header_name, header_value)
+          true
+        else
+          nil
+        end
+      end
+      private :parse_header_line
+
+      def gets_encoded
+        @io.gets.tap do |line|
+          line.force_encoding('UTF-8')
+        end
+      end
+      private :gets_encoded
+    end
   end
   
   EXTEND_BY_VERSION = {
-    '1.0' => [ ],
-    '1.1' => [ ::Stomper::Extensions::FrameSerializer::V1_1 ]
+    '1.0' => [
+      ::Stomper::Extensions::FrameSerializer::V1_0::Write,
+      ::Stomper::Extensions::FrameSerializer::V1_0::Read
+    ],
+    '1.1' => [
+      ::Stomper::Extensions::FrameSerializer::V1_1::Write,
+      ::Stomper::Extensions::FrameSerializer::V1_1::Read
+    ]
   }
 end

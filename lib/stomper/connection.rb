@@ -218,7 +218,7 @@ class Stomper::Connection
   # socket will be closed and an error will be raised.
   def connect
     @socket = @uri.create_socket
-    @serializer = ::Stomper::Extensions::FrameSerializer.new(@socket)
+    @serializer = ::Stomper::Extensions::FrameSerializer.new(@socket, @versions)
     transmit ::Stomper::Frame.new('CONNECT', {
       :'accept-version' => @versions.join(','),
       :host => @host,
