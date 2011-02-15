@@ -7,6 +7,10 @@ class Stomper::Connection
   include ::Stomper::Extensions::Events
   include ::Stomper::Extensions::Scoping
   include ::Stomper::Extensions::Protocols::Negotiator
+  include ::Stomper::Extensions::Protocols::Heartbeats
+  # By default, Stomp 1.0 heartbeat semantics (mostly no-ops/fixed values)
+  # are included
+  include ::Stomper::Extensions::Protocols::V1_0::Heartbeating
   
   # The list of supported protocol versions
   # @return [Array<String>]
@@ -52,6 +56,15 @@ class Stomper::Connection
   # @return [Array<Fixnum>]
   attr_reader :heartbeats
   
+  # The negotiated heartbeat strategy. The first element is the maximum
+  # number of milliseconds that the client can go without transmitting
+  # data or a heartbeat (a zero indicates that a client does not need to
+  # send heartbeats.) The second elemenet is the maximum number of milliseconds
+  # a server will go without transmitting data or a heartbeat (a zero indicates
+  # that the server need not send any heartbeats.)
+  # @return [Array<Fixnum>]
+  attr_reader :heartbeating
+  
   # The SSL options to use if this connection is secure
   # @return [{Symbol => Object}, nil]
   attr_reader :ssl
@@ -74,6 +87,15 @@ class Stomper::Connection
   # The passcode header value to send to the broker when connecting.
   # @return [String]
   attr_reader :passcode
+  
+  # A timestamp set to the last time a frame was transmitted. Returns +nil+
+  # if no frames have been transmitted yet
+  # @return [Time,nil]
+  attr_reader :last_transmitted_at
+  # A timestamp set to the last time a frame was received. Returns +nil+
+  # if no frames have been received yet
+  # @return [Time,nil]
+  attr_reader :last_received_at
   
   # Creates a connection to a broker specified by the suppled uri. The given
   # uri will be resolved to a URI instance through +URI.parse+. The final URI object must
@@ -152,9 +174,17 @@ class Stomper::Connection
     @login ||= (@uri.user || '')
     @passcode ||= (@uri.password || '')
     @connected = false
+    @heartbeating = [0,0]
+    @last_transmitted_at = @last_received_at = nil
     
     on_connected do |connected|
-      @version = negotiate_protocol_version(connected, @versions)
+      @version = negotiate_protocol_version(connected)
+      unless @versions.include?(@version)
+        close_socket
+        raise ::Stomper::Errors::UnsupportedProtocolVersionError,
+          "broker requested '#{@version}', client allows: #{@versions.inspect}"
+      end
+      @heartbeating = negotiate_heartbeats(connected, @heartbeats)
       extend_for_protocol
       @connected = true
     end
@@ -282,6 +312,7 @@ class Stomper::Connection
     trigger_event(:before_transmitting, self, frame)
     begin
       @serializer.write_frame(frame).tap do
+        @last_transmitted_at = Time.now
         trigger_event(:after_transmitting, self, frame)
         trigger_transmitted_frame(frame, self)
       end
@@ -297,6 +328,7 @@ class Stomper::Connection
     trigger_event(:before_receiving, self)
     begin
       @serializer.read_frame.tap do |f|
+        @last_received_at = Time.now
         trigger_event(:after_receiving, self, f)
         trigger_received_frame(f, self)
       end
@@ -322,11 +354,13 @@ class Stomper::Connection
     end
   end
   
-  # By default, connections are alive if they are @connected. This method
-  # is overridden by the inclusion of Stomp 1.1 mixins when heartbeating is
-  # enabled.
-  def alive?; @connected; end
-  def dead?; !alive?; end
+  def duration_since_transmitted
+    @last_transmitted_at && (Time.now - @last_transmitted_at)
+  end
+  
+  def duration_since_received
+    @last_received_at && (Time.now - @last_received_at)
+  end
   
   private
   def close_socket(fire_terminated=false)

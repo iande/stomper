@@ -16,6 +16,10 @@ module RSpec
         StomperFrameMatcher.new(command, body, anythingize_lonely_keys(*args))
       end
       
+      def stomper_heartbeat_frame
+        StomperFrameMatcher.new(nil, nil, {})
+      end
+      
       class StomperFrameMatcher
         def initialize(e_command, e_body, e_headers)
           @expected_command = e_command && e_command.upcase

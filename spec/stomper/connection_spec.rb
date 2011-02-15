@@ -184,19 +184,33 @@ module Stomper
       end
     end
     
+    describe "duration since transmitted and received" do
+      before(:each) do
+        @connection = Connection.new(@uri)
+      end
+      it "should return nil if no frames have been transmitted" do
+        @connection.duration_since_transmitted.should be_nil
+      end
+      
+      it "should return nil if no frames have been received" do
+        @connection.duration_since_received.should be_nil
+      end
+    end
+    
     describe "Connection IO" do
       before(:each) do
         @socket = mock('socket', :closed? => false, :close => true, :shutdown => true)
         @serializer = mock('serializer', :extend_for_protocol => true)
-        @connected_frame = mock('CONNECTED', :command => 'CONNECTED')
+        @connected_frame = mock('CONNECTED', :command => 'CONNECTED', :[] => '')
         @serializer.should_receive(:read_frame).and_return(@connected_frame)
         @uri.should_receive(:create_socket).and_return(@socket)
         ::Stomper::Extensions::FrameSerializer.stub!(:new => @serializer)
         @connection = Connection.new(@uri)
+        @connection.stub(:negotiate_heartbeats => [0,0])
       end
       
       it "should create and connect a Connection through Connection.open" do
-        @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
+        @connection.stub(:negotiate_protocol_version => '1.0')
         @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
         connection = @connection.class.open(@uri)
         connection.connected?.should be_true
@@ -204,8 +218,15 @@ module Stomper
       
       describe "frame reading" do
         before(:each) do
-          @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
+          @connection.stub(:negotiate_protocol_version => '1.0')
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+        end
+        
+        # Kind of a weak test.
+        it "should have durations since received and transmitted" do
+          @connection.connect
+          @connection.duration_since_received.should_not be_nil
+          @connection.duration_since_transmitted.should_not be_nil
         end
         
         it "should receive a frame" do
@@ -233,7 +254,7 @@ module Stomper
       
       describe "connection state events" do
         before(:each) do
-          @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
+          @connection.stub(:negotiate_protocol_version => '1.0')
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
         end
         
@@ -324,7 +345,7 @@ module Stomper
       
       describe "frame events" do
         before(:each) do
-          @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
+          @connection.stub(:negotiate_protocol_version => '1.1')
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
           @connection.connect
           @serializer.stub!(:write_frame).and_return { |f| f }
@@ -505,24 +526,27 @@ module Stomper
       describe "version negotiation" do
         it "should include Extensions::Protocols::V1_0 if the negotiated protocol is 1.0" do
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
-          @connected_frame.should_receive(:[]).with(:version).and_return('1.0')
+          @connection.stub(:negotiate_protocol_version => '1.0')
           @connection.connect
           @connection.version.should == '1.0'
-          @connection.should be_a_kind_of(::Stomper::Extensions::Protocols::V1_0)
+          @connection.should be_a_kind_of(::Stomper::Extensions::Protocols::V1_0::Acking)
+          @connection.should be_a_kind_of(::Stomper::Extensions::Protocols::V1_0::Heartbeating)
         end
 
         it "should include Extensions::Protocols::V1_0 if the negotiated protocol is 1.1" do
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
-          @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
+          @connection.stub(:negotiate_protocol_version => '1.1')
           @connection.connect
           @connection.version.should == '1.1'
-          @connection.should be_a_kind_of(::Stomper::Extensions::Protocols::V1_1)
+          @connection.should be_a_kind_of(::Stomper::Extensions::Protocols::V1_1::Acking)
+          @connection.should be_a_kind_of(::Stomper::Extensions::Protocols::V1_1::Heartbeating)
         end
         
-        it "should raise an error if the version returned by the broker is not in the list of acceptable versions" do
+        it "should raise an error if the version returned by the broker is not in the list of acceptable versions and close the connection" do
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))
-          @connected_frame.should_receive(:[]).with(:version).and_return('2.0')
+          @connection.stub(:negotiate_protocol_version => '2.0')
           lambda { @connection.connect }.should raise_error(::Stomper::Errors::UnsupportedProtocolVersionError)
+          @connection.connected?.should be_false
         end
       end
     end

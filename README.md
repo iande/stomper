@@ -16,7 +16,6 @@ There are a few features that have not yet been implemented, hence why we're
 still on a prerelease version number. The following is a list of the major
 deficiencies of the gem, but this list is not necessarily exhaustive.
 
-* Heart-beating is not yet implemented
 * Receivers have not been implemented (looking to provide threaded
   and possibly non-threaded versions, but a threaded is a minimum)
 * Thread-safety needs some work and some tests
