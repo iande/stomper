@@ -22,6 +22,7 @@ deficiencies of the gem, but this list is not necessarily exhaustive.
 * Event callbacks need a wrapper so they can be unbound
 * Subscription handlers need implemented
 * Full stack testing (probably through cucumber)
+* Ruby 1.8.7 compatibility needs to be put in place.
 
 As these issues are resolved, I'll drop them from the list (and potentially
 add other issues)
