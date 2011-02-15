@@ -497,6 +497,11 @@ module Stomper
         end
       end
       
+      describe "default destinations" do
+        it "should subscribe to default_destination if destination is not provided"
+        it "should transmit SEND frames to default_destination if destination is not provided"
+      end
+      
       describe "version negotiation" do
         it "should include Extensions::Protocols::V1_0 if the negotiated protocol is 1.0" do
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({:'accept-version' => '1.0,1.1', :'heart-beat' => '0,0'}, 'CONNECT'))

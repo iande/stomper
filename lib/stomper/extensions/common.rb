@@ -9,7 +9,7 @@ module Stomper::Extensions::Common
   # overwrites a core Ruby method but doing so maintains the consistency of
   # this interface. If you want to pass a message ala +Object#send+, use the
   # +__send__+ method instead.
-  # @note You will need to use +__send__+ if you want the behavior of {Object#send}
+  # @note You will need to use +__send__+ if you want the behavior of +Object#send+
   # @param [String] dest the destination for the SEND frame to be delivered to
   # @param [String] body the body of the SEND frame
   # @param [{Symbol => String}] additional headers to include in the generated frame

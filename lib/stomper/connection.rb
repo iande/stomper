@@ -90,6 +90,21 @@ class Stomper::Connection
   # @param [String] uri a string representing the URI to the message broker's
   #   Stomp interface.
   # @param [{Symbol => Object}] options additional options for the connection.
+  # @option options [Array<String>] :versions (['1.0', '1.1']) protocol versions
+  #   this connection should allow.
+  # @option options [Array<Fixnum>] :heartbeats ([0, 0]) heartbeat timings for
+  #   this connection in milliseconds (a zero indicates that heartbeating is
+  #   not desired from the client or the broker) 
+  # @option options [String] :default_destination (nil) default destination to
+  #   work with when no destination has been specified.
+  # @option options [{Symbol => Object}] :ssl ({}) SSL specific options to
+  #   pass on when creating an {Stomper::Sockets::SSL SSL connection}.
+  # @option options [String] :host (nil) Host name to pass as +host+ header
+  #   on CONNECT frames (will use actual connection hostname if not set)
+  # @option options [String] :login (nil) Username to send as +login+ header
+  #   for credential authenticated connections.
+  # @option options [String] :passcode (nil) Password to send as +passcode+ header
+  #   for credential authenticated connections.
   #
   # @example Connecting to a broker on 'host.domain.tld' and a port of 12345
   #   con = Stomper::Connection.new('stomp://host.domain.tld:12345')
@@ -107,15 +122,16 @@ class Stomper::Connection
   #   con = Stomper::Connection.new('stomp://host', :versions => '1.1', :heartbeats => [1000, 0])
   #   # both result in:
   #   con.heartbeat #=> [1000, 0]
-  #   con.version   #=> ['1.1']
+  #   con.versions   #=> ['1.1']
   #
   # @example Repeated options in URI and options hash
   #   con = Stomper::Connection.new('stomp://host?versions=1.1&versions=1.0', :versions => '1.1')
-  #   con.version #=> '1.1'
-  #   # In this case, the version query parameter value +[1.1 , 1.0]+ is
+  #   con.versions #=> '1.1'
+  #   # In this case, the versions query parameter value +[1.1 , 1.0]+ is
   #   # overridden by the options hash setting +1.1+
   #
-  #   con = Stomper::Connection.new('stomp://host/queue/lowest_priority?default_destination=/queue/middle_priority', :default_destination => '/queue/highest_priority')
+  #   con = Stomper::Connection.new('stomp://host/queue/lowest_priority?default_destination=/queue/middle_priority',
+  #         :default_destination => '/queue/highest_priority')
   #   con.default_destination  #=> '/queue/highest_priority'
   #   # In this case, the URI's path +/queue/lowest_priority+ is overridden the
   #   # query parameter +/queue/middle_priority+, but both are overridden by
@@ -154,8 +170,15 @@ class Stomper::Connection
   # This method accepts version numbers as:
   # - A single string value (eg: '1.0')
   # - An array of string values (eg: ['1.1', '1.0'])
-  #
+  # @overload versions=(version)
+  #   Sets the acceptable versions to a single supplied version.
+  #   @param [String] version the protocol version to accept
+  # @overload versions=(versions)
+  #   Sets the acceptable versions to the list provided
+  #   @param [Array<String>] versions list of acceptable protocol versions
   # @return [Array<String>] acceptable protocol versions
+  # @raise [Stomper::Errors::UnsupportedProtocolVersionError] if none of the
+  #   versions provided are supported by this library
   def versions=(vers)
     vers = [vers] unless vers.is_a?(Array)
     @versions = PROTOCOL_VERSIONS.select { |v| vers.include? v }

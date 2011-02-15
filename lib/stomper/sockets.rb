@@ -6,6 +6,8 @@ module Stomper::Sockets
   # A wrapper for an SSL Socket that tidies up the SSL specifics so
   # our Connection library isn't troubled by them.
   class SSL < DelegateClass(::OpenSSL::SSL::SSLSocket)
+    # Default SSL options to use with new {SSL} connections.
+    # @return {Symbol => Object}
     DEFAULT_SSL_OPTIONS = {
       :verify_mode => ::OpenSSL::SSL::VERIFY_PEER |
         ::OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT,
@@ -16,6 +18,21 @@ module Stomper::Sockets
       :post_connection_check => true
     }
     
+    # Create a new {SSL} connection to +host+ on +port+.
+    # @param [String] host hostname or IP address to connect to
+    # @param [Fixnum] port port number to establish the connection on
+    # @option opts [Object] :verify_mode (OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT)
+    #   the methodology to use when verifying SSL certificates
+    # @option opts [String] :ca_file (nil) A single file containing all known
+    #  certificates for each certificate authority (CA)
+    # @option opts [String] :ca_path (nil) An openssl hashed directory of
+    #   individual certificate files for each CA
+    # @option opts [OpenSSL::X509::Certificate] :cert (nil) Client's
+    #   certificate. This is needed when server requires client to validate
+    #   itself with a certificate.
+    # @option opts [OpenSSL::PKey::PKey] :key (nil) Client's private key.
+    #   This is needed when server requires client to validate itself with
+    #   a certificate.
     def initialize(host, port, opts={})
       ssl_opts = DEFAULT_SSL_OPTIONS.merge(opts)
 
@@ -47,6 +64,9 @@ module Stomper::Sockets
   # A wrapper for an TCP Socket that tidies up the specifics so
   # our Connection library isn't troubled by them.
   class TCP < DelegateClass(::TCPSocket)
+    # Create a new {TCP} connection to +host+ on +port+.
+    # @param [String] host hostname or IP address to connect to
+    # @param [Fixnum] port port number to establish the connection on
     def initialize(host, port)
       @socket = TCPSocket.new(host, port)
       super(@socket)
