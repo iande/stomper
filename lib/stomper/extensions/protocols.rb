@@ -192,6 +192,9 @@ module Stomper::Extensions::Protocols
         connected? && client_alive? && broker_alive?
       end
       
+      # Maximum number of milliseconds that can pass between frame / heartbeat
+      # transmissions before we consider the client to be dead.
+      # @return [Fixnum]
       def heartbeat_client_limit
         unless defined?(@heartbeat_client_limit)
           @heartbeat_client_limit = heartbeating[0] > 0 ? (1.1 * heartbeating[0]) : 0
@@ -199,6 +202,9 @@ module Stomper::Extensions::Protocols
         @heartbeat_client_limit
       end
       
+      # Maximum number of milliseconds that can pass between frames / heartbeats
+      # received before we consider the broker to be dead.
+      # @return [Fixnum]
       def heartbeat_broker_limit
         unless defined?(@heartbeat_broker_limit)
           @heartbeat_broker_limit = heartbeating[1] > 0 ? (1.1 * heartbeating[1]) : 0
@@ -206,24 +212,25 @@ module Stomper::Extensions::Protocols
         @heartbeat_broker_limit
       end
       
+      # Returns true if the client is alive. Client is alive if client heartbeating
+      # is disabled, or the number of milliseconds that have passed since last
+      # transmission is less than or equal to {#heartbeat_client_limit client} limit
+      # @return [true,false]
+      # @see #heartbeat_client_limit
+      # @see #broker_alive?
       def client_alive?
-        # We should perform some tests to see if re-writing this method after
-        # the first invocation saves any time.
-        # if heartbeat_client_limit == 0
-        #   define_method :client_alive? do
-        #     true
-        #   end
-        #   true
-        # else
-        #   define_method :client_alive? do
-        #     heartbeat_client_duration <= heartbeat_client_limit
-        #   end
-        #   heartbeat_client_duration <= heartbeat_client_limit
-        # end
+        # Consider some benchmarking to determine if this is faster than
+        # re-writing the method after its first invocation.
         heartbeat_client_limit == 0 ||
           duration_since_transmitted <= heartbeat_client_limit
       end
       
+      # Returns true if the broker is alive. Broker is alive if broker heartbeating
+      # is disabled, or the number of milliseconds that have passed since last
+      # receiving is less than or equal to {#heartbeat_broker_limit broker} limit
+      # @return [true,false]
+      # @see #heartbeat_broker_limit
+      # @see #client_alive?
       def broker_alive?
         heartbeat_broker_limit == 0 ||
           duration_since_received <= heartbeat_broker_limit
