@@ -6,6 +6,7 @@ class Stomper::Connection
   include ::Stomper::Extensions::Common
   include ::Stomper::Extensions::Events
   include ::Stomper::Extensions::Scoping
+  include ::Stomper::Extensions::Protocols::Negotiator
   
   # The list of supported protocol versions
   # @return [Array<String>]
@@ -33,6 +34,10 @@ class Stomper::Connection
   # @return [true,false]
   attr_reader :connected
   alias :connected? :connected
+  
+  # The CONNECTED frame sent by the broker during the connection handshake.
+  # @return [Stomper::Frame,nil]
+  attr_reader :connected_frame
   
   # The protocol versions to allow for this connection
   # @return [Array<String>]
@@ -133,21 +138,13 @@ class Stomper::Connection
     @connected = false
     
     on_connected do |connected|
-      version = connected[:version]
-      version = '1.0' if version.nil? || version.empty?
-      if @versions.include? version
-        @version = version
-        extend_for_protocol
-      else
-        raise ::Stomper::Errors::UnsupportedProtocolVersionError, "broker requested '#{version}', client allows: #{@versions.inspect}"
-      end
+      @version = negotiate_protocol_version(connected, @versions)
+      extend_for_protocol
       @connected = true
     end
-    
     before_transmitting do
       trigger_event(:on_connection_died, self) unless alive?
     end
-    
     before_receiving do
       trigger_event(:on_connection_died, self) unless alive?
     end
@@ -216,18 +213,21 @@ class Stomper::Connection
   # will be read from the TCP stream. If the frame is a CONNECTED frame, the
   # connection has been established and you're ready to go, otherwise the
   # socket will be closed and an error will be raised.
-  def connect
+  def connect(headers={})
     @socket = @uri.create_socket
-    @serializer = ::Stomper::Extensions::FrameSerializer.new(@socket, @versions)
-    transmit ::Stomper::Frame.new('CONNECT', {
+    @serializer = ::Stomper::Extensions::FrameSerializer.new(@socket)
+    m_headers = {
       :'accept-version' => @versions.join(','),
       :host => @host,
-      :'heart-beat' => @heartbeats.join(',')
-    })
-    connect_frame = receive
-    raise ::Stomper::Errors::StomperError, 'bad juju' if connect_frame.command != 'CONNECTED'
+      :'heart-beat' => @heartbeats.join(','),
+      :login => @login,
+      :passcode => @passcode
+    }
+    transmit create_frame('CONNECT', headers, m_headers)
+    @connected_frame = receive
+    raise ::Stomper::Errors::StomperError, 'bad juju' if @connected_frame.command != 'CONNECTED'
     trigger_event(:on_connection_established, self) if @connected
-    @connected
+    @connected_frame
   end
   alias :open :connect
   
@@ -292,23 +292,29 @@ class Stomper::Connection
   def receive_nonblock
     trigger_event(:before_receiving, self)
     if @socket.ready?
-      @socket.read_frame.tap do |f|
+      @serializer.read_frame.tap do |f|
         trigger_event(:after_receiving, self, f)
         trigger_received_frame(f, self)
       end
     end
   end
   
-  # Move this out!
-  def alive?; true; end
+  # By default, connections are alive if they are @connected. This method
+  # is overridden by the inclusion of Stomp 1.1 mixins when heartbeating is
+  # enabled.
+  def alive?; @connected; end
   def dead?; !alive?; end
   
   private
   def close_socket(fire_terminated=false)
-    trigger_event(:on_connection_terminated, self) if fire_terminated
-    unless @socket.closed?
-      @socket.shutdown(2) rescue nil
-      @socket.close rescue nil
+    begin
+      trigger_event(:on_connection_terminated, self) if fire_terminated
+    ensure
+      unless @socket.closed?
+        @socket.shutdown(2) rescue nil
+        @socket.close rescue nil
+      end
+      @connected = false
     end
     trigger_event(:on_connection_closed, self)
   end

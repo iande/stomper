@@ -119,12 +119,15 @@ module Stomper::Extensions::Events
   # will change the frame-specific event that is triggered.
   def after_receiving(&block); bind_callback(:after_receiving, block); end
   
+  # @todo Make this work better (we will need some kind of handler object
+  # to allow unbinding to work properly)
   def bind_callback(event_name, cb_proc)
     @event_callbacks ||= {}
     @event_callbacks[event_name] ||= []
     @event_callbacks[event_name] << cb_proc
   end
   
+  # @todo Make this actually work
   def unbind_callback(callback)
   end
   
@@ -138,17 +141,13 @@ module Stomper::Extensions::Events
   end
   private :trigger_event
   
-  def trigger_received_frame(frame, *args)
-    trigger_frame(frame, :on_broker_beat, *args)
-  end
+  def trigger_received_frame(frame, *args); trigger_frame(frame, :on_broker_beat, args); end
   private :trigger_received_frame
   
-  def trigger_transmitted_frame(frame, *args)
-    trigger_frame(frame, :on_client_beat, *args)
-  end
+  def trigger_transmitted_frame(frame, *args); trigger_frame(frame, :on_client_beat, args); end
   private :trigger_transmitted_frame
   
-  def trigger_frame(frame, beat_event, *args)
+  def trigger_frame(frame, beat_event, args)
     if (f_comm = frame.command && frame.command.downcase.to_sym)
       trigger_event(:"on_#{f_comm}", frame, *args)
     else

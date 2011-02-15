@@ -171,6 +171,19 @@ module Stomper
       end
     end
     
+    describe "broker URI" do
+      it "should use the URI provided" do
+        uri = URI.parse('stomp:///')
+        connection = Connection.new(uri)
+        connection.uri.should == uri
+      end
+      
+      it "should convert a string into a URI" do
+        connection = Connection.new('stomp:///')
+        connection.uri.should be_a_kind_of(::URI)
+      end
+    end
+    
     describe "Connection IO" do
       before(:each) do
         @socket = mock('socket', :closed? => false, :close => true, :shutdown => true)
@@ -182,8 +195,41 @@ module Stomper
         @connection = Connection.new(@uri)
       end
       
-      it "should test connecting with a string instead of a URI"
-      it "should test actually connecting, or something much closer to it"
+      it "should create and connect a Connection through Connection.open" do
+        @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
+        @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+        connection = @connection.class.open(@uri)
+        connection.connected?.should be_true
+      end
+      
+      describe "frame reading" do
+        before(:each) do
+          @connected_frame.should_receive(:[]).with(:version).and_return('1.1')
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+        end
+        
+        it "should receive a frame" do
+          @connection.connect
+          frame = mock("frame", :command => 'MOCK')
+          @serializer.should_receive(:read_frame).and_return(frame)
+          @connection.receive.should == frame
+        end
+        
+        it "should not receive_nonblock a frame if io is not ready" do
+          @connection.connect
+          @socket.should_receive(:ready?).and_return(false)
+          @serializer.should_not_receive(:read_frame)
+          @connection.receive_nonblock.should be_nil
+        end
+        
+        it "should receive_nonblock a frame if io is ready" do
+          @connection.connect
+          frame = mock("frame", :command => 'MOCK')
+          @socket.should_receive(:ready?).and_return(true)
+          @serializer.should_receive(:read_frame).and_return(frame)
+          @connection.receive_nonblock.should == frame
+        end
+      end
       
       describe "connection state events" do
         before(:each) do

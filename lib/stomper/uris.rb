@@ -30,8 +30,7 @@ module URI
     # @return [Stomper::Connection]
     def open(*args)
       conx = ::Stomper::Connection.new(self)
-      # Don't go this route, always provide these methods
-      # conx.extend Stomper::OpenUriInterface
+      conx.connect
       if block_given?
         begin
           yield conx

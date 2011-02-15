@@ -14,7 +14,8 @@ module Stomper::Extensions
         :invalid_content_length => "MESSAGE\ncontent-length:4\n\n12345\000",
         :invalid_header_character => "MESSAGE\ngrandpa:he was:anti\n\n12345\000",
         :invalid_header_sequence => "MESSAGE\ngrandpa:he was\\ranti\n\n12345\000",
-        :malformed_header => "MESSAGE\nearth_below_us\nfloating:weightless\n\n12345\000"
+        :malformed_header => "MESSAGE\nearth_below_us\nfloating:weightless\n\n12345\000",
+        :dangling_header_sequence => "MESSAGE\ngrandpa:he was anti\\\n\n12345\000",
       }
       @messages.each { |k, v| v.force_encoding('US-ASCII') }
       
@@ -31,7 +32,7 @@ module Stomper::Extensions
         @frames[f].content_type = 'text/plain'
       end
       @frame_io = StringIO.new
-      @frame_serializer = FrameSerializer.new(@frame_io, ['1.0', '1.1'])
+      @frame_serializer = FrameSerializer.new(@frame_io)
     end
     
     describe "Protocol 1.0" do
@@ -190,6 +191,10 @@ module Stomper::Extensions
         it "should raise an malfored header error if the frame contains an incomplete header" do
           @frame_io.string = @messages[:malformed_header]
           lambda { @frame_serializer.read_frame }.should raise_error(::Stomper::Errors::MalformedHeaderError)
+        end
+        it "should raise an invalid header esacape sequence error if the frame contains a header with a dangling escape sequence" do
+          @frame_io.string = @messages[:dangling_header_sequence]
+          lambda { @frame_serializer.read_frame }.should raise_error(::Stomper::Errors::InvalidHeaderEscapeSequenceError)
         end
       end
     end

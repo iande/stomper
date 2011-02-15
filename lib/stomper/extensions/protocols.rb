@@ -4,17 +4,31 @@
 # @note These all modules contained within this namespace require that the
 #   includer/extender also includes/extends {Stomper::Extensions::Common}
 module Stomper::Extensions::Protocols
+  # Extensions for {Stomper::Connection connections} that handle Stomp
+  # protocol negotiation.
+  module Negotiator
+    def negotiate_protocol_version(connected, versions)
+      version = connected[:version]
+      version = '1.0' if version.nil? || version.empty?
+      raise ::Stomper::Errors::UnsupportedProtocolVersionError,
+        "broker requested '#{version}', client allows: #{versions.inspect}" unless versions.include?(version)
+      version
+    end
+    private :negotiate_protocol_version
+  end
+  
   # Provides the Stomp 1.0 protocol specific interface
   # for a {Stomper::Connection} object.
   module V1_0
     # Transmits an ACK frame to the broker to acknowledge that a corresponding
-    # MESSAGE frame has been processed by the client. The first argument must
-    # be either the MESSAGE frame you wish to acknowledge or its ID. If
-    # the final parameter to this method is a hash, it will used to apply
-    # additional headers to the generated frame.
-    # @param [Stomper::Frame, String] message_or_id the MESSAGE frame, or ID, to acknowledge
+    # MESSAGE frame has been processed by the client.
+    # @overload ack(message, headers={})
+    #   @param [Stomper::Frame] message the MESSAGE frame to acknowledge
+    #   @param [{Object => String}] headers optional headers to include with the ACK frame
+    # @overload ack(message_id, headers={})
+    #   @param [String] message_id the ID of a MESSAGE frame to acknowledge
+    #   @param [{Object => String}] headers optional headers to include with the ACK frame
     # @return [Stomper::Frame] the ACK frame sent to the broker
-    # @see Stomper::Extensions::Protocol_1_1#nack
     # @example Gonna need some examples for this one...
     def ack(*args)
       headers = args.last.is_a?(Hash) ? args.pop : {}
@@ -43,7 +57,30 @@ module Stomper::Extensions::Protocols
   # Provides the Stomp 1.1 protocol specific interface
   # for a {Stomper::Connection} object.
   module V1_1
-    # @todo Write a useful explanation.
+    # Acknowledge that a MESSAGE frame has been received and successfully 
+    # processed. The Stomp 1.1 protocol now requires that both ID of the
+    # message and the ID of the subscription the message arrived on must be
+    # specified in the ACK frame's headers.
+    # @overload ack(message, headers={})
+    #   Transmit an ACK frame fro the MESSAGE frame. The appropriate
+    #   subscription ID will be determined from the MESSAGE frame's
+    #   +subscription+ header value.
+    #   @param [Stomper::Frame] message the MESSAGE frame to acknowledge
+    #   @param [{Object => String}] headers optional headers to include with the ACK frame
+    # @overload ack(message, subscription_id, headers={})
+    #   Transmit an ACK frame for the MESSAGE frame, but use the supplied
+    #   subscription ID instead of trying to determine it from the MESSAGE
+    #   frame's headers. You should use this method of the broker you are
+    #   connected to does not include a +subscribe+ header on MESSAGE frames.
+    #   @param [Stomper::Frame] message the MESSAGE frame to acknowledge
+    #   @param [String] subscription_id the ID of the subscription MESSAGE was delivered on.
+    #   @param [{Object => String}] headers optional headers to include with the ACK frame
+    # @overload ack(message_id, subscription_id, headers={})
+    #   Transmit an ACK frame for the MESSAGE frame with an ID of +message_id+
+    #   delivered on the subscription with an ID of +subscription_id+.
+    #   @param [String] message_id the ID of the MESSAGE frame to acknowledge
+    #   @param [String] subscription_id the ID of the subscription MESSAGE was delivered on.
+    #   @param [{Object => String}] headers optional headers to include with the ACK frame
     # @return [Stomper::Frame] the ACK frame sent to the broker
     # @raise [ArgumentError] if the message or subscription IDs cannot be
     #   determined
@@ -52,8 +89,30 @@ module Stomper::Extensions::Protocols
       transmit create_ack_or_nack('ACK', message_or_id, args)
     end
 
-    # @todo Write a useful explanation.
-    # @param [Stomper::Frame, String] message_or_id the MESSAGE frame, or ID, to un-acknowledge
+    # Inform the broker that a MESSAGE frame was not processed. A NACK frame
+    # is, in effect, the opposite of an ACK frame. The NACK command is a new
+    # feature introduced in Stomp 1.1, hence why it is unavailable to Stomp
+    # 1.0 connections.
+    # @overload nack(message, headers={})
+    #   Transmit a NACK frame fro the MESSAGE frame. The appropriate
+    #   subscription ID will be determined from the MESSAGE frame's
+    #   +subscription+ header value.
+    #   @param [Stomper::Frame] message the MESSAGE frame to un-acknowledge
+    #   @param [{Object => String}] headers optional headers to include with the NACK frame
+    # @overload nack(message, subscription_id, headers={})
+    #   Transmit a NACK frame for the MESSAGE frame, but use the supplied
+    #   subscription ID instead of trying to determine it from the MESSAGE
+    #   frame's headers. You should use this method of the broker you are
+    #   connected to does not include a +subscribe+ header on MESSAGE frames.
+    #   @param [Stomper::Frame] message the MESSAGE frame to un-acknowledge
+    #   @param [String] subscription_id the ID of the subscription MESSAGE was delivered on.
+    #   @param [{Object => String}] headers optional headers to include with the NACK frame
+    # @overload nack(message_id, subscription_id, headers={})
+    #   Transmit a NACK frame for the MESSAGE frame with an ID of +message_id+
+    #   delivered on the subscription with an ID of +subscription_id+.
+    #   @param [String] message_id the ID of the MESSAGE frame to un-acknowledge
+    #   @param [String] subscription_id the ID of the subscription MESSAGE was delivered on.
+    #   @param [{Object => String}] headers optional headers to include with the NACK frame
     # @return [Stomper::Frame] the NACK frame sent to the broker
     # @raise [ArgumentError] if the message or subscription IDs cannot be
     #   determined

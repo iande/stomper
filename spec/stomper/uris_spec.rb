@@ -31,6 +31,35 @@ module URI
       @uri.create_socket.should equal(socket)
       @uri_host.create_socket.should equal(host_socket)
     end
+    
+    describe "open-uri compatibility" do
+      before(:each) do
+        @connection = mock('connection')
+        ::Stomper::Connection.stub!(:new).and_return(@connection)
+      end
+      it "should return a connection if no block is given" do
+        @connection.should_receive(:connect).and_return(true)
+        @uri.open.should == @connection
+      end
+      
+      it "should yield to a block and close the connection if a block is given" do
+        @connection.should_receive(:connect).and_return(true)
+        @connection.should_receive(:disconnect).and_return(true)
+        @uri.open do |c|
+          c.should == @connection
+        end
+      end
+      
+      it "should disconnect if a block is given, even if an exception is raised" do
+        @connection.should_receive(:connect).and_return(true)
+        @connection.should_receive(:disconnect).and_return(true)
+        lambda do
+          @uri.open do |c|
+            raise "The connection should still close"
+          end
+        end.should raise_error("The connection should still close")
+      end
+    end
   end
   
   describe STOMP_SSL do

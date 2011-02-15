@@ -5,17 +5,21 @@ module Stomper::Extensions::Common
   # Transmits a SEND frame to the broker with the specified destination, body
   # and headers.  If a block is given, a +receipt+ header will be included in the frame
   # and the block will be invoked when the corresponding RECEIPT frame
-  # is received from the broker
+  # is received from the broker. The naming of this method bothers me as it
+  # overwrites a core Ruby method but doing so maintains the consistency of
+  # this interface. If you want to pass a message ala +Object#send+, use the
+  # +__send__+ method instead.
+  # @note You will need to use +__send__+ if you want the behavior of {Object#send}
   # @param [String] dest the destination for the SEND frame to be delivered to
   # @param [String] body the body of the SEND frame
   # @param [{Symbol => String}] additional headers to include in the generated frame
   # @yield [receipt] invoked when the receipt for this SEND frame has been received
   # @yieldparam [Stomper::Frame] receipt the RECEIPT frame sent by the broker
   # @return [Stomper::Frame] the SEND frame sent to the broker
-  def snd(dest, body, headers={}, &block)
+  def send(dest, body, headers={}, &block)
     transmit create_frame('SEND', headers, { :destination => dest }, body)
   end
-  alias :put :snd
+  alias :put :send
   
   # Transmits a SUBSCRIBE frame to the broker with the specified destination
   # and headers.  If a block is given, it will be invoked every time a MESSAGE

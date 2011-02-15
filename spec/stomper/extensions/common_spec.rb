@@ -23,9 +23,9 @@ module Stomper::Extensions
       @common.commit('tx-4321')
     end
     
-    it "should transmit a SEND frame with :snd" do
-      @common.should_receive(:transmit).with(stomper_frame('testing :snd', {'destination' => '/queue/test_snd'}, 'SEND'))
-      @common.snd('/queue/test_snd', 'testing :snd')
+    it "should transmit a SEND frame with :send" do
+      @common.should_receive(:transmit).with(stomper_frame('testing :send', {'destination' => '/queue/test_send'}, 'SEND'))
+      @common.send('/queue/test_send', 'testing :send')
     end
     
     it "should transmit a SEND frame with :put" do
