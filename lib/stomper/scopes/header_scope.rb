@@ -38,10 +38,7 @@ class ::Stomper::Scopes::HeaderScope
       @connection = parent.connection
       @headers = parent.headers.merge(@headers)
     end
-    # Extend the protocol version specific modules used in the connection
-    ::Stomper::Extensions::Protocols::EXTEND_BY_VERSION[@connection.version].each do |mod|
-      extend mod
-    end
+    ::Stomper::Extensions::Common.extend_by_protocol_version(self, @connection.version)
   end
   
   # Applies this scope to a block.
@@ -54,7 +51,6 @@ class ::Stomper::Scopes::HeaderScope
   # transmission.
   # @param [Stomper::Frame] frame
   def transmit(frame)
-    $stdout.puts "My transmit is being invoked: #{self.class.name}"
     frame.headers.reverse_merge!(@headers)
     @connection.transmit frame
   end

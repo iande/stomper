@@ -5,7 +5,7 @@
 class Stomper::Connection
   include ::Stomper::Extensions::Common
   include ::Stomper::Extensions::Events
-  include ::Stomper::Extensions::Scoping
+  include ::Stomper::Extensions::Heartbeat
   
   # The list of supported protocol versions
   # @return [Array<String>]
@@ -380,27 +380,6 @@ class Stomper::Connection
     end
   end
   
-  # By default, this method does nothing. If the established connection
-  # utilizes the Stomp 1.1 protocol, this method will be overridden by
-  # {Stomper::Protocols::V1_1::Heartbeating#beat}.
-  def beat; end
-
-  # By default, a connection is alive if it is connected.
-  # If the established connection utilizes the Stomp 1.1 protocol, this
-  # method will be overridden by {Stomper::Protocols::V1_1::Heartbeating#alive?}.
-  # @return [true,false]
-  # @see #dead?
-  def alive?
-    connected?
-  end
-
-  # A {Stomper::Connection connection} is dead if it is not +alive?+
-  # @return [true, false]
-  # @see #alive?
-  def dead?
-    !alive?
-  end
-  
   # Duration in milliseconds since a frame has been transmitted to the broker.
   # @return [Fixnum]
   def duration_since_transmitted
@@ -415,8 +394,8 @@ class Stomper::Connection
   
   private
   def extend_for_protocol
-    mods = ::Stomper::Extensions::Protocols::EXTEND_BY_VERSION[@version]
-    mods.each { |m| extend m } if mods
+    ::Stomper::Extensions::Common.extend_by_protocol_version(self, @version)
+    ::Stomper::Extensions::Heartbeat.extend_by_protocol_version(self, @version)
     @serializer.extend_for_protocol @version
     self
   end

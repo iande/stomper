@@ -5,7 +5,7 @@ module Stomper::Extensions
 end
 
 require 'stomper/extensions/common'
-require 'stomper/extensions/scoping'
+require 'stomper/extensions/heartbeat'
 require 'stomper/extensions/protocols'
 require 'stomper/extensions/events'
 require 'stomper/extensions/frame_serializer'
