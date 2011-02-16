@@ -188,11 +188,26 @@ module Stomper
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
         end
         
-        # Kind of a weak test.
         it "should have durations since received and transmitted" do
+          ::Time.stub(:now => 1)
           @connection.connect
-          @connection.duration_since_received.should_not be_nil
-          @connection.duration_since_transmitted.should_not be_nil
+          ::Time.stub(:now => 3)
+          @connection.duration_since_received.should == 2000
+          ::Time.stub(:now => 2)
+          @connection.duration_since_transmitted.should == 1000
+          
+          @serializer.stub(:write_frame => true)
+          @serializer.stub(:read_frame => mock('frame', :command => nil))
+        
+          ::Time.stub(:now => 2)
+          @connection.transmit ::Stomper::Frame.new('SEND', {}, 'test message')
+          ::Time.stub(:now => 5)
+          @connection.duration_since_transmitted.should == 3000
+          
+          ::Time.stub(:now => 6)
+          @connection.receive
+          ::Time.stub(:now => 8.5)
+          @connection.duration_since_received.should == 2500
         end
         
         it "should receive a frame" do

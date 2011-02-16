@@ -335,7 +335,7 @@ class Stomper::Connection
   # Duration in milliseconds since a frame has been received from the broker.
   # @return [Fixnum]
   def duration_since_received
-    @last_received_at && ((Time.now - @last_transmitted_at)*1000).to_i
+    @last_received_at && ((Time.now - @last_received_at)*1000).to_i
   end
   
   private
