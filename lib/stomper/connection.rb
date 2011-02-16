@@ -6,11 +6,6 @@ class Stomper::Connection
   include ::Stomper::Extensions::Common
   include ::Stomper::Extensions::Events
   include ::Stomper::Extensions::Scoping
-  include ::Stomper::Extensions::Protocols::Negotiator
-  include ::Stomper::Extensions::Protocols::Heartbeats
-  # By default, Stomp 1.0 heartbeat semantics (mostly no-ops/fixed values)
-  # are included
-  include ::Stomper::Extensions::Protocols::V1_0::Heartbeating
   
   # The list of supported protocol versions
   # @return [Array<String>]
@@ -86,10 +81,24 @@ class Stomper::Connection
   # if no frames have been transmitted yet
   # @return [Time,nil]
   attr_reader :last_transmitted_at
+  
   # A timestamp set to the last time a frame was received. Returns +nil+
   # if no frames have been received yet
   # @return [Time,nil]
   attr_reader :last_received_at
+  
+  # The subscription manager.  Maintains the list of destinations subscribed
+  # to as well as the callbacks to invoke when a MESSAGE frame is received
+  # on one of them.
+  # @return [Stomper::SubscriptionManager]
+  attr_reader :subscription_manager
+  
+  # The receipt manager.  Maintains the list of receipt IDs and the callbacks
+  # associated with them that will be invoked when any frame with a matching
+  # +receipt-id+ header is received.
+  # @return [Stomper::ReceiptManager]
+  attr_reader :receipt_manager
+  
   
   # Creates a connection to a broker specified by the suppled uri. The given
   # uri will be resolved to a URI instance through +URI.parse+. The final URI object must
@@ -156,22 +165,29 @@ class Stomper::Connection
     @heartbeating = [0,0]
     @last_transmitted_at = @last_received_at = nil
     
-    on_connected do |connected|
-      @version = negotiate_protocol_version(connected)
-      unless @versions.include?(@version)
-        close_socket
-        raise ::Stomper::Errors::UnsupportedProtocolVersionError,
-          "broker requested '#{@version}', client allows: #{@versions.inspect}"
+    @subscription_manager = ::Stomper::SubscriptionManager.new(self)
+    @receipt_manager = ::Stomper::ReceiptManager.new(self)
+    
+    on_connected do |cf|
+      unless connected?
+        @version = (cf[:version].nil?||cf[:version].empty?) ? '1.0' : cf[:version]
+        
+        unless @versions.include?(@version)
+          close
+          raise ::Stomper::Errors::UnsupportedProtocolVersionError,
+            "broker requested '#{@version}', client allows: #{@versions.inspect}"
+        end
+        c_x, c_y = @heartbeats
+        s_x, s_y = (cf[:'heart-beat'] || '0,0').split(',').map do |v|
+          vi = v.to_i
+          vi > 0 ? vi : 0
+        end
+        @heartbeating = [ (c_x == 0||s_y == 0 ? 0 : [c_x,s_y].max), 
+          (c_y == 0||s_x == 0 ? 0 : [c_y,s_x].max) ]
+
+        extend_for_protocol
+        @connected = true
       end
-      @heartbeating = negotiate_heartbeats(connected, @heartbeats)
-      extend_for_protocol
-      @connected = true
-    end
-    before_transmitting do
-      trigger_event(:on_connection_died, self) unless alive?
-    end
-    before_receiving do
-      trigger_event(:on_connection_died, self) unless alive?
     end
   end
   
@@ -249,8 +265,14 @@ class Stomper::Connection
       :passcode => @passcode
     }
     transmit create_frame('CONNECT', headers, m_headers)
-    @connected_frame = receive
-    raise ::Stomper::Errors::StomperError, 'bad juju' if @connected_frame.command != 'CONNECTED'
+    receive.tap do |f|
+      if f.command == 'CONNECTED'
+        @connected_frame = f
+      else
+        close
+        raise ::Stomper::Errors::StomperError, 'bad juju'
+      end
+    end
     trigger_event(:on_connection_established, self) if @connected
     @connected_frame
   end
@@ -277,14 +299,41 @@ class Stomper::Connection
   #   DISCONNECT frame (these can include event handlers, such as :on_receipt)
   def disconnect(headers={})
     transmit create_frame('DISCONNECT', headers, {})
-    close_socket
+    close
   end
-  alias :close :disconnect
+  
+  # Disconnects from the broker immediately. This is not a polite disconnect,
+  # meaning that no DISCONNECT frame is transmitted to the broker, the socket
+  # is shutdown and closed immediately. Calls to {#disconnect} invoke this
+  # method internally after the DISCONNECT frame has been transmitted. This
+  # method always triggers the
+  # {Stomper::Extensions::Events#on_connection_closed on_connection_closed} event
+  # and if +true+ is passed as a parameter,
+  # {Stomper::Extensions::Events#on_connection_terminated on_connection_terminated}
+  # will be triggered as well.
+  # @see #disconnect
+  # @see Stomper::Extensions::Events#on_connection_closed
+  # @see Stomper::Extensions::Events#on_connection_terminated
+  # @param [true,false] fire_terminated (false) If true, trigger
+  #   {Stomper::Extensions::Events#on_connection_terminated}
+  def close(fire_terminated=false)
+    begin
+      trigger_event(:on_connection_terminated, self) if fire_terminated
+    ensure
+      unless @socket.closed?
+        @socket.shutdown(2) rescue nil
+        @socket.close rescue nil
+      end
+      @connected = false
+    end
+    trigger_event(:on_connection_closed, self)
+  end
   
   # Transmits a frame to the broker. This is a low-level method used internally
   # by the more user friendly interface.
   # @param [Stomper::Frame] frame
   def transmit(frame)
+    trigger_event(:on_connection_died, self) if dead?
     trigger_event(:before_transmitting, self, frame)
     begin
       @serializer.write_frame(frame).tap do
@@ -293,7 +342,7 @@ class Stomper::Connection
         trigger_transmitted_frame(frame, self)
       end
     rescue ::IOError, ::SystemCallError
-      close_socket(true)
+      close(true)
       raise
     end
   end
@@ -301,6 +350,7 @@ class Stomper::Connection
   # Receives a frame from the broker.
   # @return [Stomper::Frame]
   def receive
+    trigger_event(:on_connection_died, self) if dead?
     trigger_event(:before_receiving, self)
     begin
       @serializer.read_frame.tap do |f|
@@ -309,7 +359,7 @@ class Stomper::Connection
         trigger_received_frame(f, self)
       end
     rescue ::IOError, ::SystemCallError
-      close_socket(true)
+      close(true)
       raise
     end
   end
@@ -330,6 +380,27 @@ class Stomper::Connection
     end
   end
   
+  # By default, this method does nothing. If the established connection
+  # utilizes the Stomp 1.1 protocol, this method will be overridden by
+  # {Stomper::Protocols::V1_1::Heartbeating#beat}.
+  def beat; end
+
+  # By default, a connection is alive if it is connected.
+  # If the established connection utilizes the Stomp 1.1 protocol, this
+  # method will be overridden by {Stomper::Protocols::V1_1::Heartbeating#alive?}.
+  # @return [true,false]
+  # @see #dead?
+  def alive?
+    connected?
+  end
+
+  # A {Stomper::Connection connection} is dead if it is not +alive?+
+  # @return [true, false]
+  # @see #alive?
+  def dead?
+    !alive?
+  end
+  
   # Duration in milliseconds since a frame has been transmitted to the broker.
   # @return [Fixnum]
   def duration_since_transmitted
@@ -343,19 +414,6 @@ class Stomper::Connection
   end
   
   private
-  def close_socket(fire_terminated=false)
-    begin
-      trigger_event(:on_connection_terminated, self) if fire_terminated
-    ensure
-      unless @socket.closed?
-        @socket.shutdown(2) rescue nil
-        @socket.close rescue nil
-      end
-      @connected = false
-    end
-    trigger_event(:on_connection_closed, self)
-  end
-  
   def extend_for_protocol
     mods = ::Stomper::Extensions::Protocols::EXTEND_BY_VERSION[@version]
     mods.each { |m| extend m } if mods

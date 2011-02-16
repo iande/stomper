@@ -3,33 +3,7 @@
 # Namespace for specific protocol version extensions.
 # @note These all modules contained within this namespace require that the
 #   includer/extender also includes/extends {Stomper::Extensions::Common}
-module Stomper::Extensions::Protocols
-  # Extensions for {Stomper::Connection connections} that handle Stomp
-  # protocol negotiation.
-  module Negotiator
-    def negotiate_protocol_version(connected)
-      version = connected[:version]
-      version = '1.0' if version.nil? || version.empty?
-      version
-    end
-    private :negotiate_protocol_version
-  end
-  
-  # Extensions for {Stomper::Connection connections} that handle Stomp
-  # heart beating negotiation.
-  module Heartbeats
-    def negotiate_heartbeats(connected, client)
-      c_x, c_y = client
-      s_x, s_y = (connected[:'heart-beat'] || '0,0').split(',').map do |v|
-        vi = v.to_i
-        vi > 0 ? vi : 0
-      end
-      [ (c_x == 0 || s_y == 0 ? 0 : [c_x, s_y].max),
-        (c_y == 0 || s_x == 0 ? 0 : [c_y, s_x].max) ]
-    end
-    private :negotiate_heartbeats
-  end
-  
+module Stomper::Extensions::Protocols  
   # Provides the Stomp 1.0 protocol specific interface
   # for a {Stomper::Connection} object.
   module V1_0
