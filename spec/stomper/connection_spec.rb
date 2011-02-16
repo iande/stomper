@@ -168,18 +168,31 @@ module Stomper
         @socket = mock('socket', :closed? => false, :close => true, :shutdown => true)
         @serializer = mock('serializer', :extend_for_protocol => true)
         @connected_frame = mock('CONNECTED', :command => 'CONNECTED', :[] => '')
-        @serializer.should_receive(:read_frame).and_return(@connected_frame)
-        @uri.should_receive(:create_socket).and_return(@socket)
+        @serializer.should_receive(:read_frame).at_least(:once).and_return(@connected_frame)
+        @uri.should_receive(:create_socket).at_least(:once).and_return(@socket)
         ::Stomper::Extensions::FrameSerializer.stub!(:new => @serializer)
         @connection = Connection.new(@uri)
         @connection.stub(:negotiate_heartbeats => [0,0])
       end
       
-      it "should create and connect a Connection through Connection.open" do
+      it "should create and connect a Connection through Connection.open/connect" do
         @connection.stub(:negotiate_protocol_version => '1.0')
-        @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+        @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).at_least(:once).and_return { |f| f }
+        
         connection = @connection.class.open(@uri)
         connection.connected?.should be_true
+        
+        connection = @connection.class.connect(@uri)
+        connection.connected?.should be_true
+      end
+      
+      it "should send a DISCONNECT frame when disconnecting politely" do
+        @connection.stub(:negotiate_protocol_version => '1.0')
+        @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+        @connection.connect
+        @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'DISCONNECT')).once
+        @connection.disconnect
+        @connection.connected?.should be_false
       end
       
       describe "frame reading" do
@@ -251,6 +264,7 @@ module Stomper
           @connection.on_connection_closed { triggered[0] = true }
           @connection.on_connection_disconnected { triggered[1] = true }
           @connection.connect
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'DISCONNECT')).once
           @connection.disconnect
           triggered.should == [true, true]
         end

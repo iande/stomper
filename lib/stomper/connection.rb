@@ -256,12 +256,15 @@ class Stomper::Connection
   end
   alias :open :connect
   
-  # Creates a new connection and immediately connects it to the broker.
-  # @see #initialize
-  def self.open(uri, options={})
-    conx = new(uri, options)
-    conx.connect
-    conx
+  class << self
+    # Creates a new connection and immediately connects it to the broker.
+    # @see #initialize
+    def connect(uri, options={})
+      conx = new(uri, options)
+      conx.connect
+      conx
+    end
+    alias :open :connect
   end
   
   # Disconnects from the broker. This is polite disconnect, in that it first
@@ -273,6 +276,7 @@ class Stomper::Connection
   # @param [{Symbol => String}] an optional set of headers to include in the
   #   DISCONNECT frame (these can include event handlers, such as :on_receipt)
   def disconnect(headers={})
+    transmit create_frame('DISCONNECT', headers, {})
     close_socket
   end
   alias :close :disconnect
@@ -359,3 +363,7 @@ class Stomper::Connection
     self
   end
 end
+
+# Alias Stomper::Client to Stomper::Connection
+::Stomper::Client = ::Stomper::Connection
+
