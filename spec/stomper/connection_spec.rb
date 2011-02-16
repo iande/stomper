@@ -12,14 +12,14 @@ module Stomper
         :password => nil)
     end
     
+    it "should alias Stomper::Client to Stomper::Connection" do
+      ::Stomper::Client.should == ::Stomper::Connection
+    end
+    
     describe "default configuration" do
       before(:each) do
         @uri.stub!(:host => 'uri.host.name')
         @connection = Connection.new(@uri)
-      end
-      
-      it "should have an empty default destination" do
-        @connection.default_destination.should == ''
       end
       
       it "should default to all supported protocol versions" do
@@ -55,24 +55,7 @@ module Stomper
     describe "configuration through uri" do
       before(:each) do
         @uri.stub!(:path => '/path/dest',
-          :query => 'versions=1.1&versions=1.0&default_destination=/query/dest')
-      end
-      
-      it "should use the path of the URI as a default destination" do
-        @uri.stub!(:query => '')
-        connection = Connection.new(@uri)
-        connection.default_destination.should == '/path/dest'
-      end
-      
-      it "should use the default_destination query parameter as a default destination" do
-        @uri.stub!(:path => '')
-        connection = Connection.new(@uri)
-        connection.default_destination.should == '/query/dest'
-      end
-      
-      it "should favor the default_destination query over the path" do
-        connection = Connection.new(@uri)
-        connection.default_destination.should == '/query/dest'
+          :query => 'versions=1.1&versions=1.0')
       end
       
       it "should use the version query parameter" do
@@ -105,14 +88,6 @@ module Stomper
     end
     
     describe "configuration through options" do
-      it "should use the :default_destination option as a default destination" do
-        connection = Connection.new(@uri, { 'default_destination' => '/options/dest' })
-        connection.default_destination.should == '/options/dest'
-
-        connection = Connection.new(@uri, { :default_destination => '/options/dest' })
-        connection.default_destination.should == '/options/dest'
-      end
-      
       it "should use the version option" do
         connection = Connection.new(@uri, { :versions => '1.0' })
         connection.versions.should == [ '1.0' ]
@@ -128,16 +103,7 @@ module Stomper
       end
     end
     
-    describe "configuration collision" do
-      it "should favor the :default_destination option over the default_destination query over the URI path" do
-        @uri.stub!(:query => 'default_destination=/query/dest')
-        @uri.stub!(:path => '/path/dest')
-        connection = Connection.new(@uri)
-        connection.default_destination.should == '/query/dest'
-        connection = Connection.new(@uri, { :default_destination => '/options/dest' })
-        connection.default_destination.should == '/options/dest'
-      end
-      
+    describe "configuration collision" do      
       it "should favor the login/passcode option over the query over the user/password of the URI" do
         @uri.stub!(:user => 'ian', :password => 's3cr3tz')
         @uri.stub!(:query => 'login=not%20ian&passcode=my_super_secret_key')
@@ -516,11 +482,6 @@ module Stomper
           @connection.receive
           triggered.should == [true, true, true, true]
         end
-      end
-      
-      describe "default destinations" do
-        it "should subscribe to default_destination if destination is not provided"
-        it "should transmit SEND frames to default_destination if destination is not provided"
       end
       
       describe "version negotiation" do

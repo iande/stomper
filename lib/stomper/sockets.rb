@@ -33,8 +33,8 @@ module Stomper::Sockets
     # @option opts [OpenSSL::PKey::PKey] :key (nil) Client's private key.
     #   This is needed when server requires client to validate itself with
     #   a certificate.
-    def initialize(host, port, opts={})
-      ssl_opts = DEFAULT_SSL_OPTIONS.merge(opts)
+    def initialize(host, port, ssl_opts={})
+      ssl_opts = DEFAULT_SSL_OPTIONS.merge(ssl_opts)
 
       @context = ::OpenSSL::SSL::SSLContext.new
       post_check = ssl_opts.delete(:post_connection_check)

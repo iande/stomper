@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Ian D. Eccles"]
   s.email       = ["ian.eccles@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "http://github.com/iande/stomper"
   s.summary     = %q{Client for message queues implementing the Stomp protocol interface.}
   s.description = %q{Client library for message passing with brokers that support the Stomp protocol.}
 
@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   
   # Require Ruby 1.9 or better (needed for encoding support)
+  # This MUST be adjusted to support 1.8.7 as well.
   s.required_ruby_version = '>= 1.9.0'
   s.has_rdoc = 'yard'
   s.add_development_dependency('rspec', '>= 2.0.0')

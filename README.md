@@ -22,6 +22,7 @@ deficiencies of the gem, but this list is not necessarily exhaustive.
 * Event callbacks need a wrapper so they can be unbound
 * Subscription handlers need implemented
 * Full stack testing (probably through cucumber)
+* The 'open-uri' interface should be factored out into a separate gem.
 * Ruby 1.8.7 compatibility needs to be put in place.
 
 As these issues are resolved, I'll drop them from the list (and potentially
@@ -95,15 +96,6 @@ add other issues)
     
     con.on_connection_terminated do
       $stderr.puts "Connection terminated abnormally!"
-    end
-    
-    # Open a connection to a broker through 'open-uri'
-    require 'open-uri'
-    open('stomp://myuser:superSecret@host.domain.tld:61613') do |stomp|
-      # Connection to broker will be connected when a block is started
-      # and disconnected when the block completes.
-      stomp.send("/queue/open-uri", "a message")
-      stomp.send("/queue/open-uri", "another message")
     end
 
 ##License

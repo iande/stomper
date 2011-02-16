@@ -23,7 +23,6 @@ class Stomper::Connection
   DEFAULT_CONFIG = {
     :versions => ['1.0', '1.1'],
     :heartbeats => [0, 0],
-    :default_destination => nil,
     :ssl => {},
     :host => nil,
     :login => nil,
@@ -69,11 +68,6 @@ class Stomper::Connection
   # @return [{Symbol => Object}, nil]
   attr_reader :ssl
   
-  # The default destination to use for subscriptions and send frames
-  # when working with a connection through the +open-uri+ interface.
-  # @return [String]
-  attr_reader :default_destination
-  
   # The host header value to send to the broker when connecting. This allows
   # the client to inform the server which host it wishes to connect with
   # when multiple brokers may share an IP address through virtual hosting.
@@ -117,8 +111,6 @@ class Stomper::Connection
   # @option options [Array<Fixnum>] :heartbeats ([0, 0]) heartbeat timings for
   #   this connection in milliseconds (a zero indicates that heartbeating is
   #   not desired from the client or the broker) 
-  # @option options [String] :default_destination (nil) default destination to
-  #   work with when no destination has been specified.
   # @option options [{Symbol => Object}] :ssl ({}) SSL specific options to
   #   pass on when creating an {Stomper::Sockets::SSL SSL connection}.
   # @option options [String] :host (nil) Host name to pass as +host+ header
@@ -134,11 +126,6 @@ class Stomper::Connection
   # @example Connecting with login credentials
   #   con = Stomper::Connection.new('stomp://username:secret@host.domain.tld')
   #
-  # @example Connecting using a default queue for delivering SEND frames and receiving MESSAGE frames
-  #   con = Stomper::Connection.new('stomp://host/queue/testing')
-  #   con = Stomper::Connection.new('stomp://host/?default_destination=/queue/testing')
-  #   con = Stomper::Connection.new('stomp://host', :default_destination => '/queue/testing')
-  #
   # @example Connecting using Stomp protocol 1.1, sending client beats once per second, and no interest in server beats.
   #   con = Stomper::Connection.new('stomp://host/?versions=1.1&heartbeats=1000&heartbeats=0')
   #   con = Stomper::Connection.new('stomp://host', :versions => '1.1', :heartbeats => [1000, 0])
@@ -151,13 +138,6 @@ class Stomper::Connection
   #   con.versions #=> '1.1'
   #   # In this case, the versions query parameter value +[1.1 , 1.0]+ is
   #   # overridden by the options hash setting +1.1+
-  #
-  #   con = Stomper::Connection.new('stomp://host/queue/lowest_priority?default_destination=/queue/middle_priority',
-  #         :default_destination => '/queue/highest_priority')
-  #   con.default_destination  #=> '/queue/highest_priority'
-  #   # In this case, the URI's path +/queue/lowest_priority+ is overridden the
-  #   # query parameter +/queue/middle_priority+, but both are overridden by
-  #   # the options hash setting +/queue/highest_priority+.
   def initialize(uri, options={})
     @uri = uri.is_a?(::URI) ? uri : ::URI.parse(uri)
     config = ::Stomper::Support.keys_to_sym(::CGI.parse(@uri.query || '')).
@@ -169,7 +149,6 @@ class Stomper::Connection
         __send__ :"#{attr_name}=", def_val
       end
     end
-    @default_destination ||= (@uri.path||'')
     @host ||= (@uri.host||'localhost')
     @login ||= (@uri.user || '')
     @passcode ||= (@uri.password || '')
@@ -237,13 +216,6 @@ class Stomper::Connection
   def ssl=(ssl_opts)
   end
   
-  # Sets the default destination for this connection. If the supplied value
-  # is an array, only the first element is considered. Any value specified is
-  # converted to a string.
-  #
-  # @param [String] val
-  def default_destination=(val); @default_destination = (val.is_a?(Array) ? val.first : val).to_s; end
-  
   # Sets the host header value to use when connecting to the server. This
   # provides the client with the ability to specify a specific broker that
   # resides on a server that supports virtual hosts.
@@ -267,7 +239,7 @@ class Stomper::Connection
   # connection has been established and you're ready to go, otherwise the
   # socket will be closed and an error will be raised.
   def connect(headers={})
-    @socket = @uri.create_socket
+    @socket = @uri.create_socket(@ssl)
     @serializer = ::Stomper::Extensions::FrameSerializer.new(@socket)
     m_headers = {
       :'accept-version' => @versions.join(','),
