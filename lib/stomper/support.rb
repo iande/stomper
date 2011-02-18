@@ -44,4 +44,13 @@ module Stomper::Support
       @next_serial_sequence.to_s
     end
   end
+  
+  def self.constantize(klass)
+    return klass if klass.is_a?(Class)
+    klass.to_s.split('::').inject(Object) do |const, named|
+      next const if named.empty?
+      const.const_defined?(named) ? const.const_get(named) :
+        const.const_missing(named)
+    end
+  end
 end

@@ -19,10 +19,7 @@ class Stomper::Scopes::ReceiptScope < ::Stomper::Scopes::HeaderScope
   # sent by the broker.
   def initialize(parent, headers)
     super
-    @receipt_ids = []
     @receipt_handler = nil
-    @handler_installed = false
-    @receipt_mutex = ::Mutex.new
   end
   
   # Takes a block as a callback to invoke when a receipt is received.
@@ -36,31 +33,12 @@ class Stomper::Scopes::ReceiptScope < ::Stomper::Scopes::HeaderScope
   # the corresponding RECEIPT frame is received from the broker.
   # @param [Stomper::Frame] frame
   def transmit(frame)
-    if check_receipt_handler
+    if @receipt_handler && FRAME_COMMANDS.include?(frame.command)
       r_id = frame[:receipt]
       r_id = ::Stomper::Support.next_serial if r_id.nil? || r_id.empty?
-      @receipt_mutex.synchronize do
-        @receipt_ids << r_id
-      end
+      receipt_manager.add(r_id, @receipt_handler)
       frame[:receipt] = r_id
     end
     super(frame)
-  end
-  
-  private
-  def check_receipt_handler
-    if @receipt_handler && !@handler_installed
-      @connection.on_receipt do |receipt|
-        r_id = receipt[:'receipt-id']
-        @receipt_mutex.synchronize do
-          if @receipt_ids.include?(r_id)
-            @receipt_handler.call(receipt)
-            @receipt_ids.delete(r_id)
-          end
-        end
-      end
-      @handler_installed = true
-    end
-    @handler_installed
   end
 end

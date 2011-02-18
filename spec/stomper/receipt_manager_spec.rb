@@ -13,66 +13,71 @@ module Stomper
       @receipt_manager = ReceiptManager.new(@connection)
     end
     
-    describe "thread safety" do
+    describe "usage" do
       before(:each) do
-        @connection.should_receive(:on_receipt)
+        @connection.extend ::Stomper::Extensions::Events
         @receipt_manager = ReceiptManager.new(@connection)
       end
-      # Everyone loves testing thread safety. Lots of comments in this test to clarify
-      # what the hell I'm doing.
-      it "should synchronize its list of receipt IDs, blocking new receipt generations until the handler is complete" do
-        pending "Make it work"
+      
+      it "should add callbacks that are invoked by a matching receipt" do
         triggered = false
-        scope_started = false
-        firing_started = false
-        scope_block = lambda do |r|
-          scope_started = true
-          Thread.stop
-          # Receipt ID 'receipt-4567' should not be in the collection yet,
-          # because @scope.send(...) should be blocked until this block completes
-          @scope.instance_variable_get(:@receipt_ids).should_not include('receipt-4567')
-          triggered = true
-        end
-        # Set up our transmission expectations
-        @connection.should_receive(:transmit).with(stomper_frame_with_headers({ :destination => '/queue/test', :receipt => 'receipt-1234' }, 'SEND'))
-        @connection.should_receive(:transmit).with(stomper_frame_with_headers({ :destination => '/queue/test', :receipt => 'receipt-4567' }, 'SEND'))
-        # Register the callback
-        @scope.apply_to(scope_block)
-        
-        # Generate our first entry in @scope's "@receipt_ids" instance variable
-        @scope.send('/queue/test', 'body of message', { :receipt => 'receipt-1234' })
-        # Trigger the event in a separate thread, as is likely to be the case
-        # in real world use
-        event_thread = Thread.new do
-          @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => 'receipt-1234' }))
-        end
-        # Prevent the "finish_firing_thread" from re-starting the "event_thread" too soon
-        ready_to_trigger = false
-        # This thread basically just waits a bit, and then tells "event_thread" to
-        # finish evaluating "scope_block", thus creating a long-lasting hold
-        # on the Mutex's lock within @scope.
-        finish_firing_thread = Thread.new do
-          firing_started = true
-          Thread.pass until ready_to_trigger
-          # Sleep a bit to ensure that @scope.send(...) has been called
-          sleep 0.25
-          event_thread.run
-        end
-        # Pass until both the 'finish_firing_thread' and 'event_thread' have started
-        # and passed or stopped, respectively.
-        Thread.pass until firing_started && scope_started
-        # Set ready to trigger to true, otherwise scope_block will never complete its execution
-        # and :send will not be able to acquire the mutex's lock.
-        ready_to_trigger = true
-        # At this point, scope_block has already begun execution, but has not yet
-        # completed it, so the Mutex is locked, and :snd will block.
-        @scope.send('/queue/test', 'other body', { :receipt => 'receipt-4567' })
-        # Once we get here, scope_block has entirely completed, so triggered should
-        # be true.
+        @receipt_manager.add('1234', lambda { |r| triggered = true })
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '1234' }))
         triggered.should be_true
-        # The triggering receipt-id 'receipt-1234' has been removed from the list.
-        # Only 'receipt-4567' should remain.
-        @scope.instance_variable_get(:@receipt_ids).should_not include('receipt-1234')
+      end
+      
+      it "should not invoke callbacks that don't match the receipt" do
+        triggered = false
+        @receipt_manager.add('1234', lambda { |r| triggered = true })
+        @receipt_manager.add('5678', lambda { |r| triggered = true })
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '12345' }))
+        triggered.should be_false
+      end
+      
+      it "should not invoke the same callback more than once" do
+        triggered = 0
+        @receipt_manager.add('1234', lambda { |r| triggered += 1 })
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '1234' }))
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '1234' }))
+        triggered.should == 1
+      end
+      
+      it "should allow a receipt handler to be registered within a callback" do
+        triggered = [false, false]
+        callback = lambda do |r|
+          triggered[0] = true
+          @receipt_manager.add('4567', lambda { |r| triggered[1] = true })
+        end
+        @receipt_manager.add('1234', callback)
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '1234' }))
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '4567' }))
+        triggered.should == [true, true]
+      end
+      
+      it "should allow a receipt handler to be registered within a callback in separate threads" do
+        triggered = [false, false]
+        started_r1 = false
+        callback = lambda do |r|
+          triggered[0] = true
+          Thread.stop
+        end
+        @receipt_manager.add('1234', callback)
+        r_1 = Thread.new(@connection) do |c|
+          started_r1 = true
+          Thread.stop
+          c.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '1234' }))
+        end
+        r_2 = Thread.new(@connection) do |c|
+          Thread.pass until triggered[0]
+          @receipt_manager.add('4567', lambda { |r| triggered[1] = true })
+          r_1.run
+          c.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => '4567' }))
+        end
+        Thread.pass until started_r1
+        r_1.run
+        r_1.join
+        r_2.join
+        triggered.should == [true, true]
       end
     end
   end

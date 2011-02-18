@@ -21,17 +21,13 @@ class Stomper::Connection
     :ssl => {},
     :host => nil,
     :login => nil,
-    :passcode => nil
+    :passcode => nil,
+    :receiver_class => ::Stomper::Receivers::Threaded
   }
 
   # The URI representation of the broker this connection is associated with
   # @return [URI]
   attr_reader :uri
-  
-  # True if a connection with the broker has been established, false otherwise.
-  # @return [true,false]
-  attr_reader :connected
-  alias :connected? :connected
   
   # The CONNECTED frame sent by the broker during the connection handshake.
   # @return [Stomper::Frame,nil]
@@ -76,6 +72,11 @@ class Stomper::Connection
   # The passcode header value to send to the broker when connecting.
   # @return [String]
   attr_reader :passcode
+  
+  # The class to use when instantiating a new receiver for the connection.
+  # Defaults to {Stomper::Receivers::Threaded}
+  # @return [CLass]
+  attr_reader :receiver_class
   
   # A timestamp set to the last time a frame was transmitted. Returns +nil+
   # if no frames have been transmitted yet
@@ -186,7 +187,6 @@ class Stomper::Connection
           (c_y == 0||s_x == 0 ? 0 : [c_y,s_x].max) ]
 
         extend_for_protocol
-        @connected = true
       end
     end
   end
@@ -247,7 +247,18 @@ class Stomper::Connection
   # Sets the passcode header value to use when connecting to the server.
   #
   # @param [String] val
-  def passcode=(val); @passcode = (val.is_a?(Array) ? val.first : val).to_s; end
+  def passcode=(val)
+    @passcode = (val.is_a?(Array) ? val.first : val).to_s
+  end
+  
+  # Sets the class to use when a receiver needs to be created
+  # @see #start
+  # @see #stop
+  # @see Stomper::Receivers::Threaded
+  def receiver_class=(val)
+    @receiver_class = ::Stomper::Support.constantize(val.is_a?(Array) ?
+      val.first : val)
+  end
   
   # Establishes a connection to the broker. After the socket connection is
   # established, a CONNECT/STOMP frame will be sent to the broker and a frame
@@ -270,9 +281,10 @@ class Stomper::Connection
         @connected_frame = f
       else
         close
-        raise ::Stomper::Errors::StomperError, 'bad juju'
+        raise ::Stomper::Errors::ConnectFailedError, 'broker did not send CONNECTED frame'
       end
     end
+    @connected = true
     trigger_event(:on_connection_established, self) if @connected
     @connected_frame
   end
@@ -289,6 +301,12 @@ class Stomper::Connection
     alias :open :connect
   end
   
+  # True if a connection with the broker has been established, false otherwise.
+  # @return [true,false]
+  def connected?
+    @connected && !@socket.closed?
+  end
+  
   # Disconnects from the broker. This is polite disconnect, in that it first
   # transmits a DISCONNECT frame before closing the underlying socket. If the
   # broker and client are using the Stomp 1.1 protocol, a receipt can be requested
@@ -300,6 +318,38 @@ class Stomper::Connection
   def disconnect(headers={})
     transmit create_frame('DISCONNECT', headers, {})
     close
+  end
+  
+  # Creates an instance of the class given by {#receiver_class} and starts it.
+  # A call to {#connect} will be made if the connection has not been established.
+  # The class to instantiate can be overridden on a per connection basis, or
+  # for all connections by changing DEFAULT_CONFIG[:receiver_class]
+  # @param [{Object => String}] headers optional headers to pass to {#connect}
+  #   if the connection has not yet been established.
+  # @return [self]
+  # @see #stop
+  # @see #connect
+  def start(headers={})
+    connect(headers) unless @connected
+    @receiver ||= receiver_class.new(self)
+    @receiver.start
+    self
+  end
+  
+  # Stops the instantiated receiver and calls {#disconnect} if a connection
+  # has been established.
+  # @param [{Object => String}] headers optional headers to pass to {#disconnect}
+  #   if the connection has been established.
+  # @return [self]
+  # @raise [Exception] if invoking +stop+ on the receiver raises an exception
+  # @see #start
+  # @see #disconnect
+  # @see Stomper::Receivers::Threaded#stop for an example of when a receiver
+  #   may raise an exception when stopped.
+  def stop(headers={})
+    disconnect(headers) if @connected
+    @receiver && @receiver.stop
+    self
   end
   
   # Disconnects from the broker immediately. This is not a polite disconnect,

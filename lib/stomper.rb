@@ -14,6 +14,8 @@ require 'io/wait'
 require 'delegate'
 # Threading and Mutex support
 require 'thread'
+# Monitor support (prevent recursive dead locking)
+require 'monitor'
 
 # Primary namespace of the stomper gem.
 module Stomper
@@ -29,5 +31,6 @@ require 'stomper/uris'
 require 'stomper/extensions'
 require 'stomper/subscription_manager'
 require 'stomper/receipt_manager'
+require 'stomper/receivers'
 require 'stomper/connection'
 require 'stomper/scopes'

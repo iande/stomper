@@ -28,9 +28,10 @@ module Stomper::Extensions::Common
   # @yieldparam [Stomper::Frame] receipt the RECEIPT frame sent by the broker
   # @return [Stomper::Frame] the SEND frame sent to the broker
   def send(dest, body, headers={}, &block)
-    transmit create_frame('SEND', headers, { :destination => dest }, body)
+    scoped_to = block ? with_receipt(&block) : self
+    scoped_to.transmit create_frame('SEND', headers, { :destination => dest }, body)
   end
-  alias :put :send
+  alias :puts :send
   
   # Transmits a SUBSCRIBE frame to the broker with the specified destination
   # and headers.  If a block is given, it will be invoked every time a MESSAGE
@@ -42,7 +43,9 @@ module Stomper::Extensions::Common
   # @return [Stomper::Frame] the SUBSCRIBE frame sent to the broker
   def subscribe(dest, headers={}, &block)
     headers[:id] ||= ::Stomper::Support.next_serial
-    transmit create_frame('SUBSCRIBE', headers, { :destination => dest })
+    subscribe = create_frame('SUBSCRIBE', headers, { :destination => dest })
+    subscription_manager.add(subscribe, block) if block
+    transmit subscribe
   end
   
   # Transmits an UNSUBSCRIBE frame to the broker for the supplied subscription ID,
@@ -54,7 +57,13 @@ module Stomper::Extensions::Common
   def unsubscribe(frame_or_id, headers={})
     sub_id = frame_or_id.is_a?(::Stomper::Frame) ? frame_or_id[:id] : frame_or_id
     raise ArgumentError, 'subscription ID could not be determined' if sub_id.nil? || sub_id.empty?
-    transmit create_frame('UNSUBSCRIBE', headers, { :id => sub_id })
+    if subscription_manager.subscribed_id? sub_id
+      transmit create_frame('UNSUBSCRIBE', headers, { :id => sub_id })
+    elsif subscription_manager.subscribed_destination? sub_id
+      subscription_manager.ids_for_destination(sub_id).map do |id|
+        transmit create_frame('UNSUBSCRIBE', headers, { :id => id })
+      end
+    end
   end
   
   # Transmits a BEGIN frame to the broker to start a transaction named by +tx_id+.

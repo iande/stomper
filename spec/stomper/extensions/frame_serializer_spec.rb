@@ -35,13 +35,110 @@ module Stomper::Extensions
       @frame_serializer = FrameSerializer.new(@frame_io)
     end
     
-    describe "Protocol 1.0" do
-      it "should have extended the V1_0 mixins" do
-        ::Stomper::Extensions::FrameSerializer::EXTEND_BY_VERSION['1.0'].each do |mod|
-          @frame_serializer.should be_a_kind_of(mod)
+    describe "thread safety" do
+      before(:each) do
+        @frame_serializer = FrameSerializer.new(mock('frame io'))
+      end
+      it "should synchronize writing to the underlying IO" do
+        first_called = false
+        call_next = false
+        ordered = []
+        @frame_serializer.stub!(:__write_frame__).and_return do |f|
+          first_called = true
+          ordered << 1
+          Thread.stop
+          ordered << 2
+          f
         end
+        
+        thread_1 = Thread.new do
+          @frame_serializer.write_frame(mock('frame'))
+        end
+        thread_2 = Thread.new do
+          Thread.pass until call_next
+          Thread.pass
+          thread_1.run
+        end
+        Thread.pass until first_called
+        call_next = true
+        
+        @frame_serializer.stub!(:__write_frame__).and_return do |f|
+          ordered << 3
+          f
+        end
+        @frame_serializer.write_frame(mock('frame'))
+        thread_1.join
+        thread_2.join
+        ordered.should == [1, 2, 3]
       end
       
+      it "should synchronize reading from the underlying IO" do
+        first_called = false
+        call_next = false
+        ordered = []
+        @frame_serializer.stub!(:__read_frame__).and_return do
+          first_called = true
+          ordered << 1
+          Thread.stop
+          ordered << 2
+          mock('frame 1')
+        end
+        
+        thread_1 = Thread.new do
+          @frame_serializer.read_frame
+        end
+        thread_2 = Thread.new do
+          Thread.pass until call_next
+          Thread.pass
+          thread_1.run
+        end
+        Thread.pass until first_called
+        call_next = true
+        
+        @frame_serializer.stub!(:__read_frame__).and_return do
+          ordered << 3
+          mock('frame 2')
+        end
+        @frame_serializer.read_frame
+        thread_1.join
+        thread_2.join
+        ordered.should == [1, 2, 3]
+      end
+      
+      it "should not make reading and writing mutually exclusive" do
+        first_called = false
+        call_next = false
+        ordered = []
+        @frame_serializer.stub!(:__write_frame__).and_return do |f|
+          first_called = true
+          ordered << 1
+          Thread.stop
+          ordered << 2
+          f
+        end
+        @frame_serializer.stub!(:__read_frame__).and_return do
+          ordered << 3
+          mock('frame 2')
+        end
+        
+        thread_1 = Thread.new do
+          @frame_serializer.write_frame(mock('frame'))
+        end
+        thread_2 = Thread.new do
+          Thread.pass until call_next
+          Thread.pass
+          thread_1.run
+        end
+        Thread.pass until first_called
+        call_next = true
+        @frame_serializer.read_frame
+        thread_1.join
+        thread_2.join
+        ordered.should == [1, 3, 2]
+      end
+    end
+    
+    describe "Protocol 1.0" do
       it "should not have extended the V1_1 mixin" do
         ::Stomper::Extensions::FrameSerializer::EXTEND_BY_VERSION['1.1'].each do |mod|
           @frame_serializer.should_not be_a_kind_of(mod)

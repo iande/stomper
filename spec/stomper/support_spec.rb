@@ -35,5 +35,35 @@ module Stomper
         @hash[:'13'].should be_nil
       end
     end
+    
+    describe "next_serial" do
+      it "should generate sequential numbers" do
+        first = Support.next_serial.to_i
+        second = Support.next_serial.to_i
+        third = Support.next_serial.to_i
+        first.should == second - 1
+        second.should == third - 1
+      end
+    end
+    
+    describe "constantize" do
+      it "should constantize a Class" do
+        Support.constantize(Class).should == ::Class
+        Support.constantize(::Stomper::Extensions::Events).should == ::Stomper::Extensions::Events
+      end
+      
+      it "should constantize string representations of known classes" do
+        Support.constantize("Module").should == ::Module
+        Support.constantize("::Module").should == ::Module
+        Support.constantize("::Stomper::Extensions").should == ::Stomper::Extensions
+        Support.constantize("Stomper::Receivers::Threaded").should == ::Stomper::Receivers::Threaded
+      end
+      
+      it "should fail to constantize un-resolvable classes" do
+        lambda { Support.constantize("::Not::::Valid") }.should raise_error(NameError)
+        lambda { Support.constantize("Module::Does::Not::Exist") }.should raise_error(NameError)
+        lambda { Support.constantize("::Stomper::Extensions::FrameSerializer::Nada") }.should raise_error(NameError)
+      end
+    end
   end
 end

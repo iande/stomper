@@ -6,12 +6,15 @@ module Stomper::Scopes
     before(:each) do
       @connection = mock("connection", :is_a? => true, :version => '1.1')
       @headers = { :transaction => 'tx-1234' }
+      @connection.stub!(:subscription_manager).and_return(mock('subscription manager', {
+        :subscribed_id? => true
+      }))
       @scope = TransactionScope.new(@connection, @headers)
       @connection.should_receive(:transmit).at_most(:once).with(stomper_frame_with_headers(@headers, 'BEGIN'))
     end
     
     it "should generate a transaction ID if one was not provided" do
-      auto_scope = Scoping::TransactionScope.new(@connection, {})
+      auto_scope = TransactionScope.new(@connection, {})
       auto_scope_name = auto_scope.transaction
       auto_scope_name.should_not be_empty
       @connection.should_receive(:transmit).with(stomper_frame_with_headers({:transaction => auto_scope_name}, 'BEGIN'))

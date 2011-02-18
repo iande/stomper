@@ -16,11 +16,6 @@ There are a few features that have not yet been implemented, hence why we're
 still on a prerelease version number. The following is a list of the major
 deficiencies of the gem, but this list is not necessarily exhaustive.
 
-* Receivers have not been implemented (looking to provide threaded
-  and possibly non-threaded versions, but a threaded is a minimum)
-* Thread-safety needs some work and some tests
-* Event callbacks need a wrapper so they can be unbound
-* Subscription handlers need implemented
 * Full stack testing (probably through cucumber)
 * Ruby 1.8.7 compatibility needs to be put in place.
 
