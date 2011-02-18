@@ -172,7 +172,6 @@ class Stomper::Connection
     on_connected do |cf|
       unless connected?
         @version = (cf[:version].nil?||cf[:version].empty?) ? '1.0' : cf[:version]
-        
         unless @versions.include?(@version)
           close
           raise ::Stomper::Errors::UnsupportedProtocolVersionError,
