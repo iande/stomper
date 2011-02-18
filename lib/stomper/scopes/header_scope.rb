@@ -13,7 +13,7 @@ class ::Stomper::Scopes::HeaderScope
   # @return [{Symbol => String}]
   attr_reader :headers
   
-  # Creates a new {HeaderScope}.  The supplied +headers+ hash will have
+  # Creates a new {Stomper::Scopes::HeaderScope}.  The supplied +headers+ hash will have
   # all of its keys converted to symbols and its values converted to strings,
   # so the key/value pairs must support this transformation (through +to_sym+
   # and +to_s+, respectively.)
@@ -54,7 +54,12 @@ class ::Stomper::Scopes::HeaderScope
     frame.headers.reverse_merge!(@headers)
     @connection.transmit frame
   end
-    
+  
+  # Returns the connection's {Stomper::ReceiptManager}
+  # @return [Stomper::ReceiptManager]
   def receipt_manager; @connection.receipt_manager; end
+  
+  # Returns the connection's {Stomper::SubscriptionManager}
+  # @return [Stomper::SubscriptionManager]
   def subscription_manager; @connection.subscription_manager; end
 end

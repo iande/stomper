@@ -45,8 +45,16 @@ module Stomper::Support
     end
   end
   
+  # Converts a string to the Ruby constant it names. If the +klass+ parameter
+  # is a kind of +Module+, this method will return +klass+ directly.
+  # @param [String,Module] klass
+  # @return [Module]
+  # @example
+  #   Stomper::Support.constantize('Stomper::Frame') #=> Stomper::Frame
+  #   Stomper::Support.constantize('This::Constant::DoesNotExist) #=> raises NameError
+  #   Stomper::Support.constantize(Symbol) #=> Symbol 
   def self.constantize(klass)
-    return klass if klass.is_a?(Class)
+    return klass if klass.is_a?(Module)
     klass.to_s.split('::').inject(Object) do |const, named|
       next const if named.empty?
       const.const_defined?(named) ? const.const_get(named) :
