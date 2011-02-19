@@ -72,8 +72,8 @@ class Stomper::Frame
   #
   # @return [String] the MIME content-type for the body of the frame.
   def content_type
-    if @headers.has? 'content-type'
-      @headers['content-type']
+    if @headers.has? :'content-type'
+      @headers[:'content-type'].split(";")[0]
     elsif (chars = charset)
       (chars == 'US-ASCII' ? 'application/octet-stream' : 'text/plain')
     end
@@ -86,19 +86,19 @@ class Stomper::Frame
   # @param [Object] ctype the MIME content-type for the body of the frame.
   def content_type=(ctype)
     if ctype
-      @headers['content-type'] = ctype
+      @headers[:'content-type'] = ctype
     else
-      @headers.delete('content-type')
+      @headers.delete(:'content-type')
     end
   end
 
   # Gets a combined content-type and charset string. A "best guess" will
   # be made based upon the guessing done by {#content_type} and {#charset}
-  #
+  # @todo This really needs adjusted!
   # @return [String] the MIME content-type and charset for the body of the frame.
   # @see #content_type
   # @see #charset
   def content_type_and_charset
-    (charset && "#{content_type};charset=#{charset}") || content_type
+    charset && "#{content_type};charset=#{charset}" || content_type
   end
 end

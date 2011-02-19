@@ -42,7 +42,10 @@ module Stomper::Extensions::Common
   # @yieldparam [Stomper::Frame] message the MESSAGE frame sent by the broker
   # @return [Stomper::Frame] the SUBSCRIBE frame sent to the broker
   def subscribe(dest, headers={}, &block)
-    headers[:id] ||= ::Stomper::Support.next_serial
+    ::Stomper::Support.keys_to_sym!(headers)
+    if headers[:id].nil? || headers[:id].empty?
+      headers[:id] = ::Stomper::Support.next_serial
+    end
     subscribe = create_frame('SUBSCRIBE', headers, { :destination => dest })
     subscription_manager.add(subscribe, block) if block
     transmit subscribe
@@ -111,6 +114,18 @@ module Stomper::Extensions::Common
     transmit create_frame('COMMIT', headers, {:transaction => tx_id})
   end
   
+  # Disconnects from the broker. This is polite disconnect, in that it first
+  # transmits a DISCONNECT frame before closing the underlying socket. If the
+  # broker and client are using the Stomp 1.1 protocol, a receipt can be requested
+  # for the DISCONNECT frame, and the connection will remain active until
+  # the receipt is received or the broker closes the connection on its end.
+  # @todo Rewrite this to fit the new approach (just transmits the frame)
+  # @param [{Symbol => String}] an optional set of headers to include in the
+  #   DISCONNECT frame (these can include event handlers, such as :on_receipt)
+  def disconnect(headers={})
+    transmit create_frame('DISCONNECT', headers, {})
+  end
+  
   # Transmits an ACK frame to the broker to acknowledge that a corresponding
   # MESSAGE frame has been processed by the client.
   # @note If the negotiated Stomp protocol version is 1.1, this method will be
@@ -127,7 +142,7 @@ module Stomper::Extensions::Common
     headers = args.last.is_a?(Hash) ? args.pop : {}
     m_id = args.shift
     if m_id.is_a?(::Stomper::Frame)
-      m_id = m_id[:id]
+      m_id = m_id[:'message-id']
     end
     m_headers = [ [:'message-id', m_id] ].inject({}) do |mh, (k,v)|
       mh[k] = v unless v.nil? || v.empty?
@@ -276,7 +291,7 @@ module Stomper::Extensions::Common
       sub_id = args.shift
       if m_id.is_a?(::Stomper::Frame)
         sub_id = m_id[:subscription] if sub_id.nil? || sub_id.empty?
-        m_id = m_id[:id]
+        m_id = m_id[:'message-id']
       end
       [[:message, m_id], [:subscription, sub_id]].each do |(k,v)|
         raise ::ArgumentError, "#{k} ID could not be determined" if v.nil? || v.empty?

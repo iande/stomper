@@ -165,12 +165,15 @@ class Stomper::Connection
     @connected = false
     @heartbeating = [0,0]
     @last_transmitted_at = @last_received_at = nil
-    
     @subscription_manager = ::Stomper::SubscriptionManager.new(self)
     @receipt_manager = ::Stomper::ReceiptManager.new(self)
+    @connecting = false
+    @disconnecting = false
     
     on_connected do |cf|
       unless connected?
+        @connecting = false
+        @disconnecting = false
         @version = (cf[:version].nil?||cf[:version].empty?) ? '1.0' : cf[:version]
         unless @versions.include?(@version)
           close
@@ -187,6 +190,11 @@ class Stomper::Connection
 
         extend_for_protocol
       end
+    end
+    
+    on_disconnect do |df|
+      @disconnecting = true
+      close unless df[:receipt]
     end
   end
   
@@ -274,6 +282,7 @@ class Stomper::Connection
       :login => @login,
       :passcode => @passcode
     }
+    @connecting = true
     transmit create_frame('CONNECT', headers, m_headers)
     receive.tap do |f|
       if f.command == 'CONNECTED'
@@ -306,19 +315,6 @@ class Stomper::Connection
     @connected && !@socket.closed?
   end
   
-  # Disconnects from the broker. This is polite disconnect, in that it first
-  # transmits a DISCONNECT frame before closing the underlying socket. If the
-  # broker and client are using the Stomp 1.1 protocol, a receipt can be requested
-  # for the DISCONNECT frame, and the connection will remain active until
-  # the receipt is received or the broker closes the connection on its end.
-  #
-  # @param [{Symbol => String}] an optional set of headers to include in the
-  #   DISCONNECT frame (these can include event handlers, such as :on_receipt)
-  def disconnect(headers={})
-    transmit create_frame('DISCONNECT', headers, {})
-    close
-  end
-  
   # Creates an instance of the class given by {#receiver_class} and starts it.
   # A call to {#connect} will be made if the connection has not been established.
   # The class to instantiate can be overridden on a per connection basis, or
@@ -346,7 +342,7 @@ class Stomper::Connection
   # @see Stomper::Receivers::Threaded#stop for an example of when a receiver
   #   may raise an exception when stopped.
   def stop(headers={})
-    disconnect(headers) if @connected
+    disconnect(headers) unless @disconnecting
     @receiver && @receiver.stop
     self
   end
@@ -384,6 +380,7 @@ class Stomper::Connection
   def transmit(frame)
     trigger_event(:on_connection_died, self) if dead?
     trigger_event(:before_transmitting, self, frame)
+    trigger_before_transmitted_frame(frame, self)
     begin
       @serializer.write_frame(frame).tap do
         @last_transmitted_at = Time.now
@@ -400,16 +397,18 @@ class Stomper::Connection
   # @return [Stomper::Frame]
   def receive
     trigger_event(:on_connection_died, self) if dead?
-    trigger_event(:before_receiving, self)
-    begin
-      @serializer.read_frame.tap do |f|
-        @last_received_at = Time.now
-        trigger_event(:after_receiving, self, f)
-        trigger_received_frame(f, self)
+    if alive? || @connecting
+      trigger_event(:before_receiving, self)
+      begin
+        @serializer.read_frame.tap do |f|
+          @last_received_at = Time.now
+          trigger_event(:after_receiving, self, f)
+          trigger_received_frame(f, self)
+        end
+      rescue ::IOError, ::SystemCallError
+        close(true)
+        raise
       end
-    rescue ::IOError, ::SystemCallError
-      close(true)
-      raise
     end
   end
   
@@ -420,6 +419,7 @@ class Stomper::Connection
   #   if any data is available it will block until a complete frame has been read.
   # @return [Stomper::Frame, nil]
   def receive_nonblock
+    trigger_event(:on_connection_died, self) if dead?
     trigger_event(:before_receiving, self)
     if @socket.ready?
       @serializer.read_frame.tap do |f|

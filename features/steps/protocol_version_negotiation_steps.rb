@@ -5,7 +5,8 @@ end
 Given /^an unversioned Stomp broker$/ do
   @broker_uri_string = "stomp:///"
   @broker_uri = URI.parse(@broker_uri_string)
-  create_broker(nil)
+  @broker = TestStompServer.new(nil)
+  @broker.start
   @connection = Stomper::Connection.new(@broker_uri)
 end
 

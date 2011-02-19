@@ -16,7 +16,6 @@ There are a few features that have not yet been implemented, hence why we're
 still on a prerelease version number. The following is a list of the major
 deficiencies of the gem, but this list is not necessarily exhaustive.
 
-* Full stack testing (probably through cucumber)
 * Ruby 1.8.7 compatibility needs to be put in place.
 
 As these issues are resolved, I'll drop them from the list (and potentially

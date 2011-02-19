@@ -1,18 +1,44 @@
 After do |s|
-  destroy_broker
+  @connection && @connection.stop rescue nil
+  @broker && @broker.force_stop
 end
 
-Given /^a Stomp (\d+\.\d+) broker$/ do |version|
+Given /^a (\d+\.\d+)?\s*connection between client and broker$/ do |version|
+  version ||= '1.0'
   @broker_uri_string = "stomp:///"
   @broker_uri = URI.parse(@broker_uri_string)
-  create_broker(version)
+  @broker = TestStompServer.new(version)
+  @broker.start
+  @connection = Stomper::Connection.new(@broker_uri)
+  @received_frames = []
+  @sent_frames = []
+  @connection.before_transmitting do |c, f|
+    @sent_frames << f
+    #puts "-> Sent: '#{f.command}' / #{f.headers.to_a.inspect}"
+  end
+  @connection.after_receiving do |c, f|
+    @received_frames << f
+    #puts "-> Received: '#{f.command}' / #{f.headers.to_a.inspect}"
+  end
+  @connection.start
+end
+
+
+Given /^a Stomp (\d+\.\d+)?\s*broker$/ do |version|
+  version ||= '1.0'
+  @broker_uri_string = "stomp:///"
+  @broker_uri = URI.parse(@broker_uri_string)
+  @broker = TestStompServer.new(version)
+  @broker.start
   @connection = Stomper::Connection.new(@broker_uri)
 end
 
 Given /^an erroring Stomp broker$/ do
   @broker_uri_string = "stomp:///"
   @broker_uri = URI.parse(@broker_uri_string)
-  create_error_broker
+  @broker = TestStompServer.new('1.0')
+  @broker.session_class = TestStompServer::StompErrorOnConnectSession
+  @broker.start
   @connection = Stomper::Connection.new(@broker_uri)
 end
 
@@ -41,7 +67,7 @@ Then /^connecting should raise an unsupported protocol version error$/ do
   lambda { @connection.connect }.should raise_error(Stomper::Errors::UnsupportedProtocolVersionError)
 end
 
-Then /^the connection should not be connected$/ do
+Then /^the (connection|client) should not be connected$/ do |arbitrary_name|
   @connection.connected?.should be_false
 end
 

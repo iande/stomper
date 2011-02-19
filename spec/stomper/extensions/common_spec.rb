@@ -63,7 +63,7 @@ module Stomper::Extensions
     
       it "should transmit an ACK for a message-id given MESSAGE frame" do
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'message-id' => 'msg-001'}, 'ACK'))
-        @common.ack(Stomper::Frame.new('MESSAGE', { :id => 'msg-001' }, 'some body'))
+        @common.ack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-001' }, 'some body'))
       end
     
       it "should transmit an ACK for a message-id given a message-id" do
@@ -138,11 +138,11 @@ module Stomper::Extensions
       
       it "should transmit a NACK for a message-id and subscription given MESSAGE frame" do
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'message-id' => 'msg-456', 'subscription' => 'sub-123'}, 'NACK'))
-        @common.nack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456', :subscription => 'sub-123' }, 'some body'))
+        @common.nack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456', :subscription => 'sub-123' }, 'some body'))
       end
       it "should transmit a NACK for a message-id and subscription given MESSAGE frame w/o subscription and subscription-id" do
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'message-id' => 'msg-456', 'subscription' => 'sub-123'}, 'NACK'))
-        @common.nack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456', :subscription => '' }, 'some body'), 'sub-123')
+        @common.nack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456', :subscription => '' }, 'some body'), 'sub-123')
       end
       it "should transmit a NACK for a message-id and subscription given message-id and subscription-id" do
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'message-id' => 'msg-456', 'subscription' => 'sub-123'}, 'NACK'))
@@ -150,27 +150,27 @@ module Stomper::Extensions
       end
       it "should raise an error when the subscription ID cannot be inferred" do
         lambda { @common.nack('msg-456') }.should raise_error(ArgumentError)
-        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456' }, 'some body')) }.should raise_error(ArgumentError)
+        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456' }, 'some body')) }.should raise_error(ArgumentError)
         lambda { @common.nack('msg-456', '') }.should raise_error(ArgumentError)
-        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456' }, 'some body'), '') }.should raise_error(ArgumentError)
+        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456' }, 'some body'), '') }.should raise_error(ArgumentError)
         lambda { @common.nack('msg-456', { :subscription => ''}) }.should raise_error(ArgumentError)
-        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456' }, 'some body'), '', { :subscription => nil }) }.should raise_error(ArgumentError)
+        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456' }, 'some body'), '', { :subscription => nil }) }.should raise_error(ArgumentError)
         lambda { @common.nack('msg-456', { :subscription => 'sub-123'}) }.should raise_error(ArgumentError)
       end
       it "should raise an error when the message-id cannot be inferred" do
         lambda { @common.nack('', 'sub-123') }.should raise_error(ArgumentError)
-        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :id => '' }, 'some body'), 'sub-123') }.should raise_error(ArgumentError)
+        lambda { @common.nack(Stomper::Frame.new('MESSAGE', { :'message-id' => '' }, 'some body'), 'sub-123') }.should raise_error(ArgumentError)
         lambda { @common.nack(nil, 'sub-123') }.should raise_error(ArgumentError)
         lambda { @common.nack(Stomper::Frame.new('MESSAGE', {}, 'some body'), 'sub-123') }.should raise_error(ArgumentError)
       end
 
       it "should transmit an ACK for a message-id and subscription given MESSAGE frame" do
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'message-id' => 'msg-456', 'subscription' => 'sub-123'}, 'ACK'))
-        @common.ack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456', :subscription => 'sub-123' }, 'some body'))
+        @common.ack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456', :subscription => 'sub-123' }, 'some body'))
       end    
       it "should transmit an ACK for a message-id and subscription given MESSAGE frame w/o subscription and subscription-id" do
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'message-id' => 'msg-456', 'subscription' => 'sub-123'}, 'ACK'))
-        @common.ack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456', :subscription => '' }, 'some body'), 'sub-123')
+        @common.ack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456', :subscription => '' }, 'some body'), 'sub-123')
       end
       it "should transmit an ACK for a message-id and subscription given message-id and subscription-id" do
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'message-id' => 'msg-456', 'subscription' => 'sub-123'}, 'ACK'))
@@ -178,16 +178,16 @@ module Stomper::Extensions
       end
       it "should raise an error when the subscription ID cannot be inferred" do
         lambda { @common.ack('msg-456') }.should raise_error(ArgumentError)
-        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456' }, 'some body')) }.should raise_error(ArgumentError)
+        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456' }, 'some body')) }.should raise_error(ArgumentError)
         lambda { @common.ack('msg-456', '') }.should raise_error(ArgumentError)
-        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456' }, 'some body'), '') }.should raise_error(ArgumentError)
+        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456' }, 'some body'), '') }.should raise_error(ArgumentError)
         lambda { @common.ack('msg-456', { :subscription => ''}) }.should raise_error(ArgumentError)
-        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :id => 'msg-456' }, 'some body'), '', { :subscription => nil }) }.should raise_error(ArgumentError)
+        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :'message-id' => 'msg-456' }, 'some body'), '', { :subscription => nil }) }.should raise_error(ArgumentError)
         lambda { @common.ack('msg-456', { :subscription => 'sub-123'}) }.should raise_error(ArgumentError)
       end
       it "should raise an error when the message-id cannot be inferred" do
         lambda { @common.ack('', 'sub-123') }.should raise_error(ArgumentError)
-        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :id => '' }, 'some body'), 'sub-123') }.should raise_error(ArgumentError)
+        lambda { @common.ack(Stomper::Frame.new('MESSAGE', { :'message-id' => '' }, 'some body'), 'sub-123') }.should raise_error(ArgumentError)
         lambda { @common.ack(nil, 'sub-123') }.should raise_error(ArgumentError)
         lambda { @common.ack(Stomper::Frame.new('MESSAGE', {}, 'some body'), 'sub-123') }.should raise_error(ArgumentError)
         lambda { @common.ack('', { :'message-id' => 'msg-456', :subscription => 'sub-123'}) }.should raise_error(ArgumentError)

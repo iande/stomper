@@ -2,22 +2,35 @@
 
 # Module for event based extensions.
 module Stomper::Extensions::Events
+  # A mapping of event names that are just aliases for other event names.
+  ALIASED_EVENTS = {
+    :on_stomp => :on_connect,
+    :before_stomp => :before_connect,
+    :on_connection_disconnected => :on_connection_closed
+  }
+  
   # Register a callback to be fired when an ABORT frame is sent to the broker.
   def on_abort(&block); bind_callback(:on_abort, block); end
+  def before_abort(&block); bind_callback(:before_abort, block); end
   
   # Register a callback to be fired when an ACK frame is sent to the broker.
   def on_ack(&block); bind_callback(:on_ack, block); end
+  def before_ack(&block); bind_callback(:before_ack, block); end
   
   # Register a callback to be fired when a BEGIN frame is sent to the broker.
   def on_begin(&block); bind_callback(:on_begin, block); end
+  def before_begin(&block); bind_callback(:before_begin, block); end
   
   # Register a callback to be fired when a COMMIT frame is sent to the broker.
   def on_commit(&block); bind_callback(:on_commit, block); end
+  def before_commit(&block); bind_callback(:before_commit, block); end
   
   # Register a callback to be fired when a CONNECT frame is sent to the
   # broker.
   def on_connect(&block); bind_callback(:on_connect, block); end
+  def before_connect(&block); bind_callback(:before_connect, block); end
   alias :on_stomp :on_connect
+  alias :before_stomp :before_connect
   
   # Register a callback to be fired when a CONNECTED frame is received from
   # the broker.
@@ -26,6 +39,7 @@ module Stomper::Extensions::Events
   # Register a callback to be fired when a DISCONNECT frame is sent to the
   # broker.
   def on_disconnect(&block); bind_callback(:on_disconnect, block); end
+  def before_disconnect(&block); bind_callback(:before_disconnect, block); end
   
   # Register a callback to be fired when an ERROR frame is received from
   # the broker.
@@ -37,6 +51,7 @@ module Stomper::Extensions::Events
   
   # Register a callback to be fired when a NACK frame is sent to the broker.
   def on_nack(&block); bind_callback(:on_nack, block); end
+  def before_nack(&block); bind_callback(:before_nack, block); end
   
   # Register a callback to be fired when a RECEIPT frame is received from
   # the broker.
@@ -44,17 +59,21 @@ module Stomper::Extensions::Events
   
   # Register a callback to be fired when a SEND frame is sent to the broker.
   def on_send(&block); bind_callback(:on_send, block); end
+  def before_send(&block); bind_callback(:before_send, block); end
   
   # Register a callback to be fired when a SUBSCRIBE frame is sent to the
   # broker.
   def on_subscribe(&block); bind_callback(:on_subscribe, block); end
+  def before_subscribe(&block); bind_callback(:before_subscribe, block); end
   
   # Register a callback to be fired when an UNSUBSCRIBE frame is sent to the
   # broker.
   def on_unsubscribe(&block); bind_callback(:on_unsubscribe, block); end
+  def before_unsubscribe(&block); bind_callback(:before_unsubscribe, block); end
   
   # Register a callback to be fired when a heartbeat is sent to the broker.
   def on_client_beat(&block); bind_callback(:on_client_beat, block); end
+  def before_client_beat(&block); bind_callback(:before_client_beat, block); end
   
   # Register a callback to be fired when a heartbeat is received from the
   # broker.
@@ -132,24 +151,23 @@ module Stomper::Extensions::Events
   end
   
   def trigger_event(event_name, *args)
-    if event_name == :on_stomp
-      event_name = :on_connect
-    elsif event_name == :on_connection_disconnected
-      event_name = :on_connection_closed
-    end
+    event_name = ALIASED_EVENTS[event_name] ? ALIASED_EVENTS[event_name] : event_name
     @event_callbacks[event_name] && @event_callbacks[event_name].each { |cb| cb.call(*args) }
   end
   private :trigger_event
   
-  def trigger_received_frame(frame, *args); trigger_frame(frame, :on_broker_beat, args); end
+  def trigger_received_frame(frame, *args); trigger_frame(frame, :on, :on_broker_beat, args); end
   private :trigger_received_frame
   
-  def trigger_transmitted_frame(frame, *args); trigger_frame(frame, :on_client_beat, args); end
+  def trigger_transmitted_frame(frame, *args); trigger_frame(frame, :on, :on_client_beat, args); end
   private :trigger_transmitted_frame
   
-  def trigger_frame(frame, beat_event, args)
+  def trigger_before_transmitted_frame(frame, *args); trigger_frame(frame, :before, :before_client_beat, args); end
+  private :trigger_before_transmitted_frame
+  
+  def trigger_frame(frame, timing, beat_event, args)
     if (f_comm = frame.command && frame.command.downcase.to_sym)
-      trigger_event(:"on_#{f_comm}", frame, *args)
+      trigger_event(:"#{timing}_#{f_comm}", frame, *args)
     else
       trigger_event(beat_event, frame, *args)
     end

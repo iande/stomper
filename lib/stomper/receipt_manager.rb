@@ -7,7 +7,13 @@ class Stomper::ReceiptManager
   def initialize(connection)
     @mon = ::Monitor.new
     @callbacks = {}
-    connection.on_receipt { |r| dispatch(r) }
+    connection.before_disconnect do |d|
+      @close_on = d[:receipt] if d[:receipt]
+    end
+    connection.on_receipt do |r|
+      dispatch(r)
+      connection.close if r[:'receipt-id'] == @close_on
+    end
   end
   
   # Adds a callback handler for a RECEIPT frame that matches the supplied

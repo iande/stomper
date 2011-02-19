@@ -10,6 +10,7 @@ module Stomper
     it "should bind to the on_receipt event handler" do
       receipt = mock('receipt')
       @connection.should_receive(:on_receipt)
+      @connection.should_receive(:before_disconnect)
       @receipt_manager = ReceiptManager.new(@connection)
     end
     
@@ -78,6 +79,12 @@ module Stomper
         r_1.join
         r_2.join
         triggered.should == [true, true]
+      end
+      
+      it "should close a connection when a RECEIPT for the DISCONNECT frame is received" do
+        @connection.__send__(:trigger_before_transmitted_frame, ::Stomper::Frame.new('DISCONNECT', {:receipt => 'd-1234'}))
+        @connection.should_receive(:close)
+        @connection.__send__(:trigger_received_frame, ::Stomper::Frame.new('RECEIPT', { :'receipt-id' => 'd-1234' }))
       end
     end
   end

@@ -48,7 +48,7 @@ class Stomper::SubscriptionManager
   # @param [String] destination
   # @return [Array<String>, nil]
   def ids_for_destination(destination)
-    @mon.synchronize { @dests_to_ids[destination] }
+    @mon.synchronize { @dests_to_ids[destination] && @dests_to_ids[destination].dup }
   end
   
   private
@@ -68,7 +68,7 @@ class Stomper::SubscriptionManager
     dest = message[:destination]
     if s_id.nil? || s_id.empty?
       cbs = @mon.synchronize do
-        @dests_to_ids[dest] && @dests_to_ids[dest].map { |id| @callback[id] }
+        @dests_to_ids[dest] && @dests_to_ids[dest].map { |id| @callbacks[id] }
       end
       cbs && cbs.each { |cb| cb.call(message) }
     else
