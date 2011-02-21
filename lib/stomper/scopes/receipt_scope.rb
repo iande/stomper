@@ -17,7 +17,7 @@ class Stomper::Scopes::ReceiptScope < ::Stomper::Scopes::HeaderScope
   # Create a new receipt scope. All receiptable frames transmitted through
   # this instance will use the same callback for handling the RECEIPT frame
   # sent by the broker.
-  def initialize(parent, headers)
+  def initialize(connection, headers)
     super
     @receipt_handler = nil
   end

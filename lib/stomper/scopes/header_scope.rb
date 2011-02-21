@@ -17,27 +17,11 @@ class ::Stomper::Scopes::HeaderScope
   # all of its keys converted to symbols and its values converted to strings,
   # so the key/value pairs must support this transformation (through +to_sym+
   # and +to_s+, respectively.)
-  # @overload initialize(connection, headers)
-  #   Creates a new scope, using the supplied connection to deliver
-  #   frames. Header name/value pairs of this instance are applied to
-  #   frames generated on this instance.
-  #   @param [Stomper::Connection] connection
-  #   @param [{Object => String}] headers
-  # @overload initialize(scope, headers)
-  #   Creates a new 'child scope' of the supplied 'parent scope'. Header
-  #   name/value pairs of the parent and of this instance are applied to
-  #   frames generated on this instance, with the child headers taking
-  #   precendence over the parent's.
-  #   @param [HeaderScope] parent
-  #   @param [{Object => String}] headers
-  def initialize(parent, headers)
+  # @param [Stomper::Connection] connection
+  # @param [{Object => String}] headers
+  def initialize(connection, headers)
     @headers = ::Stomper::Support.keys_to_sym(headers)
-    if parent.is_a?(::Stomper::Connection)
-      @connection = parent
-    else
-      @connection = parent.connection
-      @headers = parent.headers.merge(@headers)
-    end
+    @connection = connection
     ::Stomper::Extensions::Common.extend_by_protocol_version(self, @connection.version)
   end
   

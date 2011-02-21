@@ -77,16 +77,6 @@ module Stomper::Extensions
         lambda { @common.ack(nil) }.should raise_error(ArgumentError)
         lambda { @common.ack(Stomper::Frame.new('MESSAGE', {}, 'some body')) }.should raise_error(ArgumentError)
       end
-    
-      it "should return a new HeaderScope" do
-        @common.with_headers({}).should be_an_instance_of(::Stomper::Scopes::HeaderScope)
-      end
-      it "should return a new TransactionScope" do
-        @common.with_transaction.should be_an_instance_of(::Stomper::Scopes::TransactionScope)
-      end
-      it "should return a new ReceiptScope" do
-        @common.with_receipt.should be_an_instance_of(::Stomper::Scopes::ReceiptScope)
-      end
     end
     
     describe "subscription handling" do

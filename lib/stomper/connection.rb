@@ -4,6 +4,7 @@
 # Stomp protocol.
 class Stomper::Connection
   include ::Stomper::Extensions::Common
+  include ::Stomper::Extensions::Scoping
   include ::Stomper::Extensions::Events
   include ::Stomper::Extensions::Heartbeat
   

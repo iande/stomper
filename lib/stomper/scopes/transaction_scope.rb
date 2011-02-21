@@ -12,7 +12,7 @@ class Stomper::Scopes::TransactionScope < ::Stomper::Scopes::HeaderScope
   # @return [String]
   attr_reader :transaction
   
-  def initialize(parent, headers)
+  def initialize(connection, headers)
     super
     @headers[:transaction] ||= ::Stomper::Support.next_serial
     @transaction = self.headers[:transaction]
