@@ -177,13 +177,12 @@ module Stomper::Extensions::Common
   # through a COMMIT frame. If a block is not provided, the transaction must
   # be manually aborted or committed through the returned
   # {Stomper::Scopes::TransactionScope} object.
-  # @param [String,nil] tx_id the ID of the transaction, auto-generated if not
-  #   provided.
+  # @param [{Symbol => Object}] headers
   # @yield [tx] block is evaluated as a transaction
   # @yieldparam [Stomper::Scopes::TransactionScope] tx
   # @return [Stomper::Scopes::TransactionScope]
   # @example Gonna need an example or two
-  def with_transaction(tx_id=nil, headers={}, &block)
+  def with_transaction(headers={}, &block)
     create_scope(::Stomper::Scopes::TransactionScope, headers, block)
   end
 
@@ -192,6 +191,7 @@ module Stomper::Extensions::Common
   # receipt handler is created; however, all frames generated through this
   # {Stomper::Scopes::ReceiptScope} will still request a RECEIPT
   # from the broker.
+  # @param [{Symbol => Object}] headers
   # @yield [receipt] callback invoked upon receiving the RECEIPT frame
   # @yieldparam [Stomper::Frame] the received RECEIPT frame
   # @return [Stomper::Scopes::ReceiptScope]
@@ -204,6 +204,7 @@ module Stomper::Extensions::Common
   # Creates a new {Stomper::Scopes::HeaderScope} from the
   # supplied hash of headers. If a block is provided, it will be invoked with
   # with this {Stomper::Scopes::HeaderScope} as its only parameter.
+  # @param [{Symbol => Object}] headers
   # @yield [header_scope] block is evaluated applying the specified headers to
   #   all frames generated within the block.
   # @yieldparam [Stomper::Scopes::HeaderScope] header_scope
