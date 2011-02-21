@@ -15,7 +15,6 @@ class TestStompServer
       begin
         @session = @session_class.new(@socket.accept, @version)
       rescue Exception => ex
-        #puts "Got exception while waiting on #accept: #{ex}"
         stop
       end
     end
@@ -59,7 +58,6 @@ class TestStompServer
           begin
             read_frame
           rescue Exception => ex
-            #puts "Got an exception while reading: #{ex}"
           end
         end
       end
@@ -87,7 +85,6 @@ class TestStompServer
         unless f[:receipt].nil? || f[:receipt].empty?
           send_frame 'RECEIPT', { :'receipt-id' => f[:receipt] }
         end
-        #$stdout.puts "\n<- Incoming: #{f.command} / #{f.headers.inspect}\n"
         case f.command
         when 'DISCONNECT'
           @running = false
@@ -125,5 +122,29 @@ class TestStompServer
     def connect_to_client(headers)
       send_frame 'ERROR'
     end
+  end
+end
+
+class TestSSLStompServer < TestStompServer
+  SSL_CERT_FILES = {
+    :default => {
+      :c => File.expand_path('../ssl/broker_cert.pem', __FILE__),
+      :k => File.expand_path('../ssl/broker_key.pem', __FILE__)
+    }
+  }
+  
+  def initialize(version=nil, certs=:default)
+    @port = 61612
+    @tcp_socket = TCPServer.new(@port)
+    @ssl_context = OpenSSL::SSL::SSLContext.new
+    @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    cert_files = SSL_CERT_FILES[certs]
+    @ssl_context.key = OpenSSL::PKey::RSA.new(File.read(cert_files[:k]))
+    @ssl_context.cert = OpenSSL::X509::Certificate.new(File.read(cert_files[:c]))
+    @socket = OpenSSL::SSL::SSLServer.new(@tcp_socket, @ssl_context)
+    @socket.start_immediately = true
+    @session = nil
+    @version = version
+    @session_class = StompSession
   end
 end

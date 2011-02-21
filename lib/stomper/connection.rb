@@ -19,7 +19,6 @@ class Stomper::Connection
   DEFAULT_CONFIG = {
     :versions => ['1.0', '1.1'],
     :heartbeats => [0, 0],
-    :ssl => {},
     :host => nil,
     :login => nil,
     :passcode => nil,
@@ -150,6 +149,7 @@ class Stomper::Connection
   #   # In this case, the versions query parameter value +[1.1 , 1.0]+ is
   #   # overridden by the options hash setting +1.1+
   def initialize(uri, options={})
+    @ssl = options.delete(:ssl) || {}
     @uri = uri.is_a?(::URI) ? uri : ::URI.parse(uri)
     config = ::Stomper::Support.keys_to_sym(::CGI.parse(@uri.query || '')).
       merge(::Stomper::Support.keys_to_sym(options))
@@ -233,11 +233,6 @@ class Stomper::Connection
   # @param [Array<Fixnum>] beats
   def heartbeats=(beats)
     @heartbeats = beats[0..1].map { |b| bi = b.to_i; bi > 0 ? bi : 0 }
-  end
-  
-  # Sets the SSL options for this connection. These settings are only used
-  # if the connection to the broker is secure (eg: 'stomp+ssl://...')
-  def ssl=(ssl_opts)
   end
   
   # Sets the host header value to use when connecting to the server. This
@@ -348,6 +343,11 @@ class Stomper::Connection
     self
   end
   
+  # Returns true if the receiver exists and is running.
+  def running?
+    @receiver && @receiver.running?
+  end
+  
   # Disconnects from the broker immediately. This is not a polite disconnect,
   # meaning that no DISCONNECT frame is transmitted to the broker, the socket
   # is shutdown and closed immediately. Calls to {#disconnect} invoke this
@@ -402,9 +402,13 @@ class Stomper::Connection
       trigger_event(:before_receiving, self)
       begin
         @serializer.read_frame.tap do |f|
-          @last_received_at = Time.now
-          trigger_event(:after_receiving, self, f)
-          trigger_received_frame(f, self)
+          if f.nil?
+            close(true) if @connected
+          else
+            @last_received_at = Time.now
+            trigger_event(:after_receiving, self, f)
+            trigger_received_frame(f, self)
+          end
         end
       rescue ::IOError, ::SystemCallError
         close(true)

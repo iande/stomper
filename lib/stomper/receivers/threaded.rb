@@ -34,7 +34,7 @@ class Stomper::Receivers::Threaded
       @run_thread = Thread.new do
         while @running
           begin
-            @connection.receive
+            @running = false if @connection.receive.nil?
           rescue Exception => ex
             @running = false
             raise ex

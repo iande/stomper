@@ -267,6 +267,13 @@ module Stomper
           @serializer.should_receive(:read_frame).and_return(frame)
           @connection.receive_nonblock.should == frame
         end
+        
+        it "should close the socket if reading a frame returns nil" do
+          @connection.connect
+          @serializer.should_receive(:read_frame).and_return(nil)
+          @connection.should_receive(:close).with(true)
+          @connection.receive.should be_nil
+        end
       end
       
       describe "connection state events" do
@@ -549,8 +556,10 @@ module Stomper
         it "should connect and start a receiver if it is not connected" do
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
           @receiver.should_receive(:start)
+          @receiver.should_receive(:running?).and_return(true)
           
           @connection.start
+          @connection.running?.should be_true
         end
         
         it "should stop a running receiver and disconnect if it is connected" do

@@ -144,7 +144,8 @@ class Stomper::Extensions::FrameSerializer
   end
   def __read_frame__
     command = @io.gets
-    command && command.chomp!
+    return nil if command.nil?
+    command.chomp!
     frame = Stomper::Frame.new
     unless command.nil? || command.empty?
       frame.command = command

@@ -7,15 +7,17 @@ module Stomper::Receivers
       @connection = mock("connection")
       @receiver = Threaded.new(@connection)
       @receive_called = false
+      @received_frame = mock('frame')
     end
     
     def mock_receive_call
-      @connection.stub!(:receive).and_return(true)
+      @connection.stub!(:receive).and_return(@received_frame)
     end
     
     def expect_receive_call
       @connection.should_receive(:receive).at_least(:once).and_return do
         @receive_called = true
+        @received_frame
       end
     end
     
@@ -48,6 +50,7 @@ module Stomper::Receivers
       @connection.should_receive(:receive).twice.and_return do
         Thread.pass until thread_check
         thread_check = false
+        @received_frame
       end
       @receiver.start
       thread_check = true

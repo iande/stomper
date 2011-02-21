@@ -14,11 +14,9 @@ Given /^a (\d+\.\d+)?\s*connection between client and broker$/ do |version|
   @sent_frames = []
   @connection.before_transmitting do |c, f|
     @sent_frames << f
-    #puts "-> Sent: '#{f.command}' / #{f.headers.to_a.inspect}"
   end
   @connection.after_receiving do |c, f|
     @received_frames << f
-    #puts "-> Received: '#{f.command}' / #{f.headers.to_a.inspect}"
   end
   @connection.start
 end
