@@ -22,15 +22,16 @@ module Stomper
 end
 
 require 'stomper/version'
-require 'stomper/support'
 require 'stomper/errors'
 require 'stomper/headers'
 require 'stomper/sockets'
 require 'stomper/frame'
 require 'stomper/uris'
-require 'stomper/extensions'
+require 'stomper/frame_serializer'
 require 'stomper/subscription_manager'
 require 'stomper/receipt_manager'
 require 'stomper/receivers'
+require 'stomper/extensions'
 require 'stomper/scopes'
+require 'stomper/support'
 require 'stomper/connection'

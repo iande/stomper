@@ -187,7 +187,7 @@ module Stomper
         @connected_frame = mock('CONNECTED', :command => 'CONNECTED', :[] => '')
         @connected_frame.stub!(:[]).with(:version).and_return('1.0')
         @uri.should_receive(:create_socket).at_least(:once).and_return(@socket)
-        ::Stomper::Extensions::FrameSerializer.stub!(:new => @serializer)
+        ::Stomper::FrameSerializer.stub!(:new => @serializer)
         @connection = Connection.new(@uri)
       end
       

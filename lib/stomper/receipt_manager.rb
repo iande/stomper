@@ -7,10 +7,10 @@ class Stomper::ReceiptManager
   def initialize(connection)
     @mon = ::Monitor.new
     @callbacks = {}
-    connection.before_disconnect do |d|
+    connection.before_disconnect do |d, con|
       @close_on = d[:receipt] if d[:receipt]
     end
-    connection.on_receipt do |r|
+    connection.on_receipt do |r, con|
       dispatch(r)
       connection.close if r[:'receipt-id'] == @close_on
     end

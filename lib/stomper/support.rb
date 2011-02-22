@@ -62,3 +62,5 @@ module Stomper::Support
     end
   end
 end
+
+require 'stomper/support/ruby'

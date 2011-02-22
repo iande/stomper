@@ -4,7 +4,7 @@
 # this class are used to adjust the serialization behavior depending upon
 # the Stomp Protocol version being used.
 # @todo Make this work with Ruby 1.8.7
-class Stomper::Extensions::FrameSerializer
+class Stomper::FrameSerializer
   # The character that must be present at the end of every Stomp frame.
   FRAME_TERMINATOR = "\000"
   
@@ -48,25 +48,6 @@ class Stomper::Extensions::FrameSerializer
     @read_mutex.synchronize { __read_frame__ }
   end
   
-  # Reads a single byte from the body portion of a frame. Returns +nil+ if
-  # the character read is a {FRAME_TERMINATOR frame terminator}.
-  # @return [String,nil] the byte read from the stream.
-  def get_body_byte
-    #raise "Implementation varies by Ruby version"
-    c = @io.getc
-    c == FRAME_TERMINATOR ? nil : c
-  end
-  
-  # Returns the byte length of the given String. This is little more than
-  # a helper method to keep the rest of the interface consistent between
-  # Ruby 1.8.7 and Ruby 1.9.
-  # @param [String] str
-  # @return [Fixnum] byte length of +str+
-  def bytesize_of_string(str)
-    #raise "Implementation varies by Ruby version"
-    str.bytesize
-  end
-  
   # Converts the headers of the supplied frame into a single "\n" delimited
   # string that's suitable for writing to io.
   # @param [Stomper::Frame] frame the frame whose headers should be serialized
@@ -77,11 +58,13 @@ class Stomper::Extensions::FrameSerializer
       next head_str if k.empty? || ['content-type', 'content-length'].include?(k)
       head_str << "#{k}:#{escape_header_value(v)}\n"
     end
-    if ct_charset = frame.content_type_and_charset
-      serialized << "content-type:#{ct_charset}\n"
-    end
     if frame.body
-      serialized << "content-length:#{bytesize_of_string(frame.body)}\n"
+      if ct = determine_content_type(frame)
+        serialized << "content-type:#{ct}\n"
+      end
+      if clen = determine_content_length(frame)
+        serialized << "content-length:#{clen}\n"
+      end
     end
     serialized
   end
@@ -106,15 +89,6 @@ class Stomper::Extensions::FrameSerializer
     str.gsub(/\n/, '')
   end
   
-   # Return the body as it was passed. Stomp 1.0 has no concept of body
-  # encoding.
-  # @note If the connection is using the 1.1 protocol, this method will
-  #   be overridden by {FrameSerializer::V1_1#encode_body}
-  # @param [String] body body of message to encode
-  # @param [String] ct content-type header of frame
-  # @return [String]
-  def encode_body(body, ct); body; end
-  
   # Return the header name as it was passed. Stomp 1.0 does not provide
   # any means for escaping special characters such as ":" and "\n"
   # @note If the connection is using the 1.1 protocol, this method will
@@ -123,12 +97,6 @@ class Stomper::Extensions::FrameSerializer
   # @return [String]
   def unescape_header_name(str); str; end
   alias :unescape_header_value :unescape_header_name
-  
-  # Reads a line of text from the underlying IO.
-  # @note If the connection is using the 1.1 protocol, this method will
-  #   be overridden by {FrameSerializer::V1_1#get_header_line}
-  # @return [String] line of text read from IO, or '' if no text was read.
-  def get_header_line; @io.gets || ''; end
   
   private
   # These are the un-synchronized methods that do the real reading/writing
@@ -181,6 +149,15 @@ class Stomper::Extensions::FrameSerializer
       "\n" => "\\n",
       "\\" => "\\\\"
     }
+    
+    # Mapping of escape sequences to their appropriate characters. This
+    # is used when unescaping headers being read from the stream.
+    ESCAPE_SEQUENCES = {
+      'c' => ':',
+      '\\' => "\\",
+      'n' => "\n"
+    }
+    
     # Escape a header name to comply with Stomp Protocol 1.1 specifications.
     # All special characters (the keys of {CHARACTER_ESCAPES}) are replaced
     # by their corresponding escape sequences.
@@ -192,32 +169,6 @@ class Stomper::Extensions::FrameSerializer
       end
     end
     alias :escape_header_value :escape_header_name
-
-    # Mapping of escape sequences to their appropriate characters. This
-    # is used when unescaping headers being read from the stream.
-    ESCAPE_SEQUENCES = {
-      'c' => ':',
-      '\\' => "\\",
-      'n' => "\n"
-    }
-
-    # Return the body with the specified encoding applied. An encoding
-    # is specified in the 'content-type' header of a frame by the +charset+
-    # parameter. If no encoding was explicitly specified, a UTF-8 encoding
-    # is used when the frame's content type begins with +text/+, otherwise
-    # an encoding of US-ASCII is used.
-    # @param [String] body body of message to encode
-    # @param [String] ct content-type header of frame
-    # @return [String] body with the appropriate encoding applied
-    def encode_body(body, ct_header)
-      body.tap do |b|
-        charset = ct_header ?
-          (ct_header =~ /\;\s*charset=\"?([\w\-]+)\"?/i) ? $1 :
-            (ct_header =~ /^text\//) ? 'UTF-8' : 'US-ASCII' :
-          'US-ASCII'
-        b.force_encoding(charset)
-      end
-    end
     
     # Return the header name after known escape sequences have been
     # translated to their respective values. The keys of {ESCAPE_SEQUENCES},
@@ -255,18 +206,11 @@ class Stomper::Extensions::FrameSerializer
       end
     end
     alias :unescape_header_value :unescape_header_name
-
-    # Reads a line of text from the underlying IO. As per the Stomp 1.1
-    # specification, all header strings are encoded with UTF-8.
-    # @return [String] line of text read from IO, or '' if no text was read.
-    def get_header_line
-      (@io.gets || '').tap { |line| line.force_encoding('UTF-8') }
-    end
   end
   
   # The modules to mix-in to {FrameSerializer} instances depending upon which
   # protocol version is being used.
   EXTEND_BY_VERSION = {
-    '1.1' => [ ::Stomper::Extensions::FrameSerializer::V1_1 ]
+    '1.1' => [ ::Stomper::FrameSerializer::V1_1 ]
   }
 end

@@ -171,7 +171,7 @@ class Stomper::Connection
     @connecting = false
     @disconnecting = false
     
-    on_connected do |cf|
+    on_connected do |cf, con|
       unless connected?
         @connecting = false
         @disconnecting = false
@@ -193,7 +193,7 @@ class Stomper::Connection
       end
     end
     
-    on_disconnect do |df|
+    on_disconnect do |df, con|
       @disconnecting = true
       close unless df[:receipt]
     end
@@ -270,7 +270,7 @@ class Stomper::Connection
   # socket will be closed and an error will be raised.
   def connect(headers={})
     @socket = @uri.create_socket(@ssl)
-    @serializer = ::Stomper::Extensions::FrameSerializer.new(@socket)
+    @serializer = ::Stomper::FrameSerializer.new(@socket)
     m_headers = {
       :'accept-version' => @versions.join(','),
       :host => @host,

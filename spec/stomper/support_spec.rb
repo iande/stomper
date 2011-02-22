@@ -62,7 +62,7 @@ module Stomper
       it "should fail to constantize un-resolvable classes" do
         lambda { Support.constantize("::Not::::Valid") }.should raise_error(NameError)
         lambda { Support.constantize("Module::Does::Not::Exist") }.should raise_error(NameError)
-        lambda { Support.constantize("::Stomper::Extensions::FrameSerializer::Nada") }.should raise_error(NameError)
+        lambda { Support.constantize("::Stomper::FrameSerializer::Nada") }.should raise_error(NameError)
       end
     end
   end

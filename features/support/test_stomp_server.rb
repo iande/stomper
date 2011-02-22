@@ -46,7 +46,7 @@ class TestStompServer
       @client_socket = client
       @received_frames = []
       @sent_frames = []
-      @serializer = Stomper::Extensions::FrameSerializer.new(@client_socket)
+      @serializer = Stomper::FrameSerializer.new(@client_socket)
       @running = true
       @subscribed = {}
       headers = {}

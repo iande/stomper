@@ -8,8 +8,8 @@ class Stomper::SubscriptionManager
     @mon = ::Monitor.new
     @callbacks = {}
     @dests_to_ids = {}
-    connection.on_message { |m| dispatch(m) }
-    connection.on_unsubscribe { |u| remove(u) }
+    connection.on_message { |m, con| dispatch(m) }
+    connection.on_unsubscribe { |u, con| remove(u) }
   end
   
   # Adds a callback handler for a MESSAGE frame that is sent via the subscription
