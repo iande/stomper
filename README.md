@@ -1,8 +1,10 @@
-#Stomper 2.0.0pre1
+#Stomper 2.0.0
 
 Stomper is a library for connecting to and interacting with a message broker
 service that supports the Stomp [1.0](http://stomp.github.com/stomp-specification-1-0.html)
-and [1.1](http://stomp.github.com/stomp-specification-1-1.html) protocols.
+and [1.1](http://stomp.github.com/stomp-specification-1-1.html) protocols.  It
+was written with Ruby 1.9.2 in mind, but will also work with Ruby 1.8.7, previous
+versions of Ruby are not supported.
 
 As the Stomp 1.1 specification is stabilizing, there should not be major
 changes to this codebase once all of the features are fully implemented.
@@ -98,6 +100,20 @@ add other issues)
     con.on_connection_terminated do
       $stderr.puts "Connection terminated abnormally!"
     end
+
+##A Note About Encodings
+
+The Stomp 1.1 specification encourages the use of a content-type header to
+indicate both the media type of the body of a frame as well as its character
+encoding (if the body is text.)  Stomper, when used with Ruby 1.9, will do
+much of the work for you in setting an appropriate charset provided you are
+using its Encoding features properly.  Ruby 1.8.7, however, lacks native String
+encoding functionality.  As such, it is up to you to set an appropriate charset
+parameter for frames that have a body.
+
+Further, frames read from a broker that include a content-type header with a
+charset will have their bodies properly encoded in Ruby 1.9.  In Ruby 1.8.7,
+a frame's body will always be a string of bytes.
 
 ##License
 
