@@ -10,7 +10,7 @@ There is still a significant amount of work that must be done before this
 gem is ready for any use. It can be used right now, but the API will be
 rather unpleasant to deal with for common use cases.
 
-This gem is in no way related to the [Python stomper]{http://code.google.com/p/stomper/}
+This gem is in no way related to the [Python stomper](http://code.google.com/p/stomper/)
 library.
 
 ##Still in the Works
@@ -108,7 +108,7 @@ See LICENSE for full details.
 
 * Lionel Cons -- Perl STOMP library -- lots of good suggestions and support
   while I revised Stomper to support STOMP 1.1
-* Brian McCallister and Johan Sørensen -- [Original STOMP ruby gem]{http://gitorious.org/stomp} --
+* Brian McCallister and Johan Sørensen -- [Original STOMP ruby gem](http://gitorious.org/stomp) --
   introduced me to the STOMP spec and started my work on this gem
 * Hiram Chino and everyone on the stomp-spec mailing list for keeping the
   Stomp 1.1 spec moving
