@@ -8,6 +8,8 @@
 #
 # @note Header names are case sensitive, therefore the names 'header'
 #   and 'Header' will not refer to the same values.
+# @see Stomper::Support::Ruby1_8::Headers Implementation for Ruby 1.8.7
+# @see Stomper::Support::Ruby1_9::Headers Implementation for Ruby 1.9
 class Stomper::Headers
   include ::Enumerable
 end

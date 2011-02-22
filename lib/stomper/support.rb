@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 
+# Module that stores methods that add supporiting functionality to Stomper and
+# support for Ruby 1.9 and 1.8.7.
 module Stomper::Support
   # Duplicates an existing hash while transforming its keys to symbols.
   # The keys must implement the +to_sym+ method, otherwise an exception will

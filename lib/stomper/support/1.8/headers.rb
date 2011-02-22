@@ -1,22 +1,14 @@
 # -*- encoding: utf-8 -*-
 
-# A specialized container for storing header name / value pairs for a Stomp
-# {Stomper::Frame Frame}.  This container behaves much like a +Hash+, but
-# is specialized for the Stomp protocol.  Header names are always converted
-# into +String+s through the use of +to_s+ and may have more than one value
-# associated with them.
-#
-# @note Header names are case sensitive, therefore the names 'header'
-#   and 'Header' will not refer to the same values.
-class Stomper::Headers
+# The implementation of the {Stomper::Headers} class for Ruby 1.8.7
+module Stomper::Support::Ruby1_8::Headers
   # An array of header names ordered by when they were set.
   # @return [Array<String>]
   attr_reader :names
   
   # Creates a new headers collection, initialized with the optional hash
   # parameter.
-  # @note Depending upon the version of Ruby being used, the order
-  #   of headers may not correspond to the order in which values were added
+  # @note With Ruby 1.8.7, the order of hash keys may not be preserved
   # @param [Hash] headers
   # @see #merge!
   def initialize(headers={})
@@ -27,9 +19,7 @@ class Stomper::Headers
   
   # Merges a hash into this collection of headers. All of the keys used
   # in the hash must be convertable to Symbols through +to_sym+.
-  # @note Depending upon the version of Ruby being used, the order
-  #   of headers may not correspond to the order in which values were
-  #   added to the optional hash.
+  # @note With Ruby 1.8.7, the order of hash keys may not be preserved
   # @param [Hash] hash
   def merge!(hash)
     hash.each { |k, v| self[k]= v }
@@ -39,9 +29,7 @@ class Stomper::Headers
   # values are included only if the headers collection does not already have
   # a matching key. All of the keys used
   # in the hash must be convertable to Symbols through +to_sym+.
-  # @note Depending upon the version of Ruby being used, the order
-  #   of headers may not correspond to the order in which values were
-  #   added to the optional hash.
+  # @note With Ruby 1.8.7, the order of hash keys may not be preserved
   # @param [Hash] hash
   def reverse_merge!(hash)
     hash.each { |k, v|
@@ -73,7 +61,7 @@ class Stomper::Headers
   # @return [Array] the array of values associated with the header name.
   # @example
   #   headers.all_values('content-type') #=> [ 'text/plain' ]
-  #   headers.all('repeated header') #=> [ 'principle value', '13', 'other value']
+  #   headers.all(:repeated_header) #=> [ 'principle value', '13', 'other value']
   #   headers['name'] == headers.all(:name).first #=> true
   def all_values(name)
     @values[name.to_sym] || []
@@ -171,12 +159,12 @@ class Stomper::Headers
   # @return [Enumerable::Enumerator] a collection enumerator if no block was supplied
   # @example
   #   headers['name 1'] = 'value 1'
-  #   headers.append('name 2', 'value 2')
-  #   headers.append('name 2', 42)
+  #   headers.append('name_2', 'value 2')
+  #   headers.append(:name_2, 42)
   #   headers.each { |name, val| p "#{name} - #{v}" }
   #   # name 1 - value 1
-  #   # name 2 - value 2
-  #   # name 2 - 42
+  #   # name_2 - value 2
+  #   # name_2 - 42
   #   #=> #<Stomper::Components::Headers:0x0000010289d6d8>
   def each(&block)
     if block_given?
@@ -191,3 +179,5 @@ class Stomper::Headers
     end
   end
 end
+
+::Stomper::Headers.__send__(:include, ::Stomper::Support::Ruby1_8::Headers)

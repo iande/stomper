@@ -11,23 +11,28 @@ module Stomper::Extensions::Events
   
   # Register a callback to be fired when an ABORT frame is sent to the broker.
   def on_abort(&block); bind_callback(:on_abort, block); end
+  # Register a callback to be fired before an ABORT frame is sent to the broker.
   def before_abort(&block); bind_callback(:before_abort, block); end
   
   # Register a callback to be fired when an ACK frame is sent to the broker.
   def on_ack(&block); bind_callback(:on_ack, block); end
+  # Register a callback to be fired before an ACK frame is sent to the broker.
   def before_ack(&block); bind_callback(:before_ack, block); end
   
   # Register a callback to be fired when a BEGIN frame is sent to the broker.
   def on_begin(&block); bind_callback(:on_begin, block); end
+  # Register a callback to be fired before a BEGIN frame is sent to the broker.
   def before_begin(&block); bind_callback(:before_begin, block); end
   
   # Register a callback to be fired when a COMMIT frame is sent to the broker.
   def on_commit(&block); bind_callback(:on_commit, block); end
+  # Register a callback to be fired before a COMMIT frame is sent to the broker.
   def before_commit(&block); bind_callback(:before_commit, block); end
   
   # Register a callback to be fired when a CONNECT frame is sent to the
   # broker.
   def on_connect(&block); bind_callback(:on_connect, block); end
+  # Register a callback to be fired before a CONNECT frame is sent to the broker.
   def before_connect(&block); bind_callback(:before_connect, block); end
   alias :on_stomp :on_connect
   alias :before_stomp :before_connect
@@ -39,6 +44,7 @@ module Stomper::Extensions::Events
   # Register a callback to be fired when a DISCONNECT frame is sent to the
   # broker.
   def on_disconnect(&block); bind_callback(:on_disconnect, block); end
+  # Register a callback to be fired before a DISCONNECT frame is sent to the broker.
   def before_disconnect(&block); bind_callback(:before_disconnect, block); end
   
   # Register a callback to be fired when an ERROR frame is received from
@@ -51,6 +57,7 @@ module Stomper::Extensions::Events
   
   # Register a callback to be fired when a NACK frame is sent to the broker.
   def on_nack(&block); bind_callback(:on_nack, block); end
+  # Register a callback to be fired before a NACK frame is sent to the broker.
   def before_nack(&block); bind_callback(:before_nack, block); end
   
   # Register a callback to be fired when a RECEIPT frame is received from
@@ -59,20 +66,23 @@ module Stomper::Extensions::Events
   
   # Register a callback to be fired when a SEND frame is sent to the broker.
   def on_send(&block); bind_callback(:on_send, block); end
+  # Register a callback to be fired before a SEND frame is sent to the broker.
   def before_send(&block); bind_callback(:before_send, block); end
   
   # Register a callback to be fired when a SUBSCRIBE frame is sent to the
   # broker.
   def on_subscribe(&block); bind_callback(:on_subscribe, block); end
+  # Register a callback to be fired before a SUBSCRIBE frame is sent to the broker.
   def before_subscribe(&block); bind_callback(:before_subscribe, block); end
   
-  # Register a callback to be fired when an UNSUBSCRIBE frame is sent to the
-  # broker.
+  # Register a callback to be fired when an UNSUBSCRIBE frame is sent to the broker.
   def on_unsubscribe(&block); bind_callback(:on_unsubscribe, block); end
+  # Register a callback to be fired before an UNSUBSCRIBE frame is sent to the broker.
   def before_unsubscribe(&block); bind_callback(:before_unsubscribe, block); end
   
   # Register a callback to be fired when a heartbeat is sent to the broker.
   def on_client_beat(&block); bind_callback(:on_client_beat, block); end
+  # Register a callback to be fired before a heartbeat frame is sent to the broker.
   def before_client_beat(&block); bind_callback(:before_client_beat, block); end
   
   # Register a callback to be fired when a heartbeat is received from the
@@ -144,10 +154,6 @@ module Stomper::Extensions::Events
     @event_callbacks ||= {}
     @event_callbacks[event_name] ||= []
     @event_callbacks[event_name] << cb_proc
-  end
-  
-  # @todo Make this actually work
-  def unbind_callback(callback)
   end
   
   def trigger_event(event_name, *args)
