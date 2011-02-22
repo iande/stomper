@@ -380,12 +380,12 @@ class Stomper::Connection
   # @param [Stomper::Frame] frame
   def transmit(frame)
     trigger_event(:on_connection_died, self) if dead?
-    trigger_event(:before_transmitting, self, frame)
+    trigger_event(:before_transmitting, frame, self)
     trigger_before_transmitted_frame(frame, self)
     begin
       @serializer.write_frame(frame).tap do
         @last_transmitted_at = Time.now
-        trigger_event(:after_transmitting, self, frame)
+        trigger_event(:after_transmitting, frame, self)
         trigger_transmitted_frame(frame, self)
       end
     rescue ::IOError, ::SystemCallError
@@ -399,14 +399,14 @@ class Stomper::Connection
   def receive
     trigger_event(:on_connection_died, self) if dead?
     if alive? || @connecting
-      trigger_event(:before_receiving, self)
+      trigger_event(:before_receiving, nil, self)
       begin
         @serializer.read_frame.tap do |f|
           if f.nil?
             close(true) if @connected
           else
             @last_received_at = Time.now
-            trigger_event(:after_receiving, self, f)
+            trigger_event(:after_receiving, f, self)
             trigger_received_frame(f, self)
           end
         end
