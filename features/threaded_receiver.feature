@@ -6,6 +6,6 @@ Feature: Threaded receiver
   Scenario: receiver is no longer running when an exception is raised by receive
     Given a 1.1 connection between client and broker
     When the broker closes the connection unexpectedly
-    Then the receiver should no longer be running
+    Then after 0.2 seconds, the receiver should no longer be running
     And the connection should not be connected
 

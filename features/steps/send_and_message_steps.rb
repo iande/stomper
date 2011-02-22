@@ -17,16 +17,19 @@ Then /^the client should have received a "([^"]*)" message of "([^"]*)"$/ do |ct
 end
 
 When /^the client sends a "([^"]*)" encoded as "([^"]*)" to (\/.*)$/ do |body, enc, dest|
-  body.force_encoding(enc)
+  body.force_encoding(enc) if body.respond_to?(:force_encoding)
   @connection.send(dest, body)
 end
 
 Then /^the client should have received a "([^"]*)" message of "([^"]*)" encoded as "([^"]*)"$/ do |ct, body, enc|
   @messages_for_subscription.any? do |m|
-    ct_check = m.content_type == ct
+    ct_check = (m.content_type == ct || m.content_type.nil? && ct.empty?)
     b_check = body == m.body
-    enc_check = m.body.encoding.name == enc
-    ct_check && b_check && enc_check
+    if body.respond_to?(:encoding)
+      ct_check && b_check && m.body.encoding.name == enc
+    else
+      ct_check && b_check
+    end
   end.should be_true
 end
 

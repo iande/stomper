@@ -14,8 +14,8 @@ class Stomper::FrameSerializer
     body.tap do |b|
       charset = ct_header ?
         (ct_header =~ /\;\s*charset=\"?([\w\-]+)\"?/i) ? $1 :
-          (ct_header =~ /^text\//) ? 'UTF-8' : 'US-ASCII' :
-        'US-ASCII'
+          (ct_header =~ /^text\//) ? 'UTF-8' : 'ASCII-8BIT' :
+        'ASCII-8BIT'
       b.force_encoding(charset)
     end
   end

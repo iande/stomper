@@ -44,4 +44,11 @@ class Stomper::Frame
   #   frame['content-type'] = 'text/plain' #=> 'text/plain'
   #   frame['other header'] = 42 #=> '42'
   def []=(name, val); @headers[name] = val; end
+  
+  # A convenience method for getting the 'content-type' header without
+  # any parameters.
+  # @return [String,nil]
+  def content_type
+    @headers[:'content-type'] && @headers[:'content-type'].split(';').first
+  end
 end

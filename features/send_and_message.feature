@@ -23,6 +23,6 @@ Feature: Send and message
     Then the client should have received a <content-type> message of <body> encoded as <final encoding>
 
     Examples:
-      | destination  | content-type               | body          | encoding     | final encoding |
-      | /queue/test1 | "text/plain"               | "hello world" | "UTF-8"      | "UTF-8"        |
-      | /queue/test2 | "application/octet-stream" | "hello world" | "ASCII-8BIT" | "US-ASCII"     |
+      | destination  | content-type | body          | encoding     | final encoding |
+      | /queue/test1 | "text/plain" | "hello world" | "UTF-8"      | "UTF-8"        |
+      | /queue/test2 | ""           | "hello world" | "ASCII-8BIT" | "ASCII-8BIT"   |
