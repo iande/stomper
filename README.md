@@ -10,6 +10,9 @@ There is still a significant amount of work that must be done before this
 gem is ready for any use. It can be used right now, but the API will be
 rather unpleasant to deal with for common use cases.
 
+This gem is in no way related to the [Python stomper]{http://code.google.com/p/stomper/}
+library.
+
 ##Still in the Works
 
 There are a few features that have not yet been implemented, hence why we're
