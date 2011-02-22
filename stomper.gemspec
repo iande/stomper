@@ -19,9 +19,7 @@ Gem::Specification.new do |s|
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
   
-  # Require Ruby 1.9 or better (needed for encoding support)
-  # This MUST be adjusted to support 1.8.7 as well.
-  s.required_ruby_version = '>= 1.9.0'
+  s.required_ruby_version = '>= 1.8.7'
   s.has_rdoc = 'yard'
   s.add_development_dependency('rspec', '~> 2.4.0')
   s.add_development_dependency('simplecov', '>= 0.3.0')

@@ -16,7 +16,9 @@ There are a few features that have not yet been implemented, hence why we're
 still on a prerelease version number. The following is a list of the major
 deficiencies of the gem, but this list is not necessarily exhaustive.
 
-* Ruby 1.8.7 compatibility needs to be put in place.
+* A bit of refactoring is in order
+  * Create separate Header classes for 1.8.7 and 1.9.2 because Ruby >= 1.9 hashes are already ordered.
+  * Refactor specs a bit, clean up separation between 1.9 and 1.8 specific tests
 
 As these issues are resolved, I'll drop them from the list (and potentially
 add other issues)
