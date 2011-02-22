@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 # This class encapsulates a client connection to a message broker through the
-# Stomp protocol.
+# Stomp protocol. This class is also aliased as +Stomper::Client+
 class Stomper::Connection
   include ::Stomper::Extensions::Common
   include ::Stomper::Extensions::Scoping

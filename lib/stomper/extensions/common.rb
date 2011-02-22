@@ -119,7 +119,6 @@ module Stomper::Extensions::Common
   # broker and client are using the Stomp 1.1 protocol, a receipt can be requested
   # for the DISCONNECT frame, and the connection will remain active until
   # the receipt is received or the broker closes the connection on its end.
-  # @todo Rewrite this to fit the new approach (just transmits the frame)
   # @param [{Symbol => String}] an optional set of headers to include in the
   #   DISCONNECT frame (these can include event handlers, such as :on_receipt)
   def disconnect(headers={})
