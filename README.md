@@ -108,7 +108,7 @@ See LICENSE for full details.
 
 * Lionel Cons -- Perl STOMP library -- lots of good suggestions and support
   while I revised Stomper to support STOMP 1.1
-* Brian McCallister and Johan Sørensen -- Original STOMP ruby gem --
+* Brian McCallister and Johan Sørensen -- [Original STOMP ruby gem]{http://gitorious.org/stomp} --
   introduced me to the STOMP spec and started my work on this gem
 * Hiram Chino and everyone on the stomp-spec mailing list for keeping the
   Stomp 1.1 spec moving
