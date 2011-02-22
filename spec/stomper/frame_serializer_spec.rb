@@ -274,12 +274,12 @@ module Stomper
           it "should assume a binary charset if none is set and the content-type does not match text/*" do
             @frame_io.string = @messages[:non_text_content_type]
             frame = @frame_serializer.read_frame
-            frame.body.encoding.name.should == 'US-ASCII'
+            frame.body.encoding.name.should == 'ASCII-8BIT'
           end
           it "should assume a binary charset if the content-type header is not specified" do
             @frame_io.string = @messages[:no_content_type]
             frame = @frame_serializer.read_frame
-            frame.body.encoding.name.should == 'US-ASCII'
+            frame.body.encoding.name.should == 'ASCII-8BIT'
           end
           it "should set the value of a header to the first occurrence" do
             @frame_io.string = @messages[:repeated_headers]

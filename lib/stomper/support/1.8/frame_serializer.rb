@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
 
-# Frame methods for Ruby 1.8.7 (no native encoding support)
+# This class serializes Stomp frames to IO streams. Submodule mixins within
+# this class are used to adjust the serialization behavior depending upon
+# the Stomp Protocol version being used.
 class Stomper::FrameSerializer
   # Return the body with the specified encoding applied. Ruby 1.8 does not
   # have a native awareness of string encodings. As such, this method does

@@ -47,8 +47,8 @@ class Stomper::Frame
   
   # A convenience method for getting the 'content-type' header without
   # any parameters.
-  # @return [String,nil]
+  # @return [String]
   def content_type
-    @headers[:'content-type'] && @headers[:'content-type'].split(';').first
+    @headers[:'content-type'] && @headers[:'content-type'].split(';').first || ''
   end
 end

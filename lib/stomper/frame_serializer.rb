@@ -3,7 +3,6 @@
 # This class serializes Stomp frames to IO streams. Submodule mixins within
 # this class are used to adjust the serialization behavior depending upon
 # the Stomp Protocol version being used.
-# @todo Make this work with Ruby 1.8.7
 class Stomper::FrameSerializer
   # The character that must be present at the end of every Stomp frame.
   FRAME_TERMINATOR = "\000"

@@ -1,6 +1,8 @@
 # -*- encoding: utf-8 -*-
 
-# A Ruby 1.9 encoding support for frames
+# This class serializes Stomp frames to IO streams. Submodule mixins within
+# this class are used to adjust the serialization behavior depending upon
+# the Stomp Protocol version being used.
 class Stomper::FrameSerializer
   # Return the body with the specified encoding applied. An encoding
   # is specified in the 'content-type' header of a frame by the +charset+

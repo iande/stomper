@@ -23,6 +23,14 @@ module Stomper
         @frame['header name'] = 'header value'
         @frame['header name'].should == 'header value'
       end
+      
+      it "should provide a convenience method for content-type" do
+        @frame[:'content-type'] = 'text/plain; charset=UTF-8; param=val'
+        @frame.content_type.should == 'text/plain'
+        
+        @frame[:'content-type'] = nil
+        @frame.content_type.should == ''
+      end
     end
   end
 end

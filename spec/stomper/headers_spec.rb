@@ -203,19 +203,21 @@ module Stomper
         @iteration_result.should equal(@headers)
       end
       
-      if RUBY_VERSION >= '1.9'
-        it "should yield an Enumerator if :each is called without a block" do
-          enum = @headers.each
+      it "should yield an Enumerator if :each is called without a block" do
+        enum = @headers.each
+        if RUBY_VERSION >= '1.9'
           enum.should be_a_kind_of(::Enumerator)
-        
-          iterate_with_arity_one(:each, enum)
-          @received_names.should == @expected_names
-          @received_values.should == @expected_values
-
-          iterate_with_arity_two(:each, enum)
-          @received_names.should == @expected_names
-          @received_values.should == @expected_values
+        else
+          enum.should be_a_kind_of(::Enumerable::Enumerator)
         end
+      
+        iterate_with_arity_one(:each, enum)
+        @received_names.should == @expected_names
+        @received_values.should == @expected_values
+
+        iterate_with_arity_two(:each, enum)
+        @received_names.should == @expected_names
+        @received_values.should == @expected_values
       end
     end
   end
