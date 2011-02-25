@@ -1,4 +1,6 @@
 class TestStompServer
+  class StopThread < StandardError; end
+
   attr_accessor :session_class
   attr_reader :session
   
@@ -26,14 +28,14 @@ class TestStompServer
   def stop
     @session.stop if @session
     @socket.close rescue nil
-    @listener.kill rescue nil
+    @listener.raise(StopThread.new)
     @listener.join rescue nil
   end
   
   def force_stop
     @session.force_stop if @session
     @socket.close rescue nil
-    @listener.kill rescue nil
+    @listener.raise(StopThread.new)
     @listener.join rescue nil
   end
   
@@ -57,10 +59,11 @@ class TestStompServer
       connect_to_client(headers)
       @serializer.extend_for_protocol('1.1') if version == '1.1'
       @receive_thread = Thread.new do
-        while @running
+        while true
           begin
             read_frame
           rescue Exception => ex
+            break
           end
         end
       end
@@ -73,17 +76,9 @@ class TestStompServer
     
     def force_stop
       @running = false
-      if @client_socket.respond_to?(:io)
-        @client_socket.io.shutdown(2) rescue nil
-      else
-        @client_socket.shutdown(2) rescue nil
-      end
+      @receive_thread.raise(StopThread.new)
       @client_socket.close rescue nil
-      thr = @receive_thread.join(1) rescue nil
-      if !thr
-        @receiver_thread.kill rescue nil
-        @receiver_thread.join rescue nil
-      end
+      @receive_thread.join rescue nil
     end
     
     def stop
