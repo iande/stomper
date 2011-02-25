@@ -371,7 +371,6 @@ class Stomper::Connection
   def close
     #@socket_mutex.synchronize do
       if @connected
-        $stdout.puts "CONNECTION: close"
         begin
           trigger_event(:on_connection_terminated, self) unless @disconnecting
         ensure
@@ -381,7 +380,6 @@ class Stomper::Connection
           end
           @connected = false
         end
-        $stdout.puts "CONNECTION: closed"
         trigger_event(:on_connection_closed, self)
       end
     #end
