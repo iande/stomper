@@ -170,11 +170,10 @@ class Stomper::Connection
     @receipt_manager = ::Stomper::ReceiptManager.new(self)
     @connecting = false
     @disconnecting = false
+    @socket_mutex = ::Mutex.new
     
     on_connected do |cf, con|
       unless connected?
-        @connecting = false
-        @disconnecting = false
         @version = (cf[:version].nil?||cf[:version].empty?) ? '1.0' : cf[:version]
         unless @versions.include?(@version)
           close
@@ -192,9 +191,11 @@ class Stomper::Connection
         extend_for_protocol
       end
     end
-    
-    on_disconnect do |df, con|
+
+    before_disconnect do |df, con|
       @disconnecting = true
+    end
+    on_disconnect do |df, con|
       close unless df[:receipt]
     end
   end
@@ -269,28 +270,33 @@ class Stomper::Connection
   # connection has been established and you're ready to go, otherwise the
   # socket will be closed and an error will be raised.
   def connect(headers={})
-    @socket = @uri.create_socket(@ssl)
-    @serializer = ::Stomper::FrameSerializer.new(@socket)
-    m_headers = {
-      :'accept-version' => @versions.join(','),
-      :host => @host,
-      :'heart-beat' => @heartbeats.join(','),
-      :login => @login,
-      :passcode => @passcode
-    }
-    @connecting = true
-    transmit create_frame('CONNECT', headers, m_headers)
-    receive.tap do |f|
-      if f.command == 'CONNECTED'
-        @connected_frame = f
-      else
-        close
-        raise ::Stomper::Errors::ConnectFailedError, 'broker did not send CONNECTED frame'
+    #@socket_mutex.synchronize do
+      unless @connected
+        @socket = @uri.create_socket(@ssl)
+        @serializer = ::Stomper::FrameSerializer.new(@socket)
+        m_headers = {
+          :'accept-version' => @versions.join(','),
+          :host => @host,
+          :'heart-beat' => @heartbeats.join(','),
+          :login => @login,
+          :passcode => @passcode
+        }
+        @disconnecting = false
+        @connecting = true
+        transmit create_frame('CONNECT', headers, m_headers)
+        receive.tap do |f|
+          if f.command == 'CONNECTED'
+            @connected_frame = f
+            @connected = true
+            @connecting = false
+            trigger_event(:on_connection_established, self)
+          else
+            close
+            raise ::Stomper::Errors::ConnectFailedError, 'broker did not send CONNECTED frame'
+          end
+        end
       end
-    end
-    @connected = true
-    trigger_event(:on_connection_established, self) if @connected
-    @connected_frame
+    #end
   end
   alias :open :connect
   
@@ -362,17 +368,23 @@ class Stomper::Connection
   # @see Stomper::Extensions::Events#on_connection_terminated
   # @param [true,false] fire_terminated (false) If true, trigger
   #   {Stomper::Extensions::Events#on_connection_terminated}
-  def close(fire_terminated=false)
-    begin
-      trigger_event(:on_connection_terminated, self) if fire_terminated
-    ensure
-      unless @socket.closed?
-        @socket.shutdown(2) rescue nil
-        @socket.close rescue nil
+  def close
+    #@socket_mutex.synchronize do
+      if @connected
+        $stdout.puts "CONNECTION: close"
+        begin
+          trigger_event(:on_connection_terminated, self) unless @disconnecting
+        ensure
+          unless @socket.closed?
+            @socket.shutdown(2) rescue nil
+            @socket.close rescue nil
+          end
+          @connected = false
+        end
+        $stdout.puts "CONNECTION: closed"
+        trigger_event(:on_connection_closed, self)
       end
-      @connected = false
-    end
-    trigger_event(:on_connection_closed, self)
+    #end
   end
   
   # Transmits a frame to the broker. This is a low-level method used internally
@@ -389,7 +401,7 @@ class Stomper::Connection
         trigger_transmitted_frame(frame, self)
       end
     rescue ::IOError, ::SystemCallError
-      close(true)
+      close
       raise
     end
   end
@@ -403,7 +415,7 @@ class Stomper::Connection
       begin
         @serializer.read_frame.tap do |f|
           if f.nil?
-            close(true) if @connected
+            close
           else
             @last_received_at = Time.now
             trigger_event(:after_receiving, f, self)
@@ -411,7 +423,7 @@ class Stomper::Connection
           end
         end
       rescue ::IOError, ::SystemCallError
-        close(true)
+        close
         raise
       end
     end
@@ -424,14 +436,7 @@ class Stomper::Connection
   #   if any data is available it will block until a complete frame has been read.
   # @return [Stomper::Frame, nil]
   def receive_nonblock
-    trigger_event(:on_connection_died, self) if dead?
-    trigger_event(:before_receiving, self)
-    if @socket.ready?
-      @serializer.read_frame.tap do |f|
-        trigger_event(:after_receiving, self, f)
-        trigger_received_frame(f, self)
-      end
-    end
+    receive if @socket.ready?
   end
   
   # Duration in milliseconds since a frame has been transmitted to the broker.
@@ -457,4 +462,3 @@ end
 
 # Alias Stomper::Client to Stomper::Connection
 ::Stomper::Client = ::Stomper::Connection
-

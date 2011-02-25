@@ -4,7 +4,10 @@ class TestStompServer
   
   def initialize(version=nil)
     @port = 61613
-    @socket = TCPServer.new(@port)
+    begin
+      @socket = TCPServer.new(@port)
+    rescue Exception => ex
+    end
     @session = nil
     @version = version
     @session_class = StompSession
@@ -70,8 +73,17 @@ class TestStompServer
     
     def force_stop
       @running = false
+      if @client_socket.respond_to?(:io)
+        @client_socket.io.shutdown(2) rescue nil
+      else
+        @client_socket.shutdown(2) rescue nil
+      end
       @client_socket.close rescue nil
-      @receive_thread.join rescue nil
+      thr = @receive_thread.join(1) rescue nil
+      if !thr
+        @receiver_thread.kill rescue nil
+        @receiver_thread.join rescue nil
+      end
     end
     
     def stop
@@ -112,8 +124,11 @@ class TestStompServer
     
     def send_frame cmd, headers={}, body=nil
       frame = cmd.is_a?(Stomper::Frame) ? cmd : Stomper::Frame.new(cmd, headers, body)
-      @serializer.write_frame(frame).tap do |f|
-        @sent_frames << f
+      begin
+        @serializer.write_frame(frame).tap do |f|
+          @sent_frames << f
+        end
+      rescue Exception => ex
       end
     end
   end
@@ -135,7 +150,11 @@ class TestSSLStompServer < TestStompServer
   
   def initialize(version=nil, certs=:default)
     @port = 61612
-    @tcp_socket = TCPServer.new(@port)
+    begin
+      @tcp_socket = TCPServer.new(@port)
+    rescue Exception => ex
+      retry
+    end
     @ssl_context = OpenSSL::SSL::SSLContext.new
     @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
     cert_files = SSL_CERT_FILES[certs]

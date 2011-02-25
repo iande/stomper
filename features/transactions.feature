@@ -10,6 +10,7 @@ Feature: Transactions
     And the client acks a message by ID "m-1234" and subscription "s-5678" within the scope
     And the client nacks a message by ID "m-9012" and subscription "s-5678" within the scope
     And the client aborts the transaction scope
+    And the frame exchange is completed
     Then the broker should have received a "BEGIN" frame with headers
     | header-name | header-value |
     | transaction | t-0001       |
@@ -30,6 +31,7 @@ Feature: Transactions
   Scenario: Applying a transaction to a successful block
     Given a 1.1 connection between client and broker
     When the client executes a successful transaction block named "t-0002"
+    And the frame exchange is completed
     Then the broker should have received a "BEGIN" frame with headers
     | header-name | header-value |
     | transaction | t-0002       |
@@ -49,6 +51,7 @@ Feature: Transactions
   Scenario: Applying a transaction to an unsuccessful block
     Given a 1.1 connection between client and broker
     When the client executes an unsuccessful transaction block named "t-0002"
+    And the frame exchange is completed
     Then the broker should have received a "BEGIN" frame with headers
     | header-name | header-value |
     | transaction | t-0002       |

@@ -3,6 +3,7 @@ When /^the client acks a message by ID "([^"]*)"$/ do |message_id|
 end
 
 When /^the client acks the last MESSAGE$/ do
+  When("the client waits for 1 \"MESSAGE\" frame")
   @connection.ack @received_frames.select { |f| f.command == "MESSAGE" }.last
 end
 
@@ -15,6 +16,7 @@ When /^the client acks a message by ID "([^"]*)" and subscription "([^"]*)"$/ do
 end
 
 When /^the client nacks the last MESSAGE$/ do
+  When("the client waits for 1 \"MESSAGE\" frame")
   @connection.nack @received_frames.select { |f| f.command == "MESSAGE" }.last
 end
 

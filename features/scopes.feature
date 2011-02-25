@@ -15,6 +15,7 @@ Feature: Scopes
     | header-name | header-value      |
     | id          | s-9012            |
     | ack         | client-individual |
+    And the frame exchange is completed
     Then the broker should have received an "ACK" frame with headers
     | header-name   | header-value |
     | x-my-header   | some value   |

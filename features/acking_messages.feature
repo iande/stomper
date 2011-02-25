@@ -10,6 +10,7 @@ Feature: Acking messages
     | message-id   | m-1234         |
     | subscription | s-5678         |
     | destination  | /queue/testing |
+    #When the client waits for 1 "MESSAGE" frame
     When the client acks the last MESSAGE
     And the frame exchange is completed
     Then the broker should have received an "ACK" frame with headers

@@ -33,3 +33,8 @@ When /^the frame exchange is completed without client disconnect$/ do
   @connection.stop
   @broker.stop
 end
+
+When /^the client waits for (\d+) "([^"]*)" frames?$/ do |count, command|
+  count = count.to_i
+  Thread.pass while @received_frames.select { |f| f.command == command }.size < count
+end
