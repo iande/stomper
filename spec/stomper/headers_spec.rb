@@ -28,13 +28,6 @@ module Stomper
       @headers['test header'].should == ''
     end
     
-    it "should return an array of header key/value pairs" do
-      @headers['header 1'] = 'testing'
-      @headers['other header'] = 19
-      @headers[:tom] = 'servo'
-      @headers.to_a.should == [ ['header 1', 'testing'], ['other header', '19'], ['tom', 'servo'] ]
-    end
-    
     it "should preserve the order of keys" do
       expected_keys = []
       20.times do |n|
@@ -108,6 +101,20 @@ module Stomper
       @headers.to_a.should == [ ['header 1', 'h1 value 1'], ['header 1', 'h1 value 2'],
         ['header 1', 'h1 value 3'], ['header 2', 'h2 value 1'], ['header 3', 'h3 value 1'],
         ['header 3', 'h3 value 2'] ]
+    end
+    
+    it "should be convertable to a hash of principle values" do
+      @headers.append('header 1', 'h1 value 1')
+      @headers.append('header 1', 'h1 value 2')
+      @headers.append('header 1', 'h1 value 3')
+      @headers['header 2'] = 'h2 value 1'
+      @headers['header 3'] = 'h3 value 1'
+      @headers.append('header 3', 'h3 value 2')
+      @headers.to_hash.should == {
+        :'header 1' => 'h1 value 1',
+        :'header 2' => 'h2 value 1',
+        :'header 3' => 'h3 value 1'
+      }
     end
     
     it "should set a header value to the first encountered in a chain of appends" do

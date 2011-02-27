@@ -12,10 +12,10 @@ Given /^a (\d+\.\d+)?\s*connection between client and broker$/ do |version|
   @connection = Stomper::Connection.new(@broker_uri)
   @received_frames = []
   @sent_frames = []
-  @connection.before_transmitting do |c, f|
+  @connection.before_transmitting do |f, c|
     @sent_frames << f
   end
-  @connection.after_receiving do |c, f|
+  @connection.after_receiving do |f, c|
     @received_frames << f
   end
   @connection.start

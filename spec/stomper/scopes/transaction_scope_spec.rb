@@ -7,7 +7,7 @@ module Stomper::Scopes
       @connection = mock("connection", :is_a? => true, :version => '1.1')
       @headers = { :transaction => 'tx-1234' }
       @connection.stub!(:subscription_manager).and_return(mock('subscription manager', {
-        :subscribed_id? => true
+        :remove => ['no-real-destination']
       }))
       @scope = TransactionScope.new(@connection, @headers)
       @connection.should_receive(:transmit).at_most(:once).with(stomper_frame_with_headers(@headers, 'BEGIN'))

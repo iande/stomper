@@ -6,10 +6,12 @@ class Stomper::SubscriptionManager
   # @param [Stomper::Connection] connection
   def initialize(connection)
     @mon = ::Monitor.new
-    @callbacks = {}
-    @dests_to_ids = {}
+    @subscribes = {}
     connection.on_message { |m, con| dispatch(m) }
-    connection.on_unsubscribe { |u, con| remove(u) }
+    connection.on_unsubscribe { |u, con| remove(u[:id]) }
+    connection.on_connection_closed do |con|
+      @subscribes.each { |id, sub| sub.active = false }
+    end
   end
   
   # Adds a callback handler for a MESSAGE frame that is sent via the subscription
@@ -22,58 +24,76 @@ class Stomper::SubscriptionManager
     s_id = subscribe[:id]
     dest = subscribe[:destination]
     @mon.synchronize do
-      @callbacks[s_id] = callback
-      @dests_to_ids[dest] ||= []
-      @dests_to_ids[dest] << s_id
+      @subscribes[s_id] = Subscription.new(subscribe, callback)
     end
   end
   
-  # Returns true if the subscription ID is registered
-  # @param [String] id
-  # @return [true,false]
-  def subscribed_id?(id)
-    @mon.synchronize { @callbacks.key? id }
+  # Removes a subscription by ID or destination.
+  # @param [String] sub_id ID or destination of the subscription
+  # @return [Array<String>] array of subscription IDs matching +sub_id+
+  def remove(sub_id)
+    @mon.synchronize do
+      if @subscribes.key? sub_id
+        @subscribes.delete sub_id
+        [sub_id]
+      else
+        @subscribes.values.inject([]) do |ids, sub|
+          if sub.destination == sub_id
+            @subscribes.delete sub.id
+            ids << sub.id
+          end
+          ids
+        end
+      end
+    end
   end
   
-  # Returns true if the subscription destination is registered
-  # @param [String] destination
-  # @return [true,false]
-  def subscribed_destination?(destination)
-    @mon.synchronize { @dests_to_ids.key? destination }
+  # Returns all current subscriptions in the form of their SUBSCRIBE frames.
+  # @return [Array<Stomper::Frame>]
+  def subscribed
+    @mon.synchronize { @subscribes.values.select { |s| s.active? } }.map { |s| s.frame }
   end
   
-  # Returns an array of subscription IDs that correspond to
-  # the given subscription destination. If the destination is unknown,
-  # returns +nil+.
-  # @param [String] destination
-  # @return [Array<String>, nil]
-  def ids_for_destination(destination)
-    @mon.synchronize { @dests_to_ids[destination] && @dests_to_ids[destination].dup }
+  def inactive_subscriptions
+    @mon.synchronize { @subscribes.values.reject { |s| s.active? } }
+  end
+  
+  def remove_inactive_subscription(sub_id)
+    @mon.synchronize do
+      @subscribes[sub_id] && !@subscribes[sub_id].active? &&
+        @subscribes.delete(sub_id)
+    end
   end
   
   private
-  def remove(unsub)
-    s_id = unsub[:id]
-    @mon.synchronize do
-      @dests_to_ids.each do |dest, ids|
-        ids.delete s_id
-        @dests_to_ids.delete dest if ids.empty?
-      end
-      @callbacks.delete(s_id)
-    end
-  end
-  
   def dispatch(message)
     s_id = message[:subscription]
     dest = message[:destination]
     if s_id.nil? || s_id.empty?
-      cbs = @mon.synchronize do
-        @dests_to_ids[dest] && @dests_to_ids[dest].map { |id| @callbacks[id] }
-      end
-      cbs && cbs.each { |cb| cb.call(message) }
+      @mon.synchronize do
+        @subscribes.values.map do |sub|
+          (sub.destination == dest) && sub
+        end
+      end.each { |cb| cb && cb.call(message) }
     else
-      cb = @mon.synchronize { @callbacks[s_id] }
+      cb = @mon.synchronize { @subscribes[s_id] }
       cb && cb.call(message)
+    end
+  end
+  
+  class Subscription
+    attr_reader :frame, :callback
+    attr_accessor :active
+    alias :active? :active
+    def initialize(fr, cb)
+      @frame = fr
+      @callback = cb
+      @active = true
+    end
+    def id; @frame[:id]; end
+    def destination; @frame[:destination]; end
+    def call(m)
+      @callback.call(m) if @active
     end
   end
 end

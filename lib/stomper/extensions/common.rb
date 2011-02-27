@@ -60,13 +60,23 @@ module Stomper::Extensions::Common
   def unsubscribe(frame_or_id, headers={})
     sub_id = frame_or_id.is_a?(::Stomper::Frame) ? frame_or_id[:id] : frame_or_id
     raise ArgumentError, 'subscription ID could not be determined' if sub_id.nil? || sub_id.empty?
-    if subscription_manager.subscribed_id? sub_id
-      transmit create_frame('UNSUBSCRIBE', headers, { :id => sub_id })
-    elsif subscription_manager.subscribed_destination? sub_id
-      subscription_manager.ids_for_destination(sub_id).map do |id|
-        transmit create_frame('UNSUBSCRIBE', headers, { :id => id })
+    subscription_manager.remove(sub_id).map do |id|
+      transmit create_frame('UNSUBSCRIBE', headers, { :id => id })
+    end.last
+  end
+  
+  # Resubscribes to subscriptions that were not unsubscribed from before the
+  # connection was last disconnected.
+  def resubscribe
+    subscription_manager.inactive_subscriptions.each do |sub|
+      headers = sub.frame.headers.to_h
+      headers.delete(:id)
+      headers.delete(:destination)
+      if subscribe(sub.destination, headers, &sub.callback)
+        subscription_manager.remove_inactive(sub.id)
       end
     end
+    self
   end
   
   # Transmits a BEGIN frame to the broker to start a transaction named by +tx_id+.

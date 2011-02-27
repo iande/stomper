@@ -12,4 +12,11 @@
 # @see Stomper::Support::Ruby1_9::Headers Implementation for Ruby 1.9
 class Stomper::Headers
   include ::Enumerable
+  
+  # Returns a new +Hash+ object associating symbolized header names and their
+  # principle values.
+  # @return [Hash]
+  def to_hash
+    to_a.inject({}) { |h, (k,v)| h[k.to_sym] ||= v; h }
+  end
 end

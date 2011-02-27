@@ -45,13 +45,13 @@ module Stomper::Extensions
       end
     
       it "should transmit an UNSUBSCRIBE frame for a given subscription ID" do
-        @subscription_manager.should_receive(:subscribed_id?).with('subscription-1234').and_return(true)
+        @subscription_manager.should_receive(:remove).with('subscription-1234').and_return(['subscription-1234'])
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'id' => 'subscription-1234'}, 'UNSUBSCRIBE'))
         @common.unsubscribe('subscription-1234')
       end
     
       it "should transmit an UNSUBSCRIBE frame for a given SUBSCRIBE frame" do
-        @subscription_manager.should_receive(:subscribed_id?).with('id-in-frame-4321').and_return(true)
+        @subscription_manager.should_receive(:remove).with('id-in-frame-4321').and_return(['id-in-frame-4321'])
         subscribe = ::Stomper::Frame.new('SUBSCRIBE', { :id => 'id-in-frame-4321' })
         @common.should_receive(:transmit).with(stomper_frame_with_headers({'id' => 'id-in-frame-4321'}, 'UNSUBSCRIBE'))
         @common.unsubscribe(subscribe)
@@ -94,9 +94,7 @@ module Stomper::Extensions
         # as well.
         @common.should_receive(:transmit).with(stomper_frame_with_headers({:id => '1234'}, 'UNSUBSCRIBE'))
         @common.should_receive(:transmit).with(stomper_frame_with_headers({:id => '4567'}, 'UNSUBSCRIBE'))
-        @subscription_manager.should_receive(:subscribed_id?).with('/queue/test').and_return(false)
-        @subscription_manager.should_receive(:subscribed_destination?).with('/queue/test').and_return(true)
-        @subscription_manager.should_receive(:ids_for_destination).with('/queue/test').and_return(['1234', '4567'])
+        @subscription_manager.should_receive(:remove).with('/queue/test').and_return(['1234', '4567'])
         @common.unsubscribe("/queue/test")
       end
     end

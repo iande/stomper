@@ -7,7 +7,7 @@ module Stomper::Scopes
       @connection = mock("connection", :is_a? => true, :version => '1.1')
       @headers = { :global_1 => 'turbo', 'global_2' => 'is me', :persistent => true }
       @connection.stub!(:subscription_manager).and_return(mock('subscription manager', {
-        :subscribed_id? => true
+        :remove => ['no-real-destination']
       }))
       @scope = HeaderScope.new(@connection, @headers)
     end

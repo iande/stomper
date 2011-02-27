@@ -8,7 +8,7 @@ module Stomper::Scopes
       @connection = mock("connection", :is_a? => true, :version => '1.1')
       @connection.stub!(:receipt_manager => @receipt_manager)
       @connection.stub!(:subscription_manager).and_return(mock('subscription manager', {
-        :subscribed_id? => true
+        :remove => ['/queue/test']
       }))
       @scope = ReceiptScope.new(@connection, {})
     end
