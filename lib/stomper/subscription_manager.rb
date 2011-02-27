@@ -2,20 +2,14 @@
 
 # Manages subscriptions for a {Stomper::Connection}
 class Stomper::SubscriptionManager
-  attr_reader :lost_subscriptions
-  
   # Creates a new subscription handler for the supplied {Stomper::Connection connection}
   # @param [Stomper::Connection] connection
   def initialize(connection)
     @mon = ::Monitor.new
-    @subscribes = {}
-    @lost_subscriptions = []
+    @subscriptions = {}
     connection.on_message { |m, con| dispatch(m) }
     connection.on_unsubscribe { |u, con| remove(u[:id]) }
-    connection.on_connection_closed do |con|
-      @subscribes.each { |id, sub| sub.frame.headers.delete(:id); @lost_subscriptions << sub }
-      @subscribes.clear
-    end
+    connection.on_connection_closed { |con| @subscriptions.clear }
   end
   
   # Adds a callback handler for a MESSAGE frame that is sent via the subscription
@@ -28,7 +22,7 @@ class Stomper::SubscriptionManager
     s_id = subscribe[:id]
     dest = subscribe[:destination]
     @mon.synchronize do
-      @subscribes[s_id] = Subscription.new(subscribe, callback)
+      @subscriptions[s_id] = Subscription.new(subscribe, callback)
     end
   end
   
@@ -37,13 +31,13 @@ class Stomper::SubscriptionManager
   # @return [Array<String>] array of subscription IDs matching +sub_id+
   def remove(sub_id)
     @mon.synchronize do
-      if @subscribes.key? sub_id
-        @subscribes.delete sub_id
+      if @subscriptions.key? sub_id
+        @subscriptions.delete sub_id
         [sub_id]
       else
-        @subscribes.values.inject([]) do |ids, sub|
+        @subscriptions.values.inject([]) do |ids, sub|
           if sub.destination == sub_id
-            @subscribes.delete sub.id
+            @subscriptions.delete sub.id
             ids << sub.id
           end
           ids
@@ -54,8 +48,8 @@ class Stomper::SubscriptionManager
   
   # Returns all current subscriptions in the form of their SUBSCRIBE frames.
   # @return [Array<Stomper::Frame>]
-  def subscribed
-    @mon.synchronize { @subscribes.values.map { |s| s.frame } }
+  def subscriptions
+    @mon.synchronize { @subscriptions.values }
   end
   
   private
@@ -64,12 +58,12 @@ class Stomper::SubscriptionManager
     dest = message[:destination]
     if s_id.nil? || s_id.empty?
       @mon.synchronize do
-        @subscribes.values.map do |sub|
+        @subscriptions.values.map do |sub|
           (sub.destination == dest) && sub
         end
       end.each { |cb| cb && cb.call(message) }
     else
-      cb = @mon.synchronize { @subscribes[s_id] }
+      cb = @mon.synchronize { @subscriptions[s_id] }
       cb && cb.call(message)
     end
   end

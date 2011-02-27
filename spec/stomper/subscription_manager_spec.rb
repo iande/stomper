@@ -24,39 +24,40 @@ module Stomper
       
       it "should correctly report subscriptoins" do
         @subscription_manager.add(@subscribe_frame, lambda { |m| true })
-        @subscription_manager.subscribed.any? { |s| s[:id] == '1234' }.should be_true
-        @subscription_manager.subscribed.any? { |s| s[:id] == '4321' }.should be_false
+        @subscription_manager.subscriptions.any? { |s| s.id == '1234' }.should be_true
+        @subscription_manager.subscriptions.any? { |s| s.id == '4321' }.should be_false
         @subscription_manager.remove('1234')
-        @subscription_manager.subscribed.any? { |s| s[:id] == '1234' }.should be_false
+        @subscription_manager.subscriptions.any? { |s| s.id == '1234' }.should be_false
       end
  
       it "should correctly report subscribed destinations" do
         @subscription_manager.add(@subscribe_frame, lambda { |m| true })
-        @subscription_manager.subscribed.any? { |s| s[:destination] == '/queue/testing' }.should be_true
-        @subscription_manager.subscribed.any? { |s| s[:destination] == '/queue/test' }.should be_false
+        @subscription_manager.subscriptions.any? { |s| s.destination == '/queue/testing' }.should be_true
+        @subscription_manager.subscriptions.any? { |s| s.destination == '/queue/test' }.should be_false
         @subscription_manager.remove('/queue/testing')
-        @subscription_manager.subscribed.any? { |s| s[:destination] == '/queue/testing' }.should be_false
+        @subscription_manager.subscriptions.any? { |s| s.destination == '/queue/testing' }.should be_false
       end
       
       it "should correctly map subscribed destinations to their IDs" do
         alt_subscribe_frame = ::Stomper::Frame.new('SUBSCRIBE', {:id => '4567', :destination => '/queue/test_further'})
         @subscription_manager.add(@subscribe_frame, lambda { |m| true })
         @subscription_manager.add(alt_subscribe_frame, lambda { |m| true })
-        @subscription_manager.subscribed.map { |s| s[:id] }.should == ['1234', '4567']
+        @subscription_manager.subscriptions.map { |s| s.id }.should == ['1234', '4567']
         @subscription_manager.remove('/queue/testing')
-        @subscription_manager.subscribed.map { |s| s[:id] }.should == ['4567']
+        @subscription_manager.subscriptions.map { |s| s.id }.should == ['4567']
         @subscription_manager.remove('/queue/test_further')
-        @subscription_manager.subscribed.should be_empty
+        @subscription_manager.subscriptions.should be_empty
       end
       
-      # it "should provide a set of subscriptions that were not unsubscribed before the connection was closed" do
-      #   alt_subscribe_frame = ::Stomper::Frame.new('SUBSCRIBE', {:id => '4567', :destination => '/queue/test_further'})
-      #   @subscription_manager.add(@subscribe_frame, lambda { |m| true })
-      #   @subscription_manager.add(alt_subscribe_frame, lambda { |m| true })
-      #   @subscription_manager.remove('1234')
-      #   @connection.__send__(:trigger_event, :on_connection_closed, @connection)
-      #   @subscription_manager.inactive_subscriptions.map { |s| s.id }.should == ['4567']
-      # end
+      it "should clear out all remaining subscriptions when the connection is closed" do
+        alt_subscribe_frame = ::Stomper::Frame.new('SUBSCRIBE', {:id => '4567', :destination => '/queue/test_further'})
+        @subscription_manager.add(@subscribe_frame, lambda { |m| true })
+        @subscription_manager.add(alt_subscribe_frame, lambda { |m| true })
+        @subscription_manager.remove('4567')
+        @subscription_manager.subscriptions.map { |s| s.id }.should == ['1234']
+        @connection.__send__(:trigger_event, :on_connection_closed, @connection)
+        @subscription_manager.subscriptions.should be_empty
+      end
       
       it "should trigger subscriptions for MESSAGE frames with only a destination" do
         triggered = [0, 0]
