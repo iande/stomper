@@ -65,20 +65,6 @@ module Stomper::Extensions::Common
     end.last
   end
   
-  # Resubscribes to subscriptions that were not unsubscribed from before the
-  # connection was last disconnected.
-  def resubscribe
-    subscription_manager.inactive_subscriptions.each do |sub|
-      headers = sub.frame.headers.to_h
-      headers.delete(:id)
-      headers.delete(:destination)
-      if subscribe(sub.destination, headers, &sub.callback)
-        subscription_manager.remove_inactive(sub.id)
-      end
-    end
-    self
-  end
-  
   # Transmits a BEGIN frame to the broker to start a transaction named by +tx_id+.
   # When directly handling transaction management in this fashion, it is up to
   # you to ensure the uniqueness of transaction ids, that frames within this

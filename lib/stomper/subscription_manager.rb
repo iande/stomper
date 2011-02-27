@@ -2,15 +2,19 @@
 
 # Manages subscriptions for a {Stomper::Connection}
 class Stomper::SubscriptionManager
+  attr_reader :lost_subscriptions
+  
   # Creates a new subscription handler for the supplied {Stomper::Connection connection}
   # @param [Stomper::Connection] connection
   def initialize(connection)
     @mon = ::Monitor.new
     @subscribes = {}
+    @lost_subscriptions = []
     connection.on_message { |m, con| dispatch(m) }
     connection.on_unsubscribe { |u, con| remove(u[:id]) }
     connection.on_connection_closed do |con|
-      @subscribes.each { |id, sub| sub.active = false }
+      @subscribes.each { |id, sub| sub.frame.headers.delete(:id); @lost_subscriptions << sub }
+      @subscribes.clear
     end
   end
   
@@ -54,17 +58,6 @@ class Stomper::SubscriptionManager
     @mon.synchronize { @subscribes.values.select { |s| s.active? } }.map { |s| s.frame }
   end
   
-  def inactive_subscriptions
-    @mon.synchronize { @subscribes.values.reject { |s| s.active? } }
-  end
-  
-  def remove_inactive_subscription(sub_id)
-    @mon.synchronize do
-      @subscribes[sub_id] && !@subscribes[sub_id].active? &&
-        @subscribes.delete(sub_id)
-    end
-  end
-  
   private
   def dispatch(message)
     s_id = message[:subscription]
@@ -83,17 +76,12 @@ class Stomper::SubscriptionManager
   
   class Subscription
     attr_reader :frame, :callback
-    attr_accessor :active
-    alias :active? :active
     def initialize(fr, cb)
       @frame = fr
       @callback = cb
-      @active = true
     end
     def id; @frame[:id]; end
     def destination; @frame[:destination]; end
-    def call(m)
-      @callback.call(m) if @active
-    end
+    def call(m); @callback.call(m); end
   end
 end

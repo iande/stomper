@@ -35,17 +35,12 @@ class Stomper::Receivers::Threaded
     if is_starting
       @run_thread = Thread.new do
         begin
-          while true
-            begin
-              break if @connection.receive.nil?
-            rescue ::Stomper::Receivers::Threaded::StopReceiver
-              break
-            rescue Exception => ex
-              @running = false
-              raise ex
-            end
+          until @connection.receive.nil?
           end
         rescue ::Stomper::Receivers::Threaded::StopReceiver
+        rescue Exception => ex
+          @running = false
+          raise ex
         end
         @running = false
       end
