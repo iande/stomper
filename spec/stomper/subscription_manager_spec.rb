@@ -11,7 +11,6 @@ module Stomper
       receipt = mock('receipt')
       @connection.should_receive(:on_message)
       @connection.should_receive(:on_unsubscribe)
-      @connection.should_receive(:on_connection_closed)
       @subscription_manager = SubscriptionManager.new(@connection)
     end
     
@@ -49,13 +48,13 @@ module Stomper
         @subscription_manager.subscriptions.should be_empty
       end
       
-      it "should clear out all remaining subscriptions when the connection is closed" do
+      it "should clear out all remaining subscriptions when cleared" do
         alt_subscribe_frame = ::Stomper::Frame.new('SUBSCRIBE', {:id => '4567', :destination => '/queue/test_further'})
         @subscription_manager.add(@subscribe_frame, lambda { |m| true })
         @subscription_manager.add(alt_subscribe_frame, lambda { |m| true })
         @subscription_manager.remove('4567')
         @subscription_manager.subscriptions.map { |s| s.id }.should == ['1234']
-        @connection.__send__(:trigger_event, :on_connection_closed, @connection)
+        @subscription_manager.clear
         @subscription_manager.subscriptions.should be_empty
       end
       

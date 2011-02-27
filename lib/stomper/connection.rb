@@ -171,7 +171,7 @@ class Stomper::Connection
     @connecting = false
     @disconnecting = false
     @disconnected = false
-    @socket_mutex = ::Mutex.new
+    @close_mutex = ::Mutex.new
     
     on_connected do |cf, con|
       unless connected?
@@ -272,34 +272,32 @@ class Stomper::Connection
   # connection has been established and you're ready to go, otherwise the
   # socket will be closed and an error will be raised.
   def connect(headers={})
-    #@socket_mutex.synchronize do
-      unless @connected
-        @socket = @uri.create_socket(@ssl)
-        @serializer = ::Stomper::FrameSerializer.new(@socket)
-        m_headers = {
-          :'accept-version' => @versions.join(','),
-          :host => @host,
-          :'heart-beat' => @heartbeats.join(','),
-          :login => @login,
-          :passcode => @passcode
-        }
-        @disconnecting = false
-        @disconnected = false
-        @connecting = true
-        transmit create_frame('CONNECT', headers, m_headers)
-        receive.tap do |f|
-          if f.command == 'CONNECTED'
-            @connected_frame = f
-            @connected = true
-            @connecting = false
-            trigger_event(:on_connection_established, self)
-          else
-            close
-            raise ::Stomper::Errors::ConnectFailedError, 'broker did not send CONNECTED frame'
-          end
+    unless @connected
+      @socket = @uri.create_socket(@ssl)
+      @serializer = ::Stomper::FrameSerializer.new(@socket)
+      m_headers = {
+        :'accept-version' => @versions.join(','),
+        :host => @host,
+        :'heart-beat' => @heartbeats.join(','),
+        :login => @login,
+        :passcode => @passcode
+      }
+      @disconnecting = false
+      @disconnected = false
+      @connecting = true
+      transmit create_frame('CONNECT', headers, m_headers)
+      receive.tap do |f|
+        if f.command == 'CONNECTED'
+          @connected_frame = f
+          @connected = true
+          @connecting = false
+          trigger_event(:on_connection_established, self)
+        else
+          close
+          raise ::Stomper::Errors::ConnectFailedError, 'broker did not send CONNECTED frame'
         end
       end
-    #end
+    end
   end
   alias :open :connect
   
@@ -372,7 +370,7 @@ class Stomper::Connection
   # @param [true,false] fire_terminated (false) If true, trigger
   #   {Stomper::Extensions::Events#on_connection_terminated}
   def close
-    #@socket_mutex.synchronize do
+    @close_mutex.synchronize do
       if @connected
         begin
           trigger_event(:on_connection_terminated, self) unless @disconnected
@@ -384,8 +382,10 @@ class Stomper::Connection
           @connected = false
         end
         trigger_event(:on_connection_closed, self)
+        subscription_manager.clear
+        receipt_manager.clear
       end
-    #end
+    end
   end
   
   # Transmits a frame to the broker. This is a low-level method used internally

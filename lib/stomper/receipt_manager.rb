@@ -27,6 +27,11 @@ class Stomper::ReceiptManager
     self
   end
   
+  # Remove all receipt handlers.
+  def clear
+    @mon.synchronize { @callbacks.clear }
+  end
+  
   private
   def dispatch(receipt)
     cb = @mon.synchronize { @callbacks.delete(receipt[:'receipt-id']) }

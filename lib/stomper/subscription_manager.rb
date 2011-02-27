@@ -9,7 +9,6 @@ class Stomper::SubscriptionManager
     @subscriptions = {}
     connection.on_message { |m, con| dispatch(m) }
     connection.on_unsubscribe { |u, con| remove(u[:id]) }
-    connection.on_connection_closed { |con| @subscriptions.clear }
   end
   
   # Adds a callback handler for a MESSAGE frame that is sent via the subscription
@@ -46,10 +45,16 @@ class Stomper::SubscriptionManager
     end
   end
   
-  # Returns all current subscriptions in the form of their SUBSCRIBE frames.
-  # @return [Array<Stomper::Frame>]
+  # Returns all current subscriptions.
+  # @return [Array<Stomper::SubscriptionManager::Subscription>]
   def subscriptions
     @mon.synchronize { @subscriptions.values }
+  end
+  
+  # Remove all subscriptions. This method does not send UNSUBSCRIBE frames
+  # to the broker.
+  def clear
+    @mon.synchronize { @subscriptions.clear }
   end
   
   private

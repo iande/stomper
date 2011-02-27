@@ -218,6 +218,22 @@ module Stomper
         @connection.connected?.should be_false
       end
       
+      it "should clear subscriptions on close" do
+        @serializer.should_receive(:read_frame).at_least(:once).and_return(@connected_frame)
+        @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+        @connection.connect
+        @connection.subscription_manager.should_receive(:clear)
+        @connection.close
+      end
+      
+      it "should clear receipt handlers on close" do
+        @serializer.should_receive(:read_frame).at_least(:once).and_return(@connected_frame)
+        @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'CONNECT')).once.and_return { |f| f }
+        @connection.connect
+        @connection.receipt_manager.should_receive(:clear)
+        @connection.close
+      end
+      
       describe "frame reading" do
         before(:each) do
           @serializer.should_receive(:read_frame).at_least(:once).and_return(@connected_frame)
@@ -394,7 +410,6 @@ module Stomper
           lambda { @connection.receive }.should raise_error(SystemCallError)
           triggered.should be_true
         end
-        
       end
       
       describe "frame events" do
