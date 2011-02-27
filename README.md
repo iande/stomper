@@ -1,4 +1,4 @@
-#Stomper 2.0.0
+#Stomper 2.0
 
 Stomper is a library for connecting to and interacting with a message broker
 service that supports the Stomp [1.0](http://stomp.github.com/stomp-specification-1-0.html)
