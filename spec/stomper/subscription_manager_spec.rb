@@ -49,14 +49,14 @@ module Stomper
         @subscription_manager.subscribed.should be_empty
       end
       
-      it "should provide a set of subscriptions that were not unsubscribed before the connection was closed" do
-        alt_subscribe_frame = ::Stomper::Frame.new('SUBSCRIBE', {:id => '4567', :destination => '/queue/test_further'})
-        @subscription_manager.add(@subscribe_frame, lambda { |m| true })
-        @subscription_manager.add(alt_subscribe_frame, lambda { |m| true })
-        @subscription_manager.remove('1234')
-        @connection.__send__(:trigger_event, :on_connection_closed, @connection)
-        @subscription_manager.inactive_subscriptions.map { |s| s.id }.should == ['4567']
-      end
+      # it "should provide a set of subscriptions that were not unsubscribed before the connection was closed" do
+      #   alt_subscribe_frame = ::Stomper::Frame.new('SUBSCRIBE', {:id => '4567', :destination => '/queue/test_further'})
+      #   @subscription_manager.add(@subscribe_frame, lambda { |m| true })
+      #   @subscription_manager.add(alt_subscribe_frame, lambda { |m| true })
+      #   @subscription_manager.remove('1234')
+      #   @connection.__send__(:trigger_event, :on_connection_closed, @connection)
+      #   @subscription_manager.inactive_subscriptions.map { |s| s.id }.should == ['4567']
+      # end
       
       it "should trigger subscriptions for MESSAGE frames with only a destination" do
         triggered = [0, 0]

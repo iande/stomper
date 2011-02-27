@@ -55,7 +55,7 @@ class Stomper::SubscriptionManager
   # Returns all current subscriptions in the form of their SUBSCRIBE frames.
   # @return [Array<Stomper::Frame>]
   def subscribed
-    @mon.synchronize { @subscribes.values.select { |s| s.active? } }.map { |s| s.frame }
+    @mon.synchronize { @subscribes.values.map { |s| s.frame } }
   end
   
   private
