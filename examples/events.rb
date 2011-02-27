@@ -31,6 +31,10 @@ client.on_connection_closed do |con|
   $stdout.puts "Connection has been closed"
 end
 
+client.on_connection_terminated do |con|
+  $stdout.puts "Connection closed unexpectedly"
+end
+
 client.send("/queue/stomper/test", "hello world")
 client.disconnect
 

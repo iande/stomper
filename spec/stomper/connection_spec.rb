@@ -365,23 +365,32 @@ module Stomper
           triggered.should be_true
         end
 
-        it "should not trigger on_connection_terminated if the socket raises an IOError when disconnecting" do
+        it "should not trigger on_connection_terminated if the socket raises an error after disconnecting" do
           triggered = false
           @connection.on_connection_terminated { triggered = true }
           @connection.connect
           @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'DISCONNECT'))
           @connection.disconnect
-          @connection.stub(:alive? => true)
-          @serializer.stub!(:read_frame).and_raise(IOError.new('io error'))
+          @connection.should_receive(:alive?).at_least(:once).and_return(true)
+          @serializer.should_receive(:read_frame).and_raise(IOError.new('Error while reading frame'))
           lambda { @connection.receive }.should raise_error(IOError)
           triggered.should be_false
+        end
+        
+        it "should trigger on_connection_terminated if the socket raises an error before DISCONNECT is written" do
+          triggered = false
+          @connection.on_connection_terminated { triggered = true }
+          @connection.connect
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'DISCONNECT')).and_raise(IOError.new('Error before DISCONNECT'))
+          lambda { @connection.disconnect }.should raise_error(IOError)
+          triggered.should be_true
         end
         
         it "should trigger on_connection_terminated if the socket raises a SystemCallError while receiving" do
           triggered = false
           @connection.on_connection_terminated { triggered = true }
           @connection.connect
-          @serializer.stub!(:read_frame).and_raise(SystemCallError.new('syscall error'))
+          @serializer.should_receive(:read_frame).and_raise(SystemCallError.new('syscall error'))
           lambda { @connection.receive }.should raise_error(SystemCallError)
           triggered.should be_true
         end

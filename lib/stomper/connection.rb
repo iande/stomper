@@ -170,6 +170,7 @@ class Stomper::Connection
     @receipt_manager = ::Stomper::ReceiptManager.new(self)
     @connecting = false
     @disconnecting = false
+    @disconnected = false
     @socket_mutex = ::Mutex.new
     
     on_connected do |cf, con|
@@ -196,6 +197,7 @@ class Stomper::Connection
       @disconnecting = true
     end
     on_disconnect do |df, con|
+      @disconnected = true
       close unless df[:receipt]
     end
   end
@@ -282,6 +284,7 @@ class Stomper::Connection
           :passcode => @passcode
         }
         @disconnecting = false
+        @disconnected = false
         @connecting = true
         transmit create_frame('CONNECT', headers, m_headers)
         receive.tap do |f|
@@ -372,7 +375,7 @@ class Stomper::Connection
     #@socket_mutex.synchronize do
       if @connected
         begin
-          trigger_event(:on_connection_terminated, self) unless @disconnecting
+          trigger_event(:on_connection_terminated, self) unless @disconnected
         ensure
           unless @socket.closed?
             @socket.shutdown(2) rescue nil
