@@ -7,6 +7,9 @@ end
 
 Then /^the client should have received a receipt for the last "([^"]*)"$/ do |command|
   fr = @sent_frames.select { |f| f.command == command }.last
+  # This needs improved, use @received_frames instaed.
+  $stdout.puts "Last: #{command}: #{fr.headers.to_a.inspect}"
+  $stdout.puts "-> #{@receipts_received.inspect}"
   (@receipts_received && @receipts_received[fr[:'receipt']]).should_not be_nil
 end
 

@@ -1,10 +1,15 @@
 class TestStompServer
+  class StopThread < StandardError; end
+
   attr_accessor :session_class
   attr_reader :session
   
   def initialize(version=nil)
     @port = 61613
-    @socket = TCPServer.new(@port)
+    begin
+      @socket = TCPServer.new(@port)
+    rescue Exception => ex
+    end
     @session = nil
     @version = version
     @session_class = StompSession
@@ -23,14 +28,14 @@ class TestStompServer
   def stop
     @session.stop if @session
     @socket.close rescue nil
-    @listener.kill rescue nil
+    @listener.raise(StopThread.new)
     @listener.join rescue nil
   end
   
   def force_stop
     @session.force_stop if @session
     @socket.close rescue nil
-    @listener.kill rescue nil
+    @listener.raise(StopThread.new)
     @listener.join rescue nil
   end
   
@@ -54,10 +59,11 @@ class TestStompServer
       connect_to_client(headers)
       @serializer.extend_for_protocol('1.1') if version == '1.1'
       @receive_thread = Thread.new do
-        while @running
+        while true
           begin
             read_frame
           rescue Exception => ex
+            break
           end
         end
       end
@@ -70,6 +76,7 @@ class TestStompServer
     
     def force_stop
       @running = false
+      @receive_thread.raise(StopThread.new)
       @client_socket.close rescue nil
       @receive_thread.join rescue nil
     end
@@ -112,8 +119,11 @@ class TestStompServer
     
     def send_frame cmd, headers={}, body=nil
       frame = cmd.is_a?(Stomper::Frame) ? cmd : Stomper::Frame.new(cmd, headers, body)
-      @serializer.write_frame(frame).tap do |f|
-        @sent_frames << f
+      begin
+        @serializer.write_frame(frame).tap do |f|
+          @sent_frames << f
+        end
+      rescue Exception => ex
       end
     end
   end
@@ -135,7 +145,11 @@ class TestSSLStompServer < TestStompServer
   
   def initialize(version=nil, certs=:default)
     @port = 61612
-    @tcp_socket = TCPServer.new(@port)
+    begin
+      @tcp_socket = TCPServer.new(@port)
+    rescue Exception => ex
+      retry
+    end
     @ssl_context = OpenSSL::SSL::SSLContext.new
     @ssl_context.verify_mode = OpenSSL::SSL::VERIFY_NONE
     cert_files = SSL_CERT_FILES[certs]

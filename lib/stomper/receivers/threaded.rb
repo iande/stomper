@@ -2,6 +2,9 @@
 
 # Basic threaded receiver
 class Stomper::Receivers::Threaded
+  # Stop Receiver
+  class StopReceiver < StandardError; end
+
   # Returns true if the receiver is currently running, false otherwise.
   # If the polling thread is terminated due to a raised exception, this
   # attribute will be false.
@@ -20,7 +23,6 @@ class Stomper::Receivers::Threaded
     @running = false
     @run_mutex = ::Mutex.new
     @run_thread = nil
-    @raised_while_running = nil
   end
   
   # Starts the receiver by creating a new thread to continually poll the
@@ -32,14 +34,20 @@ class Stomper::Receivers::Threaded
     is_starting = @run_mutex.synchronize { @running = true unless @running }
     if is_starting
       @run_thread = Thread.new do
-        while @running
-          begin
-            @running = false if @connection.receive.nil?
-          rescue Exception => ex
-            @running = false
-            raise ex
+        begin
+          while true
+            begin
+              break if @connection.receive.nil?
+            rescue ::Stomper::Receivers::Threaded::StopReceiver
+              break
+            rescue Exception => ex
+              @running = false
+              raise ex
+            end
           end
+        rescue ::Stomper::Receivers::Threaded::StopReceiver
         end
+        @running = false
       end
     end
     self
@@ -58,11 +66,12 @@ class Stomper::Receivers::Threaded
   def stop
     stopped = @run_mutex.synchronize { @run_thread.nil? }
     unless stopped
-      @running = false
+      @run_thread.raise(::Stomper::Receivers::Threaded::StopReceiver.new)
       begin
         @run_thread.join
-      rescue IOError
+      rescue ::IOError, ::SystemCallError
         raise if @connection.connected?
+      rescue ::Stomper::Receivers::Threaded::StopReceiver => ex
       end
       @run_thread = nil
     end

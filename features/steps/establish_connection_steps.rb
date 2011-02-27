@@ -1,6 +1,9 @@
 After do |s|
-  @connection && @connection.stop rescue nil
-  @broker && @broker.force_stop
+  begin
+    @connection && @connection.stop
+    @broker && @broker.force_stop
+  rescue Exception => ex
+  end
 end
 
 Given /^a (\d+\.\d+)?\s*connection between client and broker$/ do |version|

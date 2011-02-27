@@ -7,6 +7,7 @@ Feature: Send and message
     Given a 1.1 connection between client and broker
     And the client subscribes to <destination>
     When the client sends a <content-type> <body> to <destination>
+    And the client waits for 1 "MESSAGE" frame
     And the frame exchange is completed
     Then the client should have received a <content-type> message of <body>
     
@@ -19,6 +20,7 @@ Feature: Send and message
     Given a 1.1 connection between client and broker
     And the client subscribes to <destination>
     When the client sends a <body> encoded as <encoding> to <destination>
+    And the client waits for 1 "MESSAGE" frame
     And the frame exchange is completed
     Then the client should have received a <content-type> message of <body> encoded as <final encoding>
 

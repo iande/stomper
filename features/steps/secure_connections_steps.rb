@@ -25,6 +25,8 @@ end
 
 Then /^connecting should raise an openssl error$/ do
   lambda { @connection.connect }.should raise_error(OpenSSL::SSL::SSLError)
+  # It is problematic that this is needed...
+  @broker.stop
 end
 
 When /^an SSL post connection check is not performed$/ do

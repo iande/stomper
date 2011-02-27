@@ -271,8 +271,16 @@ module Stomper
         it "should close the socket if reading a frame returns nil" do
           @connection.connect
           @serializer.should_receive(:read_frame).and_return(nil)
-          @connection.should_receive(:close).with(true)
+          @connection.should_receive(:close)
           @connection.receive.should be_nil
+        end
+
+        it "should close the socket if reading a frame returns nil" do
+          @connection.connect
+          @socket.should_receive(:ready?).and_return(true)
+          @serializer.should_receive(:read_frame).and_return(nil)
+          @connection.should_receive(:close)
+          @connection.receive_nonblock.should be_nil
         end
       end
       
@@ -355,6 +363,18 @@ module Stomper
           @serializer.stub!(:read_frame).and_raise(IOError.new('io error'))
           lambda { @connection.receive }.should raise_error(IOError)
           triggered.should be_true
+        end
+
+        it "should not trigger on_connection_terminated if the socket raises an IOError when disconnecting" do
+          triggered = false
+          @connection.on_connection_terminated { triggered = true }
+          @connection.connect
+          @serializer.should_receive(:write_frame).with(stomper_frame_with_headers({}, 'DISCONNECT'))
+          @connection.disconnect
+          @connection.stub(:alive? => true)
+          @serializer.stub!(:read_frame).and_raise(IOError.new('io error'))
+          lambda { @connection.receive }.should raise_error(IOError)
+          triggered.should be_false
         end
         
         it "should trigger on_connection_terminated if the socket raises a SystemCallError while receiving" do

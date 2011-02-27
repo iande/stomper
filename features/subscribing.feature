@@ -19,6 +19,7 @@ Feature: Subscribing
     | message-id   | m-1235         |
     | subscription | s-5678         |
     | destination  | /queue/testing |
+    And the client waits for 2 "MESSAGE" frames
     And the frame exchange is completed
     Then the client should have received a "MESSAGE" frame with headers
     | header-name  | header-value   |
@@ -50,6 +51,7 @@ Feature: Subscribing
     | header-name | header-value   |
     | message-id  | m-1236         |
     | destination | /queue/testing |
+    And the client waits for 3 "MESSAGE" frame
     And the frame exchange is completed
     Then the client should have received a "MESSAGE" frame with headers
     | header-name | header-value |
@@ -73,6 +75,7 @@ Feature: Subscribing
     | message-id   | m-1234         |
     | destination  | /queue/testing |
     | subscription | s-9999         |
+    And the client waits for 1 "MESSAGE" frame
     And the frame exchange is completed
     Then the client should have received a "MESSAGE" frame with headers
     | header-name  | header-value |
@@ -91,13 +94,15 @@ Feature: Subscribing
     | message-id   | m-1234         |
     | destination  | /queue/testing |
     | subscription | s-5678         |
+    And the client waits for 1 "MESSAGE" frame
     And the client unsubscribes by ID
     And the broker sends a "MESSAGE" frame with headers
     | header-name  | header-value   |
     | message-id   | m-1235         |
     | destination  | /queue/testing |
     | subscription | s-5678         |
-    And the client disconnects
+    And the client waits for 1 "MESSAGE" frame
+    And the frame exchange is completed
     Then the default subscription callback should have been triggered 1 time
 
   Scenario: No callbacks after unsubscribing by frame
@@ -110,12 +115,14 @@ Feature: Subscribing
     | message-id   | m-1234         |
     | destination  | /queue/testing |
     | subscription | s-5678         |
+    And the client waits for 1 "MESSAGE" frame
     And the client unsubscribes by frame
     And the broker sends a "MESSAGE" frame with headers
     | header-name  | header-value   |
     | message-id   | m-1235         |
     | destination  | /queue/testing |
     | subscription | s-5678         |
+    And the client waits for 1 "MESSAGE" frame
     And the frame exchange is completed
     Then the default subscription callback should have been triggered 1 time
 
@@ -136,11 +143,13 @@ Feature: Subscribing
     | header-name  | header-value   |
     | message-id   | m-1235         |
     | destination  | /queue/testing |
+    And the client waits for 2 "MESSAGE" frames
     And the client unsubscribes from destination "/queue/testing"
     And the broker sends a "MESSAGE" frame with headers
     | header-name | header-value   |
     | message-id  | m-1235         |
     | destination | /queue/testing |
+    And the client waits for 1 "MESSAGE" frame
     And the frame exchange is completed
     Then the default subscription callback should have been triggered 3 times
     And the broker should have received an "UNSUBSCRIBE" frame with headers
