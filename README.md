@@ -15,22 +15,6 @@ rather unpleasant to deal with for common use cases.
 This gem is in no way related to the [Python stomper](http://code.google.com/p/stomper/)
 library.
 
-##Still in the Works
-
-There are a few features that have not yet been implemented, hence why we're
-still on a prerelease version number. The following is a list of the major
-deficiencies of the gem, but this list is not necessarily exhaustive.
-
-* Write some features to test other connections:
-  * Authenticated logins
-  * SSL Client verification (just to ensure that SSL params are being
-    delivered appropriately)
-* A bit of refactoring is in order
-  * Refactor specs a bit, clean up separation between 1.9 and 1.8 specific tests
-
-As these issues are resolved, I'll drop them from the list (and potentially
-add other issues)
-
 ##Example Usage
 
     # Establish a connection to the broker
@@ -128,3 +112,8 @@ See LICENSE for full details.
   introduced me to the STOMP spec and started my work on this gem
 * Hiram Chino and everyone on the stomp-spec mailing list for keeping the
   Stomp 1.1 spec moving
+
+##To Do
+
+The specs and features tests could use some refactoring, especially the
+features.
