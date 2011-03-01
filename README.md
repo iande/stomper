@@ -112,8 +112,3 @@ See LICENSE for full details.
   introduced me to the STOMP spec and started my work on this gem
 * Hiram Chino and everyone on the stomp-spec mailing list for keeping the
   Stomp 1.1 spec moving
-
-##To Do
-
-The specs and features tests could use some refactoring, especially the
-features.
