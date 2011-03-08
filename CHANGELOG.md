@@ -1,5 +1,12 @@
 # Changes
 
+## 2.0.5 - 2011-03-08
+
+* fixed issue with reusing connections after heartbeating extensions were
+  included
+
+* three releases in one day... pretty awesome.
+
 ## 2.0.4 - 2011-03-08
 
 * minor issue where extraneous on\_connection\_died events were triggered.
