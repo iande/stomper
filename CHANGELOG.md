@@ -1,5 +1,9 @@
 # Changes
 
+## 2.0.4 - 2011-03-08
+
+* minor issue where extraneous on\_connection\_died events were triggered.
+
 ## 2.0.3 - 2011-03-08
 
 * checks that some event callbacks exist before trying to invoke, fixes #6

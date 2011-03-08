@@ -174,7 +174,7 @@ class Stomper::Connection
     @close_mutex = ::Mutex.new
     
     on_connected do |cf, con|
-      unless connected?
+      unless @connected
         @version = (cf[:version].nil?||cf[:version].empty?) ? '1.0' : cf[:version]
         unless @versions.include?(@version)
           close
@@ -312,10 +312,11 @@ class Stomper::Connection
     alias :open :connect
   end
   
-  # True if a connection with the broker has been established, false otherwise.
+  # True if a connection with the broker has been established or is in the
+  # process of being established, false otherwise.
   # @return [true,false]
   def connected?
-    @connected && !@socket.closed?
+    (@connecting || @connected) && !@socket.closed?
   end
   
   # Creates an instance of the class given by {#receiver_class} and starts it.
@@ -371,7 +372,7 @@ class Stomper::Connection
   #   {Stomper::Extensions::Events#on_connection_terminated}
   def close
     @close_mutex.synchronize do
-      if @connected
+      if connected?
         begin
           trigger_event(:on_connection_terminated, self) unless @disconnected
         ensure
@@ -379,7 +380,7 @@ class Stomper::Connection
             @socket.shutdown(2) rescue nil
             @socket.close rescue nil
           end
-          @connected = false
+          @connecting = @connected = false
         end
         trigger_event(:on_connection_closed, self)
         subscription_manager.clear
@@ -410,8 +411,7 @@ class Stomper::Connection
   # Receives a frame from the broker.
   # @return [Stomper::Frame]
   def receive
-    trigger_event(:on_connection_died, self) if dead?
-    if alive? || @connecting
+    if alive?
       trigger_event(:before_receiving, nil, self)
       begin
         @serializer.read_frame.tap do |f|
@@ -427,6 +427,8 @@ class Stomper::Connection
         close
         raise
       end
+    else
+      trigger_event(:on_connection_died, self)
     end
   end
   

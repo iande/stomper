@@ -343,13 +343,24 @@ module Stomper
           triggered.should be_true
         end
         
-        it "should trigger on_connection_died before receiving non-blocking (even if not ready) if the connection is dead" do
+        it "should not trigger on_connection_died before receiving non-blocking if socket is not ready" do
           triggered = false
           @connection.on_connection_died { triggered = true }
           @connection.connect
           @connection.stub!(:alive?).and_return(false)
           @serializer.stub!(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
           @socket.stub!(:ready?).and_return(false)
+          @connection.receive_nonblock
+          triggered.should be_false
+        end
+        
+        it "should trigger on_connection_died before receiving non-blocking if socket is ready" do
+          triggered = false
+          @connection.on_connection_died { triggered = true }
+          @connection.connect
+          @connection.stub!(:alive?).and_return(false)
+          @serializer.stub!(:read_frame).and_return(::Stomper::Frame.new('MESSAGE'))
+          @socket.stub!(:ready?).and_return(true)
           @connection.receive_nonblock
           triggered.should be_true
         end

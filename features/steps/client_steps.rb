@@ -1,6 +1,9 @@
 After do |s|
   begin
     @connection && @connection.stop
+  rescue Exception => ex
+  end
+  begin
     @broker && @broker.force_stop
   rescue Exception => ex
   end

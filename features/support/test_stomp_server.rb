@@ -9,6 +9,7 @@ class TestStompServer
     begin
       @socket = TCPServer.new(@port)
     rescue Exception => ex
+      retry
     end
     @session = nil
     @version = version
@@ -59,7 +60,7 @@ class TestStompServer
       connect_to_client(headers)
       @serializer.extend_for_protocol('1.1') if version == '1.1'
       @receive_thread = Thread.new do
-        while true
+        loop do
           begin
             read_frame
           rescue Exception => ex
@@ -88,30 +89,32 @@ class TestStompServer
     
     def read_frame
       @serializer.read_frame.tap do |f|
-        @received_frames << f
-        unless f[:receipt].nil? || f[:receipt].empty?
-          send_frame 'RECEIPT', { :'receipt-id' => f[:receipt] }
-        end
-        case f.command
-        when 'DISCONNECT'
-          @running = false
-          @client_socket.close
-        when 'SEND'
-          if @subscribed[f[:destination]]
-            @subscribed[f[:destination]].each_with_index do |sub_id, idx|
-              msg = f.dup
-              msg[:subscription] = sub_id
-              msg[:'message-id'] = "m-#{(Time.now.to_f * 1000).to_i}-#{idx}"
-              msg.command = 'MESSAGE'
-              send_frame msg
-            end
+        if f
+          @received_frames << f
+          unless f[:receipt].nil? || f[:receipt].empty?
+            send_frame 'RECEIPT', { :'receipt-id' => f[:receipt] }
           end
-        when 'SUBSCRIBE'
-          @subscribed[f[:destination]] ||= []
-          @subscribed[f[:destination]] << f[:id]
-        when 'UNSUBSCRIBE'
-          if @subscribed[f[:destination]]
-            @subscribed[f[:destination]].delete f[:id]
+          case f.command
+          when 'DISCONNECT'
+            @running = false
+            @client_socket.close
+          when 'SEND'
+            if @subscribed[f[:destination]]
+              @subscribed[f[:destination]].each_with_index do |sub_id, idx|
+                msg = f.dup
+                msg[:subscription] = sub_id
+                msg[:'message-id'] = "m-#{(Time.now.to_f * 1000).to_i}-#{idx}"
+                msg.command = 'MESSAGE'
+                send_frame msg
+              end
+            end
+          when 'SUBSCRIBE'
+            @subscribed[f[:destination]] ||= []
+            @subscribed[f[:destination]] << f[:id]
+          when 'UNSUBSCRIBE'
+            if @subscribed[f[:destination]]
+              @subscribed[f[:destination]].delete f[:id]
+            end
           end
         end
       end
@@ -130,6 +133,7 @@ class TestStompServer
   
   class StompErrorOnConnectSession < StompSession
     def connect_to_client(headers)
+      rf = read_frame
       send_frame 'ERROR'
     end
   end

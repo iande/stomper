@@ -17,7 +17,7 @@ module Stomper::Extensions::Heartbeat
   # {Stomper::Protocols::V1_1::Heartbeating#beat}.
   def beat; end
 
-  # By default, a connection is alive if it is connected.
+  # By default, a connection is alive if it is {Stomper::Connection#connected?}.
   # If the established connection utilizes the Stomp 1.1 protocol, this
   # method will be overridden by {Stomper::Protocols::V1_1::Heartbeating#alive?}.
   # @return [true,false]
@@ -41,7 +41,7 @@ module Stomper::Extensions::Heartbeat
     end
 
     # Stomp 1.1 {Stomper::Connection connections} are alive if they are
-    # +connected?+ and are meeting their negotiated heart-beating obligations.
+    # {Stomper::Connection#connected?} and are meeting their negotiated heart-beating obligations.
     # @return [true, false]
     # @see #dead?
     def alive?
