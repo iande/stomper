@@ -429,6 +429,7 @@ class Stomper::Connection
       end
     else
       trigger_event(:on_connection_died, self)
+      nil
     end
   end
   

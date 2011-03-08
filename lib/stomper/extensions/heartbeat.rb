@@ -77,7 +77,7 @@ module Stomper::Extensions::Heartbeat
     def client_alive?
       # Consider some benchmarking to determine if this is faster than
       # re-writing the method after its first invocation.
-      heartbeat_client_limit == 0 ||
+      @connecting || heartbeat_client_limit == 0 ||
         duration_since_transmitted <= heartbeat_client_limit
     end
     
@@ -88,7 +88,7 @@ module Stomper::Extensions::Heartbeat
     # @see #heartbeat_broker_limit
     # @see #client_alive?
     def broker_alive?
-      heartbeat_broker_limit == 0 ||
+      @connecting || heartbeat_broker_limit == 0 ||
         duration_since_received <= heartbeat_broker_limit
     end
   end
