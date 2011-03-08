@@ -189,7 +189,8 @@ module Stomper::Extensions::Events
   
   def trigger_event(event_name, *args)
     event_name = ALIASED_EVENTS[event_name] ? ALIASED_EVENTS[event_name] : event_name
-    @event_callbacks[event_name] && @event_callbacks[event_name].each { |cb| cb.call(*args) }
+    @event_callbacks && @event_callbacks[event_name] &&
+      @event_callbacks[event_name].each { |cb| cb.call(*args) }
   end
   private :trigger_event
   

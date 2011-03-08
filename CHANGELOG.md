@@ -1,5 +1,9 @@
 # Changes
 
+## 2.0.3 - 2011-03-08
+
+* checks that some event callbacks exist before trying to invoke, fixes #6
+
 ## 2.0.2 - 2011-03-01
 
 * updated to-do's and version number in README.md
