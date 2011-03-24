@@ -1,5 +1,11 @@
 #Stomper 2.0
 
+##Important Note
+Due to some major API changes, the relative obscurity of this gem, and the
+fact that there is already a python STOMP client named `stomper`, I'll be
+pushing out a final version of this gem and doing further development under
+a different name.  Sorry for any confusion.
+
 Stomper is a library for connecting to and interacting with a message broker
 service that supports the Stomp [1.0](http://stomp.github.com/stomp-specification-1-0.html)
 and [1.1](http://stomp.github.com/stomp-specification-1-1.html) protocols.  It
