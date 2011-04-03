@@ -2,6 +2,6 @@
 
 # Primary namespace of the stomper gem.
 module Stomper
-  # The current version of the stomper gem.
-  VERSION = '2.0.5'
+  # The final version of the stomper gem.
+  VERSION = '2.0.6'
 end

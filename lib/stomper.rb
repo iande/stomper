@@ -1,5 +1,9 @@
 # -*- encoding: utf-8 -*-
 
+$stderr.puts "The gem has been deprecated, please use onstomp instead."
+$stderr.puts "\t\tgem install onstomp"
+$stderr.puts "See https://github.com/meadvillerb/onstomp for more information."
+
 # For extensions to URI.parse for Stomp schemes.
 require 'uri'
 # Primarily for CGI.parse
